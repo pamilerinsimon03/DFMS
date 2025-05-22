@@ -15,7 +15,7 @@ The University of Ibadan DFMS is a web-based system that allows:
 - HTML5 for markup
 - CSS3 for styling
 - Vanilla JavaScript (ES6+) for interactivity & state
-- Supabase JS Client via CDN for Auth, Database, and Storage (Phase 2)
+- Supabase JS Client via CDN for Auth, Database, and Storage
 - No build tools—all files served statically
 
 ## Project Structure
