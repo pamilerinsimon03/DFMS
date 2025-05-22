@@ -1,0 +1,397 @@
+.log-in {
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    width: 100%;
+}
+
+.log-in .div {
+    background-color: #ffffff;
+    width: 100%;
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+}
+
+.log-in .overlap {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+}
+
+.log-in .overlap-group {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+}
+
+.log-in .rectangle {
+    width: 158px;
+    background-color: #01017a;
+    position: absolute;
+    height: 100%;
+    top: 0;
+    left: 0;
+}
+
+.log-in .image {
+    width: 142px;
+    height: 152px;
+    top: 41px;
+    left: 8px;
+    position: absolute;
+    object-fit: cover;
+}
+
+.log-in .line {
+    position: absolute;
+    width: calc(100% - 258px);
+    height: 1px;
+    top: 215px;
+    left: 257px;
+    background-color: #e0e0e0;
+    border: none;
+}
+
+.log-in .overlap-2 {
+    position: absolute;
+    width: 768px;
+    max-width: 90%;
+    height: 608px;
+    top: 275px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.log-in .img {
+    width: 568px;
+    height: 608px;
+    top: 0;
+    left: 100px;
+    position: absolute;
+    object-fit: cover;
+    opacity: 0.2;
+    z-index: 0;
+}
+
+.log-in .frame {
+    display: flex;
+    flex-direction: column;
+    width: 768px;
+    align-items: flex-start;
+    gap: 24px;
+    position: absolute;
+    top: 50px;
+    left: 0;
+    z-index: 1;
+}
+
+.log-in .text-wrapper {
+    position: relative;
+    align-self: stretch;
+    margin-top: -1.00px;
+    font-family: "Poppins", Helvetica;
+    font-weight: 600;
+    color: #01017a;
+    font-size: 32px;
+    text-align: center;
+    letter-spacing: 0;
+    line-height: 54px;
+}
+
+.log-in .frame-2 {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 32px;
+    position: relative;
+    align-self: stretch;
+    width: 100%;
+    flex: 0 0 auto;
+}
+
+.log-in .frame-3 {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 40px;
+    position: relative;
+    align-self: stretch;
+    width: 100%;
+    flex: 0 0 auto;
+}
+
+.log-in .frame-4 {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+    position: relative;
+    align-self: stretch;
+    width: 100%;
+    flex: 0 0 auto;
+}
+
+.log-in .component-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    position: relative;
+    align-self: stretch;
+    width: 100%;
+    flex: 0 0 auto;
+}
+
+.log-in .component {
+    flex-direction: column;
+    width: 100%;
+    height: 96px;
+    align-items: flex-start;
+    display: flex;
+    gap: 16px;
+    position: relative;
+}
+
+.log-in .frame-5 {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    position: relative;
+    flex: 0 0 auto;
+}
+
+.log-in .input-label {
+    font-family: "Poppins", Helvetica;
+    color: #909090;
+    font-size: 20px;
+    line-height: 18px;
+    position: relative;
+    width: fit-content;
+    font-weight: 400;
+    letter-spacing: 0;
+    white-space: nowrap;
+}
+
+.log-in .text-wrapper-2 {
+    position: relative;
+    width: fit-content;
+    margin-top: -1.00px;
+    font-family: "Poppins", Helvetica;
+    font-weight: 700;
+    color: #f21b3f;
+    font-size: 24px;
+    letter-spacing: 0;
+    line-height: 20px;
+    white-space: nowrap;
+}
+
+.log-in .frame-6 {
+    display: flex;
+    height: 48px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0px 16px;
+    position: relative;
+    align-self: stretch;
+    width: 100%;
+    background-color: #ffffff;
+    border-radius: 6px;
+    border: 1px solid;
+    border-color: #919191;
+    box-sizing: border-box;
+}
+
+.log-in .input-content,
+.log-in .input-content-2 {
+    font-family: "Poppins", Helvetica;
+    font-style: italic;
+    font-size: 16px;
+    line-height: 20px;
+    position: relative;
+    width: 100%;
+    font-weight: 400;
+    letter-spacing: 0;
+    white-space: nowrap;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 0;
+}
+
+.log-in .input-content {
+    color: #909090;
+}
+
+.log-in .input-content-2 {
+    color: #bdbdbd;
+}
+
+.log-in .group {
+    position: relative;
+    width: 100%;
+    height: 84px;
+}
+
+.log-in .overlap-group-2 {
+    position: relative;
+    height: 84px;
+}
+
+.log-in .component-2 {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    align-items: flex-start;
+    gap: 16px;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.log-in .input-label-2 {
+    position: relative;
+    width: fit-content;
+    font-family: "Poppins", Helvetica;
+    font-weight: 400;
+    color: #919191;
+    font-size: 20px;
+    letter-spacing: 0;
+    line-height: 18px;
+    white-space: nowrap;
+}
+
+.log-in .COCO-line-eye-slash {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.log-in .COCO-line-eye-slash-2 {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    top: 48px;
+    right: 16px;
+    cursor: pointer;
+}
+
+.log-in .component-3 {
+    height: 48px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    align-self: stretch;
+    width: 100%;
+    background-color: #01017a;
+    border-radius: 6px;
+    display: flex;
+    gap: 16px;
+    position: relative;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.log-in .component-3:hover {
+    background-color: #00005a;
+}
+
+.log-in .button-text {
+    position: relative;
+    width: fit-content;
+    font-family: "Poppins", Helvetica;
+    font-weight: 700;
+    color: #f9fcff;
+    font-size: 16px;
+    letter-spacing: 0;
+    line-height: 48px;
+    white-space: nowrap;
+}
+
+.log-in .forgotten-password {
+    position: relative;
+    align-self: stretch;
+    font-family: "Poppins", Helvetica;
+    font-weight: 400;
+    color: transparent;
+    font-size: 16px;
+    letter-spacing: 0;
+    line-height: 14px;
+    text-align: center;
+    margin-top: 8px;
+}
+
+.log-in .span {
+    color: #919191;
+}
+
+.log-in .text-wrapper-3 {
+    color: #000000;
+}
+
+.log-in .text-wrapper-4 {
+    font-family: "Poppins", Helvetica;
+    font-weight: 700;
+    color: #01017a;
+    cursor: pointer;
+}
+
+.log-in .text-wrapper-4:hover {
+    text-decoration: underline;
+}
+
+.log-in .frame-7 {
+    display: flex;
+    flex-direction: column;
+    width: 620px;
+    max-width: 90%;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: absolute;
+    top: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.log-in .text-wrapper-5 {
+    position: relative;
+    align-self: stretch;
+    margin-top: -1.00px;
+    font-family: "Poppins", Helvetica;
+    font-weight: 700;
+    color: #01017a;
+    font-size: 48px;
+    text-align: center;
+    letter-spacing: 0;
+    line-height: 72px;
+}
+
+.log-in .text-wrapper-6 {
+    position: relative;
+    align-self: stretch;
+    font-family: "Poppins", Helvetica;
+    font-weight: 600;
+    color: #01017a;
+    font-size: 36px;
+    text-align: center;
+    letter-spacing: 0;
+    line-height: 54px;
+}
+
+.log-in .rectangle-2 {
+    width: 100px;
+    background-color: rgba(250, 166, 44, 1); /* Orange color strip */
+    position: absolute;
+    height: 100%;
+    top: 0;
+    left: 158px; /* Positioned right after blue sidebar */
+}
+
+
