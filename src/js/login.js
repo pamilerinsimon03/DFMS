@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // For demonstration purposes only
-            // In a real application, this would be handled by Supabase authentication
+            // This would later be handled by Supabase authentication
             console.log('Login attempt with:', { matricNumber, password });
             
             // Mock authentication - replace with actual Supabase auth in Phase 2

@@ -387,11 +387,11 @@
 
 .log-in .rectangle-2 {
     width: 100px;
-    background-color: rgba(250, 166, 44, 1); /* Orange color strip */
+    background-color: rgba(250, 166, 44, 1); 
     position: absolute;
     height: 100%;
     top: 0;
-    left: 158px; /* Positioned right after blue sidebar */
+    left: 158px; 
 }
 
 
