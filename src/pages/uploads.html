@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Uploads - University of Ibadan DFMS</title>
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/styleguide.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="../css/uploads.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar - Fixed position -->
+        <div class="sidebar">
+            <div class="sidebar-content">
+                <img class="logo" src="../assets/images/ui-logo.png" alt="University of Ibadan Logo" />
+                <div class="sidebar-menu">
+                    <div class="menu-items">
+                        <div class="menu-item">
+                            <div class="menu-icon dashboard-icon">
+                                <img src="/src/assets/images/home white.svg" alt="">
+                            </div>
+                            <div class="menu-text">Dashboard</div>
+                        </div>
+                        <div class="menu-item active">
+                            <div class="menu-icon uploads-icon">
+                                <img src="/src/assets/images/Document Purple.svg" alt="">
+                            </div>
+                            <div class="menu-text active-text">My Uploads</div>
+                        </div>
+                        <div class="menu-item">
+                            <div class="menu-icon profile-icon">
+                                <img src="../assets/images/User-Circle.svg" alt="">
+                            </div>
+                            <div class="menu-text">Profile</div>
+                        </div>
+                        <div class="menu-item">
+                            <div class="menu-icon settings-icon">
+                                <img src="../assets/images/settings.svg" alt="">
+                            </div>
+                            <div class="menu-text">Settings</div>
+                        </div>
+                    </div>
+                    <div class="menu-item logout">
+                        <div class="menu-icon logout-icon">
+                            <img src="../assets/images/log-out.svg" alt="">
+                        </div>
+                        <div class="menu-text">Log out</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div class="welcome">
+                    <h1>Welcome John</h1>
+                </div>
+                <div class="header-right">
+                    <div class="search-container">
+                        <div class="search-box">
+                            <div class="search-icon">
+                                <img src="../assets/images/search-normal.svg" alt="">
+                            </div>
+                            <input type="text" placeholder="Search here" class="search-input">
+                        </div>
+                        <div class="notification-icon">
+                            <img src="../assets/images/notification-bing.svg" alt="">
+                            <div class="notification-dot"></div>
+                        </div>
+                    </div>
+                    <div class="user-profile">
+                        <img src="../assets/images/Small Avatar.svg" alt="User Profile" class="avatar">
+                        <div class="user-info">
+                            <div class="user-name">John Doe</div>
+                            <div class="user-id">Matric No: E0500627</div>
+                        </div>
+                        <div class="dropdown-icon">
+                            <img src="../assets/images/arrow-down.svg" alt="">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="header-divider"></div>
+
+            <!-- Main Uploads Content -->
+            <div class="uploads-content">
+                <!-- Tab Navigation -->
+                <div class="uploads-tabs">
+                    <div class="tabs-left">
+                        <div class="tab-item active">Total Uploads</div>
+                        <div class="tab-item">Pending Verification</div>
+                        <div class="tab-item">Verified</div>
+                    </div>
+                    <div class="date-filter">
+                        <div class="date-input">
+                            <span>01/01/2025</span>
+                            <img src="../assets/images/calendar.svg" alt="Calendar">
+                        </div>
+                        <span class="date-separator">-</span>
+                        <div class="date-input">
+                            <span>19/20/2025</span>
+                            <img src="../assets/images/calendar.svg" alt="Calendar">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Uploads Table -->
+                <div class="uploads-table">
+                    <!-- Table Header -->
+                    <div class="table-header">
+                        <div class="th-sn">
+                            <span>SN</span>
+                            <img src="../assets/images/arrow-down-small.svg" alt="Sort">
+                        </div>
+                        <div class="th-name">Name</div>
+                        <div class="th-document">Document Name</div>
+                        <div class="th-date">
+                            <span>Date</span>
+                            <img src="../assets/images/arrow-down-small.svg" alt="Sort">
+                        </div>
+                        <div class="th-status">Status</div>
+                        <div class="th-action">Action</div>
+                    </div>
+
+                    <!-- Table Rows -->
+                    <div class="table-row">
+                        <div class="td-sn">1.</div>
+                        <div class="td-name">Birth Certificate</div>
+                        <div class="td-document">My Birth Certificate.JPEG</div>
+                        <div class="td-date">07/05/2025</div>
+                        <div class="td-status verified">
+                            <div class="status-dot"></div>
+                            <div class="status-text">Verified</div>
+                        </div>
+                        <div class="td-action">
+                            <button class="btn-success">Successful</button>
+                        </div>
+                    </div>
+
+                    <div class="table-row">
+                        <div class="td-sn">2.</div>
+                        <div class="td-name">Admission Letter</div>
+                        <div class="td-document">Document 0523.PDF</div>
+                        <div class="td-date">19/04/2025</div>
+                        <div class="td-status pending">
+                            <div class="status-dot"></div>
+                            <div class="status-text">Pending</div>
+                        </div>
+                        <div class="td-action">
+                            <button class="btn-warning">Awaiting Verification</button>
+                        </div>
+                    </div>
+
+                    <div class="table-row">
+                        <div class="td-sn">3.</div>
+                        <div class="td-name">Passport Photograph</div>
+                        <div class="td-document">New Passport.PNG</div>
+                        <div class="td-date">17/03/2025</div>
+                        <div class="td-status verified">
+                            <div class="status-dot"></div>
+                            <div class="status-text">Verified</div>
+                        </div>
+                        <div class="td-action">
+                            <button class="btn-success">Successful</button>
+                        </div>
+                    </div>
+
+                    <div class="table-row">
+                        <div class="td-sn">4.</div>
+                        <div class="td-name">O Level Result</div>
+                        <div class="td-document">WASSCE Reult.PDF</div>
+                        <div class="td-date">12/05/2025</div>
+                        <div class="td-status verified">
+                            <div class="status-dot"></div>
+                            <div class="status-text">Verified</div>
+                        </div>
+                        <div class="td-action">
+                            <button class="btn-success">Successful</button>
+                        </div>
+                    </div>
+
+                    <div class="table-row">
+                        <div class="td-sn">5.</div>
+                        <div class="td-name">JAMB Result</div>
+                        <div class="td-document">JAMB UFacility.PDF</div>
+                        <div class="td-date">17/03/2025</div>
+                        <div class="td-status pending">
+                            <div class="status-dot"></div>
+                            <div class="status-text">Pending</div>
+                        </div>
+                        <div class="td-action">
+                            <button class="btn-warning">Awaiting Verification</button>
+                        </div>
+                    </div>
+
+                    <div class="table-row">
+                        <div class="td-sn">6.</div>
+                        <div class="td-name">JAMB Result</div>
+                        <div class="td-document">JAMB UFacility.PDF</div>
+                        <div class="td-date">19/04/2025</div>
+                        <div class="td-status pending">
+                            <div class="status-dot"></div>
+                            <div class="status-text">Pending</div>
+                        </div>
+                        <div class="td-action">
+                            <button class="btn-warning">Awaiting Verification</button>
+                        </div>
+                    </div>
+
+                    <div class="table-row">
+                        <div class="td-sn">7.</div>
+                        <div class="td-name">NACOSS Receipt</div>
+                        <div class="td-document">Receipt.JPEG</div>
+                        <div class="td-date">19/04/2025</div>
+                        <div class="td-status failed">
+                            <div class="status-dot"></div>
+                            <div class="status-text">Failed</div>
+                        </div>
+                        <div class="td-action">
+                            <button class="btn-danger">Reupload Document</button>
+                        </div>
+                    </div>
+
+                    <div class="table-row">
+                        <div class="td-sn">8.</div>
+                        <div class="td-name">Medical Receipt</div>
+                        <div class="td-document">Medical.JPEG</div>
+                        <div class="td-date">17/03/2025</div>
+                        <div class="td-status failed">
+                            <div class="status-dot"></div>
+                            <div class="status-text">Failed</div>
+                        </div>
+                        <div class="td-action">
+                            <button class="btn-danger">Reupload Document</button>
+                        </div>
+                    </div>
+
+                    <div class="table-row">
+                        <div class="td-sn">9.</div>
+                        <div class="td-name">Faculty Registration Receipt</div>
+                        <div class="td-document">Faculty.JPEG</div>
+                        <div class="td-date">19/04/2025</div>
+                        <div class="td-status verified">
+                            <div class="status-dot"></div>
+                            <div class="status-text">Verified</div>
+                        </div>
+                        <div class="td-action">
+                            <button class="btn-success">Successful</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/dashboard.js"></script>
+    <script src="../js/uploads.js"></script>
+</body>
+</html>

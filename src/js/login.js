@@ -39,14 +39,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // For demonstration purposes only
-            // This would later be handled by Supabase authentication
+            // In a real application, this would be handled by Supabase authentication
             console.log('Login attempt with:', { matricNumber, password });
             
             // Mock authentication - replace with actual Supabase auth in Phase 2
-            alert('Login functionality will be implemented with Supabase in Phase 2');
+            alert('Login successful. Redirecting to dashboard...');
             
-            // Redirect to dashboard (placeholder)
-            // window.location.href = 'dashboard.html';
+            // Redirect to dashboard
+            window.location.href = 'src/pages/dashboard.html';
         });
     }
 });

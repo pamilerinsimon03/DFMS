@@ -1,0 +1,273 @@
+/* Uploads page specific styles */
+
+/* Main content layout */
+.uploads-content {
+    width: 100%;
+    padding: 20px 24px;
+}
+
+/* Tabs navigation */
+.uploads-tabs {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.tabs-left {
+    display: flex;
+    align-items: center;
+    gap: 29px;
+}
+
+.tab-item {
+    padding: 10px;
+    color: #999999;
+    font-size: 16px;
+    font-weight: 400;
+    cursor: pointer;
+}
+
+.tab-item.active {
+    border-bottom: 2px solid #FAA62C;
+    color: #01017A;
+    font-weight: 700;
+}
+
+/* Date filter */
+.date-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.date-input {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: #FFFFFF;
+    border-radius: 10px;
+    border: 0.5px solid rgba(128, 128, 128, 0.4);
+    color: #999999;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.date-input img {
+    width: 20px;
+    height: 20px;
+    opacity: 0.4;
+}
+
+.date-separator {
+    color: #999999;
+    font-size: 14px;
+}
+
+/* Uploads table */
+.uploads-table {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Table header */
+.table-header {
+    display: flex;
+    align-items: center;
+    background: #F6F8FE;
+    border-radius: 12px;
+    padding: 0 16px;
+    height: 70px;
+}
+
+.table-header > div {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    color: #292D32;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.th-sn {
+    width: 70px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.th-name {
+    width: 280px;
+}
+
+.th-document {
+    width: 260px;
+}
+
+.th-date {
+    width: 132px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.th-status {
+    width: 132px;
+}
+
+.th-action {
+    flex: 1;
+}
+
+.table-header img {
+    width: 16px;
+    height: 16px;
+}
+
+/* Table rows */
+.table-row {
+    display: flex;
+    align-items: center;
+    background: #FFFFFF;
+    border-radius: 12px;
+    padding: 0 16px;
+    height: 70px;
+}
+
+.table-row > div {
+    padding: 10px 12px;
+    color: #292D32;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.td-sn {
+    width: 70px;
+}
+
+.td-name {
+    width: 280px;
+}
+
+.td-document {
+    width: 260px;
+}
+
+.td-date {
+    width: 132px;
+}
+
+.td-status {
+    width: 132px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.td-status .status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.td-status.verified .status-dot {
+    background-color: #34C759;
+}
+
+.td-status.verified .status-text {
+    color: #34C759;
+}
+
+.td-status.pending .status-dot {
+    background-color: #FAA62C;
+}
+
+.td-status.pending .status-text {
+    color: #FAA62C;
+    font-size: 10px;
+}
+
+.td-status.failed .status-dot {
+    background-color: #F21B3F;
+}
+
+.td-status.failed .status-text {
+    color: #F21B3F;
+    font-size: 10px;
+}
+
+.td-action {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+/* Buttons */
+.td-action button {
+    width: 160px;
+    padding: 6px 42px;
+    border-radius: 5px;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: #FFFFFF;
+    cursor: pointer;
+}
+
+.btn-success {
+    background-color: #01017A;
+}
+
+.btn-warning {
+    background-color: #FAA62C;
+}
+
+.btn-danger {
+    background-color: #F21B3F;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .uploads-tabs {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .table-row, .table-header {
+        padding: 0 8px;
+    }
+
+    .th-name, .td-name {
+        width: 200px;
+    }
+
+    .th-document, .td-document {
+        width: 200px;
+    }
+
+    .td-action button {
+        width: 140px;
+        padding: 6px 10px;
+    }
+}
+
+@media (max-width: 992px) {
+    .th-name, .td-name {
+        width: 180px;
+    }
+
+    .th-document, .td-document {
+        width: 180px;
+    }
+
+    .td-action button {
+        width: 120px;
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+}
