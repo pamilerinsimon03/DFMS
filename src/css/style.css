@@ -86,7 +86,6 @@
     align-items: flex-start;
     gap: 24px;
     position: absolute;
-    top: 50px;
     left: 0;
     z-index: 1;
 }
@@ -394,4 +393,181 @@
     left: 158px; 
 }
 
+/* Responsive styles */
+@media (max-width: 768px) {
+    .log-in .div {
+        overflow-x: hidden;
+    }
+    
+    .log-in .rectangle {
+        display: none;
+    }
+    
+    .log-in .rectangle-2 {
+        display: none;
+    }
+    
+    .log-in .line {
+        width: 100%;
+        left: 0;
+        top: 100px;
+    }
+    
+    .log-in .image {
+        width: 61px;
+        height: 66px;
+        top: 27px;
+        left: 24px;
+    }
+    
+    .log-in .frame-7 {
+        width: 250px;
+        top: 27px;
+        left: calc(24px + 61px);
+        transform: none;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0;
+    }
+    
+    .log-in .text-wrapper-5 {
+        font-size: 16px;
+        line-height: 24px;
+        text-align: center;
+    }
+    
+    .log-in .text-wrapper-6 {
+        font-size: 12px;
+        line-height: 18px;
+        text-align: center;
+    }
+    
+    .log-in .overlap-2 {
+        width: 312px;
+        max-width: calc(100% - 48px);
+        height: auto;
+        top: 190px; /* Increased from 150px to 190px for better spacing on mobile */
+        left: 24px;
+        transform: none;
+    }
+    
+    .log-in .img {
+        width: 312px;
+        height: 333px;
+        left: 0;
+    }
+    
+    .log-in .frame {
+        width: 100%;
+        top: 80px;
+        left: 0;
+    }
+    
+    .log-in .text-wrapper {
+        font-size: 20px;
+        line-height: 30px;
+    }
+    
+    .log-in .frame-2 {
+        gap: 26px;
+    }
+    
+    .log-in .frame-3 {
+        gap: 36px;
+    }
+    
+    .log-in .frame-4 {
+        gap: 16px;
+    }
+    
+    .log-in .input-label,
+    .log-in .input-label-2 {
+        font-size: 12px;
+        line-height: 18px;
+        color: #BEBEBE;
+    }
+    
+    .log-in .text-wrapper-2 {
+        font-size: 12px;
+        line-height: 18px;
+    }
+    
+    .log-in .input-content,
+    .log-in .input-content-2 {
+        font-size: 14px;
+        line-height: 20px;
+        color: #BEBEBE;
+    }
+    
+    .log-in .component-3 {
+        height: 48px;
+        border-radius: 6px;
+        padding: 0;
+        margin-top: 20px;
+    }
+    
+    .log-in .button-text {
+        font-size: 16px;
+        line-height: 48px;
+    }
+    
+    .log-in .forgotten-password {
+        font-size: 12px;
+        line-height: 14px;
+        margin-top: 10px;
+    }
+    
+    .log-in .span {
+        font-size: 12px;
+        line-height: 14px;
+        color: #919191;
+    }
+    
+    .log-in .text-wrapper-4 {
+        font-size: 12px;
+        line-height: 14px;
+    }
+}
 
+/* Tablet-specific adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .log-in .frame {
+        top: 125px; /* Consistent with desktop */
+        width: 90%;
+        left: 5%;
+    }
+    
+    .log-in .overlap-2 {
+        width: 90%;
+    }
+}
+
+@media (max-width: 480px) {
+    .log-in .overlap-2 {
+        width: calc(100% - 48px);
+    }
+    
+    .log-in .img {
+        width: 312px;
+        height: 333px;
+        opacity: 0.1;
+        top: 0;
+        left: 0;
+    }
+    
+    /* Fix for small screens */
+    .log-in .frame-6 {
+        padding: 0px 16px;
+        border-radius: 8px;
+        border-color: rgba(145, 145, 145, 0.5);
+    }
+    
+    .log-in .input-content,
+    .log-in .input-content-2 {
+        font-size: 14px;
+    }
+    
+    .log-in .frame-7 {
+        left: 95px;
+    }
+}

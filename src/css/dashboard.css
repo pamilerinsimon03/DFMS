@@ -1,10 +1,12 @@
 /* Dashboard main styles */
-body {
+html, body {
     margin: 0;
     padding: 0;
+    width: 100%;
+    height: 100%;
     font-family: 'Poppins', sans-serif;
     background-color: #FCFCFC;
-    overflow-x: hidden;
+    overflow-x: hidden; /* prevent horizontal scroll */
 }
 
 .dashboard-container {
@@ -14,16 +16,54 @@ body {
     position: relative;
 }
 
-/* Sidebar styles */
-.sidebar {
-    width: 300px;
-    height: 100vh;
-    background: #01017A;
+#sidebar {
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 10;
-    box-sizing: border-box;
+    bottom: 0;
+    width: 300px;              
+    background: #01017A;
+    transform: translateX(-100%); 
+    transition: transform 0.3s ease;
+    z-index: 100;              
+    overflow-y: auto;
+}
+
+#mobile-sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;                
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 90;               
+}
+
+#sidebar.open {
+    transform: translateX(0);
+}
+#mobile-sidebar-overlay.open {
+    opacity: 1;
+    visibility: visible;
+}
+/* Hide the “hamburger” by default; only show on mobile */
+.mobile-menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #01017A;
+    margin-right: 16px; /* spacing between hamburger and “Welcome John” */
+}
+
+#mobile-menu-toggle {
+    display: none;
+    background: none;
+    border: none;
 }
 
 .sidebar-content {
@@ -36,8 +76,6 @@ body {
 }
 
 .logo {
-    width: 142px;
-    height: 152px;
     margin-bottom: 40px;
 }
 
@@ -131,7 +169,7 @@ body {
 /* Main content styles */
 .main-content {
     flex: 1;
-    margin-left: 332px;
+    margin-left: 0;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -140,10 +178,14 @@ body {
 
 /* Header styles */
 .header {
+    position: sticky;
     padding: 20px 32px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background: white; /* or whatever your design calls for */
+    z-index: 80;
+    border-bottom: 1px solid #FAA62C;
 }
 
 .welcome h1 {
@@ -152,13 +194,18 @@ body {
     font-weight: 700;
     line-height: 48px;
     margin: 0;
-    white-space: nowrap;
+    white-space: nowrap;    
 }
 
 .header-right {
     display: flex;
     align-items: center;
     gap: 16px;
+    margin-left: auto;
+}
+
+.mobile-menu-btn {
+    display: none;
 }
 
 .search-container {
@@ -272,7 +319,7 @@ body {
 }
 
 .header-divider {
-    width: 1000px;
+    width: 80%;
     height: 1px;
     position: absolute;
     left: 30px;
@@ -281,20 +328,35 @@ body {
     border: none;
 }
 
+.main-body-content {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 16px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
 /* Dashboard content styles */
 .dashboard-content {
+    flex: 0 0 75%;
+    width: 75%;
     padding: 24px 32px 0;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 24px;
     overflow-y: auto;
     max-height: calc(100vh - 84px);
-    width: calc(100% - 400px);
+    box-sizing: border-box;
 }
+
 
 /* User info card styles */
 .user-info-card {
-    width: 688px;
+    width: 100%;
+    max-width: 800px;   /* optional “cap” on very large desktop screens */
+    margin-top: 0;
+    margin-bottom: 0;     /* center horizontally if you want 800px max */
     padding: 20px 32px;
     background-color: white;
     box-shadow: 1px 1px 8px rgba(148, 173, 193, 0.2);
@@ -302,7 +364,7 @@ body {
     display: flex;
     align-items: center;
     gap: 42px;
-    margin-top: 0;
+    box-sizing: border-box;
 }
 
 .user-photo {
@@ -357,34 +419,47 @@ body {
     display: flex;
     flex-direction: column;
     margin-top: 36px;
+    max-width: 1100px;
 }
 
 .files-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin: 0 auto;
     margin-bottom: 5px;
-    border-bottom: 2px solid #01017A;
     padding-bottom: 10px;
-    width: 25%;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .files-title {
-    color: #01017A;
     font-size: 20px;
     font-weight: 600;
+    color: #01017A;
+    display: inline-block;
+    border-bottom: 2px solid #01017A;
+    padding-bottom: 15px;  
+}
+
+.files-header .see-more {
+    font-size: 14px;
+    font-weight: 500;
+    color: #535353;        /* match your brand color */
+    text-decoration: none;
+    white-space: nowrap;   /* prevent it from wrapping onto two lines */
+    transition: color 0.2s ease;
 }
 
 .files-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    display: flex;
     gap: 24px;
     margin-top: 20px;
+    flex-wrap: wrap;
+    justify-content: space-between;
 }
 
 .file-card {
-    width: 100%;
-    height: 250px;
     background-color: white;
     box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.05);
     border-radius: 10px;
@@ -393,6 +468,10 @@ body {
     overflow: hidden;
     transition: transform 0.3s ease;
     cursor: pointer;
+    flex: 1 1 calc(33.333% - 24px);
+    max-width: calc(33.333% - 24px);
+    height: 250px;
+    box-sizing: border-box;
 }
 
 .file-card:hover {
@@ -466,30 +545,32 @@ body {
 
 /* Right sidebar styles */
 .right-sidebar {
-    width: 400px;
-    position: absolute;
-    right: 0;
-    top: 84px;
-    height: calc(100vh - 84px);
+    flex: 0 0 25%;
+    width: 25%;
     background-color: #F7F7FD;
     padding: 24px 20px;
     display: flex;
     flex-direction: column;
     gap: 24px;
+    max-height: calc(100vh - 84px);
+    box-sizing: border-box;
+    z-index: 50;
     overflow-y: auto;
 }
 
 /* Documents counter styles */
 .documents-counter {
-    width: 360px;
+    width: 100%;
+    max-width: 360px;
     height: 196px;
     background-color: white;
     border-radius: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-top: 30px;
+    margin: 0 auto;
     padding: 37px 24px;
+    box-sizing: border-box;
 }
 
 .counter-container {
@@ -522,7 +603,8 @@ body {
 
 /* Upload section styles */
 .upload-section {
-    width: 360px;
+    width: 100%;
+    max-width: 360px;
     height: 240px;
     background-color: white;
     border-radius: 10px;
@@ -530,8 +612,9 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    margin-top: 16px;
+    margin: 0 auto;
     padding: 37px 24px;
+    box-sizing: border-box;
 }
 
 .upload-container {
@@ -593,12 +676,15 @@ body {
 
 /* Files to upload section styles */
 .todo-files {
-    width: 360px;
+    width: 100%;
+    max-width: 360px;
     height: auto;
     display: flex;
     flex-direction: column;
     gap: 16px;
     margin-top: 24px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .todo-title {
@@ -653,70 +739,204 @@ body {
     line-height: 12px;
 }
 
-/* Responsive adjustments */
-@media (max-width: 1440px) {
-    .right-sidebar {
-        width: 320px;
-    }
-
+@media (min-width: 769px) and (max-width: 1440px) {
+    .right-sidebar,
     .documents-counter,
     .upload-section,
     .todo-files {
-        width: 300px;
+        max-width: 300px;
     }
-
     .counter-container,
     .upload-container {
-        width: 260px;
+        max-width: 260px;
     }
-
     .user-info-card {
-        width: 600px;
+        max-width: 700px;
     }
 
     .files-section {
-        width: 600px;
+        max-width: 700px;
     }
 
     .file-card {
-        width: 190px;
-    }
-
-    .file-image {
-        width: 190px;
+        max-width: calc(33.333% - 20px);
     }
 }
 
-@media (max-width: 1200px) {
-    .right-sidebar {
-        width: 280px;
+@media (min-width: 1025px) {
+    #sidebar {
+        transform: translateX(0) !important;
+        overflow: hidden;
+    }
+    .main-content {
+        margin-left: 300px;  /* push content to the right by sidebar width */
+    }
+    .mobile-menu-btn {
+        display: none;       /* hide hamburger on large screens */
+    }
+}
+@media (max-width: 768px) {
+    .header {
+        padding: 16px 16px;
     }
 
-    .documents-counter,
-    .upload-section,
-    .todo-files {
-        width: 260px;
+    .mobile-menu-btn {
+        display: inline-flex;
     }
 
-    .counter-container,
-    .upload-container {
-        width: 220px;
+    #mobile-menu-toggle {
+        display: inline-flex;
+    }
+    .user-info {
+        display: none;
+        width: 100%;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
     }
 
-    .user-info-card {
-        width: 550px;
-        gap: 20px;
+    .welcome {
+        display: none;
     }
 
-    .files-section {
-        width: 550px;
+    .welcome h1 {
+        font-size: 24px;         /* shrink heading on mobile */
+        line-height: 32px;
+    }
+
+    /* Shrink the search box on mobile or hide it entirely if you prefer */
+    .search-box {
+        width: 38px;
+        height: 40px;
+        padding: 5px;
+        border-radius: 100%;
+    }
+    .search-icon img{
+        width: 24px;
+        height: 24px;
+    }
+    .search-input {
+        display: none;
+    }
+    .notification-icon img{
+        width: 24px;
+        width: 24px;
+    }
+    .header-divider {
+        display: none;
     }
 
     .file-card {
-        width: 170px;
+        flex: 1 1 100%;
+        max-width: 100%;
+        margin-bottom: 16px;
     }
 
-    .file-image {
-        width: 170px;
+    .main-body-content {
+        flex-direction: column;
+        margin: 0;
+        overflow: hidden;
+    }
+    #sidebar {
+        overflow: hidden;
+    }
+    .dashboard-content {
+        flex: 0 0 100%;
+        width: 100%;
+        padding: 16px;              
+        gap: 16px;
+        height: auto;
+        margin-top: 16px;
+    }
+
+    /* Sidebar: drop out of absolute positioning and fill full width */
+    .right-sidebar {
+        flex: 0 0 100%;
+        width: 100%;
+        padding: 16px;              
+        gap: 16px;
+        height: 100%;
+    }
+
+    .user-info-card {
+        width: 100%;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 16px;
+        flex-direction: column; 
+        align-items: center;
+        gap: 16px;
+    }
+    .user-photo {
+        width: 120px;
+        height: 120px;
+    }
+    .user-details {
+        width: 100%;
+        padding: 0;
+    }
+    .user-detail-row {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .files-header {
+        width: 100%;
+    }
+
+    .files-section {
+        width: 100%;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .detail-item {
+        width: 100%;
+    }
+    .detail-title {
+        font-size: 18px;
+    }
+    .detail-value {
+        font-size: 14px;
+    }
+    .documents-counter,
+    .upload-section,
+    .todo-files {
+        width: 100%;
+        max-width: none;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 16px;
+    }
+    .counter-container,
+    .upload-container {
+        width: 100%;
+        max-width: none;
+    }
+    .counter-number {
+        font-size: 28px;
+    }
+    .counter-label {
+        font-size: 12px;
+    }
+    .upload-btn {
+        width: 50%;
+        padding: auto;
+        font-size: 14px;
+        align-items: center;
+        text-align: center;
+    }
+    .todo-title {
+        font-size: 18px;
+    }
+    .todo-item {
+        padding: 12px;
+    }
+    .todo-date {
+        font-size: 10px;
     }
 }
