@@ -271,3 +271,33 @@
         font-size: 12px;
     }
 }
+@media (max-width: 768px) {
+  /* “Force show” those header parts on uploads page */
+    .header .header-right {
+        display: flex !important;
+    }
+    .table-header {
+        display: none;  /* hide the header row on phone */
+    }
+    .table-row {
+        display: contents;
+        width: 100%;
+        margin-left: auto;
+    }
+    .uploads-table {
+        width: 100%;
+    }
+    .td-action button {
+        width: 50%;
+        margin-right: auto;
+    }
+    .table-row > div {
+        font-size: 20px;
+    }
+    .td-action button {
+        font-size: 18px;
+    }
+    .td-status {
+        display: none;
+    }
+}
