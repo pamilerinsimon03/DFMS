@@ -1,52 +1,50 @@
-// Login page functionality
+// login.js
 document.addEventListener('DOMContentLoaded', function() {
-    // Toggle password visibility
+  // Toggle password visibility
     const togglePassword = document.getElementById('togglePassword');
     const passwordInput = document.getElementById('password');
-    
+
     if (togglePassword && passwordInput) {
         togglePassword.addEventListener('click', function() {
-            // Toggle the type attribute
-            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordInput.setAttribute('type', type);
-            
-            // Toggle the eye slash icon
-            this.src = type === 'password' 
-                ? 'src/assets/images/eye-slash.svg' 
-                : 'src/assets/images/eye.svg';
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        this.src = type === 'password'
+            ? 'src/assets/images/eye-slash.svg'
+            : 'src/assets/images/eye.svg';
         });
     }
-    
-    // Form submission handling
-    const loginForm = document.querySelector('.component-3');
-    
-    if (loginForm) {
-        loginForm.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            const matricNumber = document.getElementById('matricNumber').value;
-            const password = document.getElementById('password').value;
-            
-            // Basic validation
-            if (!matricNumber.trim()) {
-                alert('Please enter your Matric Number');
-                return;
-            }
-            
-            if (!password.trim()) {
-                alert('Please enter your Password');
-                return;
-            }
-            
-            // For demonstration purposes only
-            // In a real application, this would be handled by Supabase authentication
-            console.log('Login attempt with:', { matricNumber, password });
-            
-            // Mock authentication - replace with actual Supabase auth in Phase 2
-            alert('Login successful. Redirecting to dashboard...');
-            
-            // Redirect to dashboard
-            window.location.href = 'src/pages/dashboard.html';
-        });
-    }
+
+    // Handle login click
+    const loginBtn = document.getElementById('loginBtn');
+    loginBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+
+            const matricNumber = document.getElementById('matricNumber').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+        // Basic validation
+        if (!matricNumber) {
+        alert('Please enter your Staff ID');
+        return;
+        }
+        if (!password) {
+        alert('Please enter your Password');
+        return;
+        }
+
+        // Dummy admin credentials
+        const ADMIN_ID       = 'ADMIN001';
+        const ADMIN_PASSWORD = 'password123';
+
+        if (matricNumber === ADMIN_ID && password === ADMIN_PASSWORD) {
+        // Admin login
+        alert('Admin login successful. Redirecting to admin dashboard...');
+        window.location.href = 'src/pages/admin.html'; 
+        } else {
+        // Student (or incorrect) login
+        // In a real app you'd verify against a database or auth provider
+        alert('Login successful. Redirecting to student dashboard...');
+        window.location.href = 'src/pages/dashboard.html';
+        }
+    });
 });

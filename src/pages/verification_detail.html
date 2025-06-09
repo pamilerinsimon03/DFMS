@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verification Detail - UI DFMS</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/styleguide.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/uploads.css">
+  <link rel="stylesheet" href="../css/verifications_detail.css">
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- Sidebar -->
+    <div id="mobile-sidebar-overlay" class="sidebar-overlay"></div>
+    <div id="sidebar" class="sidebar">
+      <div class="sidebar-content">
+        <img class="logo" src="../assets/images/ui-logo.png" alt="Logo">
+        <div class="sidebar-menu">
+          <div class="menu-items">
+            <div class="menu-item"><div class="menu-icon"><img src="../assets/images/home white.svg"></div><div class="menu-text">Dashboard</div></div>
+            <div class="menu-item active"><div class="menu-icon"><img src="../assets/images/verification purple.svg"></div><div class="menu-text active-text">Verifications</div></div>
+            <div class="menu-item"><div class="menu-icon"><img src="../assets/images/analytics.svg"></div><div class="menu-text">Analytics</div></div>
+            <div class="menu-item"><div class="menu-icon"><img src="../assets/images/settings.svg"></div><div class="menu-text">Settings</div></div>
+          </div>
+          <div class="menu-item logout"><div class="menu-icon"><img src="../assets/images/log-out.svg"></div><div class="menu-text">Log out</div></div>
+        </div>
+      </div>
+    </div>
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="header">
+        <button id="mobile-menu-toggle" class="mobile-menu-btn">☰</button>
+        <div class="search-container">
+          <div class="search-box">
+            <div class="search-icon"><img src="../assets/images/search-normal.svg" alt=""></div>
+            <input type="text" placeholder="Search here" class="search-input">
+          </div>
+          <div class="date-filter">
+            <div class="date-input"><span>01/01/2025</span><img src="../assets/images/calendar.svg" alt=""></div>
+            <span>-</span>
+            <div class="date-input"><span>19/20/2025</span><img src="../assets/images/calendar.svg" alt=""></div>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="notification-icon"><img src="../assets/images/notification-bing.svg" alt=""></div>
+          <div class="user-profile"><img class="avatar" src="../assets/images/admin-avatar.png" alt="Admin"><div class="user-info"><div class="user-name">Dr. Femi Olukoya</div><div class="user-id">femiolukoya@gmail.com</div></div></div>
+        </div>
+      </div>
+      <div class="header-divider"></div>
+      <div class="subheader">
+        <button class="back-btn">
+          <img src="../assets/images/Arrow - Left.svg" alt="Back" class="back-icon">
+        </button>
+      </div>
+      <div class="detail-page-content">
+        <div class="detail-row">
+          <div class="doc-preview-container">
+            <div class="doc-preview">
+              <object class="doc-embed" data="../assets/documents/Course_registration_20477.pdf" type="application/pdf">
+                <img src="../assets/images/PDF Icon Pic.png" alt="Document Preview">
+              </object>
+              <div class="zoom-icon"><img src="../assets/images/Zoom - In.svg" alt="Zoom"></div>
+            </div>
+          </div>
+          <div class="cards-wrapper">
+            <div class="student-card">
+              <img class="avatar-large" src="../assets/images/Small Avatar.svg" alt="Student">
+              <div class="student-info">
+                <div class="info-group">
+                  <div class="label">Name</div>
+                  <div class="value">Olaniran Pamilerin Simon</div>
+                </div>
+                <div class="info-group">
+                  <div class="label">Department</div>
+                  <div class="value">Computer Science</div>
+                </div>
+                <div class="info-group">
+                  <div class="label">Matric No</div>
+                  <div class="value">E0500627</div>
+                </div>
+                <div class="info-group">
+                  <div class="label">Level</div>
+                  <div class="value">300L</div>
+                </div>
+                <div class="info-group">
+                  <div class="label">Session</div>
+                  <div class="value">2023/2024</div>
+                </div>
+              </div>
+            </div>
+            <div class="details-card">
+              <div class="details-header">Document Details</div>
+              <div class="details-row"><div class="label">Document Name:</div><div class="value">Course Registration</div></div>
+              <div class="details-row"><div class="label">File Uploaded:</div><div class="value">Course_registration_20477.pdf</div></div>
+              <div class="details-row"><div class="label">Date Uploaded:</div><div class="value">07/05/2025</div></div>
+              <div class="details-row"><div class="label">Time Uploaded:</div><div class="value">05:18pm</div></div>
+            </div>
+          </div>
+        </div> <!-- end detail-row -->
+        <div class="action-row">
+          <button class="approve-btn"><img src="../assets/images/Check.svg" class="btn-icon" alt="">Approve</button>
+          <button class="reject-btn"><img src="../assets/images/Close.svg" class="btn-icon" alt="">Reject</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="doc-modal">
+    <div class="doc-modal-content">
+      <img id="modal-img" src="" alt="Full Document">
+      <div class="close-modal"><img src="../assets/images/Close.svg" alt="Close"></div>
+    </div>
+  </div>
+  <script src="../js/verification_detail.js"></script>
+  <script src="../js/admin.js"></script>
+</body>
+</html>
