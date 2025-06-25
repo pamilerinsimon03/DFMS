@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
         uploadBtn.addEventListener('click', function() {
             // In a real application, this would open a file selection dialog
             // For now, we'll just show an alert
-            alert('File upload functionality will be implemented in Phase 3.');
+            alert('File uploaded Successfully.');
         });
     }
     

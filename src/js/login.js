@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Student (or incorrect) login
         // In a real app you'd verify against a database or auth provider
         alert('Login successful. Redirecting to student dashboard...');
-        window.location.href = 'src/pages/dashboard.html';
+        window.location.href = 'dashboard.php';
         }
     });
 });
