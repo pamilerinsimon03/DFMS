@@ -1,11 +1,6 @@
 <?php
 require_once 'config.php';
 
-// Prevent redirect loop
-if (isset($_SESSION['redirect_count']) && $_SESSION['redirect_count'] > 5) {
-    file_put_contents('debug.txt', "Redirect loop detected: User ID {$_SESSION['user_id']}\n", FILE_APPEND);
-    die("Error: Too many redirects. Please contact support.");
-}
 $_SESSION['redirect_count'] = isset($_SESSION['redirect_count']) ? $_SESSION['redirect_count'] + 1 : 1;
 
 // Check if user is logged in
@@ -49,6 +44,7 @@ if (isset($_SESSION['user_id'])) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -56,21 +52,35 @@ if (isset($_SESSION['user_id'])) {
     <link rel="stylesheet" href="src/css/global.css">
     <link rel="stylesheet" href="src/css/styleguide.css">
     <link rel="stylesheet" href="src/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,600;0,700;1,400&display=swap"
+        rel="stylesheet">
     <style>
-        .message { text-align: center; margin-bottom: 10px; font-size: 14px; }
-        .success { color: green; }
-        .error { color: red; }
+    .message {
+        text-align: center;
+        margin-bottom: 10px;
+        font-size: 14px;
+    }
+
+    .success {
+        color: green;
+    }
+
+    .error {
+        color: red;
+    }
     </style>
 </head>
+
 <body>
     <?php if (isset($_SESSION['success'])): ?>
-        <p class="message success"><?php echo htmlspecialchars($_SESSION['success']); unset($_SESSION['success']); ?></p>
-        <script>
-            setTimeout(() => { window.location.href = 'dashboard.php'; }, 2000);
-        </script>
+    <p class="message success"><?php echo htmlspecialchars($_SESSION['success']); unset($_SESSION['success']); ?></p>
+    <script>
+    setTimeout(() => {
+        window.location.href = 'dashboard.php';
+    }, 2000);
+    </script>
     <?php elseif (isset($_SESSION['error'])): ?>
-        <p class="message error"><?php echo htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?></p>
+    <p class="message error"><?php echo htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?></p>
     <?php endif; ?>
     <div class="log-in">
         <div class="div">
@@ -85,7 +95,8 @@ if (isset($_SESSION['user_id'])) {
                         <h2 class="text-wrapper-6">DIGITAL FILE MANAGEMENT PORTAL</h2>
                     </div>
                     <div class="overlap-2">
-                        <img class="img" src="src/assets/images/ui-logo-watermark.png" alt="University of Ibadan Logo Watermark" />
+                        <img class="img" src="src/assets/images/ui-logo-watermark.png"
+                            alt="University of Ibadan Logo Watermark" />
                         <div class="frame">
                             <h3 class="text-wrapper">Login</h3>
                             <form class="frame" action="login.php" method="POST">
@@ -95,11 +106,14 @@ if (isset($_SESSION['user_id'])) {
                                             <div class="component-wrapper">
                                                 <div class="component">
                                                     <div class="frame-5">
-                                                        <label class="input-label" for="matricNumber">Matric Number</label>
+                                                        <label class="input-label" for="matricNumber">Matric
+                                                            Number</label>
                                                         <span class="text-wrapper-2">*</span>
                                                     </div>
                                                     <div class="frame-6">
-                                                        <input type="text" placeholder="Enter your matric number" class="input-content" id="matricNumber" name="matric_number" required>
+                                                        <input type="text" placeholder="Enter your matric number"
+                                                            class="input-content" id="matricNumber" name="matric_number"
+                                                            required>
                                                     </div>
                                                 </div>
                                             </div>
@@ -111,8 +125,12 @@ if (isset($_SESSION['user_id'])) {
                                                             <span class="text-wrapper-2">*</span>
                                                         </div>
                                                         <div class="frame-6">
-                                                            <input type="password" placeholder="Enter your password" class="input-content-2" id="password" name="password" required>
-                                                            <img class="COCO-line-eye-slash" id="togglePassword" src="src/assets/images/eye-slash.svg" alt="Toggle password visibility" />
+                                                            <input type="password" placeholder="Enter your password"
+                                                                class="input-content-2" id="password" name="password"
+                                                                required>
+                                                            <img class="COCO-line-eye-slash" id="togglePassword"
+                                                                src="src/assets/images/eye-slash.svg"
+                                                                alt="Toggle password visibility" />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -135,12 +153,13 @@ if (isset($_SESSION['user_id'])) {
         </div>
     </div>
     <script>
-        document.getElementById('togglePassword').addEventListener('click', function () {
-            const passwordInput = document.getElementById('password');
-            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordInput.setAttribute('type', type);
-            this.src = type === 'password' ? 'src/assets/images/eye-slash.svg' : 'src/assets/images/eye.svg';
-        });
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        const passwordInput = document.getElementById('password');
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        this.src = type === 'password' ? 'src/assets/images/eye-slash.svg' : 'src/assets/images/eye.svg';
+    });
     </script>
 </body>
+
 </html>

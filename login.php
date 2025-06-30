@@ -1,11 +1,6 @@
 <?php
 require_once 'config.php';
 
-// Prevent redirect loop
-if (isset($_SESSION['redirect_count']) && $_SESSION['redirect_count'] > 5) {
-    file_put_contents('debug.txt', "Redirect loop detected: User ID {$_SESSION['user_id']}\n", FILE_APPEND);
-    die("Error: Too many redirects. Please contact support.");
-}
 $_SESSION['redirect_count'] = isset($_SESSION['redirect_count']) ? $_SESSION['redirect_count'] + 1 : 1;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

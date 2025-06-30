@@ -38,17 +38,30 @@ function initCharts() {
             datasets: [{
                 label: 'Documents Uploaded',
                 data: [3, 1],
-                backgroundColor: ['#4e73df', '#1cc88a'],
-                borderColor: ['#4e73df', '#1cc88a'],
-                borderWidth: 1
+                backgroundColor: "#01017A",
+                borderRadius: 4,
+                barThickness: 10
             }]
         };
         new Chart(barCanvas, {
             type: 'bar',
             data: barData,
             options: {
-                responsive: true,
-                scales: { y: { beginAtZero: true } }
+                responsive: false,
+                maintainAspectRatio: false,
+                layout: { padding: 0 },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 200, color: '#999999', font: { family: 'Poppins', size: 14 } },
+                        grid: { drawBorder: false, color: 'rgba(128,128,128,0.3)', borderDash: [5,5], lineWidth: 1 }
+                    },
+                    x: {
+                        ticks: { maxRotation: 0, autoSkip: true, color: '#999999', font: { family: 'Poppins', size: 12 } },
+                        grid: { display: false }
+                    }
+                },
+                plugins: { legend:{ display:false } }
             }
         });
         logEvent('Bar chart initialized: ' + JSON.stringify(barData));
@@ -59,21 +72,63 @@ function initCharts() {
             labels: ['Pending', 'Verified', 'Failed'],
             datasets: [{
                 data: [4, 0, 0],
-                backgroundColor: ['#f6c23e', '#1cc88a', '#e74a3b']
+                backgroundColor: ['#009A49','#FAA62C','#FF3B30']
             }]
         };
         new Chart(pieCanvas, {
             type: 'pie',
             data: pieData,
-            options: { responsive: true }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: { padding: 0 },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 10, padding: 20, color:'#999999', font:{ family:'Poppins', size:12 } }
+                    },
+                    tooltip: { callbacks:{ label: ctx => `${ctx.label}: ${ctx.parsed}` } }
+                }
+            }
         });
         logEvent('Pie chart initialized: ' + JSON.stringify(pieData));
     }
 }
 
+// Toggle More ▾ action menus
+function initActionMenus() {
+    // Close any open menus
+    function closeAll() {
+        document.querySelectorAll('.action-menu-content').forEach(menu => {
+            menu.style.display = 'none';
+        });
+    }
+
+    // Toggle this menu
+    function toggleMenu(menu) {
+        const isOpen = menu.style.display === 'block';
+        closeAll();
+        menu.style.display = isOpen ? 'none' : 'block';
+    }
+
+    document.querySelectorAll('.action-menu .action-btn').forEach(btn => {
+        const content = btn.nextElementSibling;
+        if (!content) return;
+        btn.addEventListener('click', e => {
+            e.stopPropagation();
+            toggleMenu(content);
+        });
+    });
+
+    // Close on outside click
+    document.addEventListener('click', () => closeAll());
+}
+
 // Initialize
+
 document.addEventListener('DOMContentLoaded', () => {
     logEvent('admin.js loaded');
     initSidebar();
     initCharts();
+    initActionMenus();
 });

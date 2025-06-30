@@ -40,7 +40,7 @@ function initForm() {
             startDateInput.value = '<?php echo htmlspecialchars($start_date); ?>';
             endDateInput.value = '<?php echo htmlspecialchars($end_date); ?>';
             formSearch.value = '<?php echo htmlspecialchars($search); ?>';
-            searchInput.value = '<?php echo htmlspecialchars($search); ?>';
+            searchInput.value = 'Search Here';
             logEvent('Form initialized');
         }
     });

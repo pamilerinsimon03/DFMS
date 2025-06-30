@@ -181,6 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -190,49 +191,224 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
     <link rel="stylesheet" href="src/css/dashboard.css">
     <link rel="stylesheet" href="src/css/admin.css">
     <link rel="stylesheet" href="src/css/uploads.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+        rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        .admin-message { margin: 10px 0; font-size: 14px; text-align: center; }
-        .admin-message.success { color: green; }
-        .admin-message.error { color: red; }
-        .action-menu { position: relative; display: inline-block; cursor: pointer; }
-        .action-menu-content { display: none; position: absolute; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1; min-width: 100px; }
-        .action-menu:hover .action-menu-content { display: block; }
-        .action-menu-content a, .action-menu-content button { display: block; width: 100%; padding: 8px; border: none; background: none; text-align: left; cursor: pointer; text-decoration: none; color: #000; }
-        .action-menu-content a:hover, .action-menu-content button:hover { background: #f0f0f0; }
-        .uploads-tabs .tab-item { cursor: pointer; }
-        .uploads-tabs .tab-item.active { color: #4e73df; border-bottom: 2px solid #4e73df; }
-        .status-pending { background: #fff3cd; }
-        .status-verified { background: #d4edda; }
-        .status-rejected { background: #f8d7da; }
-        .filter-button { padding: 8px 16px; background: #4e73df; color: #fff; border: none; cursor: pointer; border-radius: 4px; margin-top: 10px; }
-        .filter-button:hover { background: #2e59d9; }
-        .doc-link { color: #4e73df; text-decoration: none; }
-        .doc-link:hover { text-decoration: underline; }
-        .pagination { margin: 20px 0; text-align: center; }
-        .pagination a { padding: 8px 12px; margin: 0 4px; border: 1px solid #ddd; text-decoration: none; color: #4e73df; }
-        .pagination a.active { background: #4e73df; color: #fff; border: 1px solid #4e73df; }
-        .pagination a:hover { background: #f0f0f0; }
-        @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); transition: transform 0.3s ease; }
-            .sidebar.active { transform: translateX(0); }
-            .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; }
-            .sidebar-overlay.active { display: block; }
-            .main-content { margin-left: 0; }
-            .mobile-menu-btn { display: block; }
-            .table-wrapper { overflow-x: auto; }
-            .docs-table { min-width: 600px; }
-            .date-filter { flex-direction: column; }
-            .date-input { margin-bottom: 5px; }
-            .filter-button { width: 100%; }
+    .admin-message {
+        margin: 10px 0;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    .admin-message.success {
+        color: green;
+    }
+
+    .admin-message.error {
+        color: red;
+    }
+
+    .action-menu {
+        position: relative;
+        display: inline-block;
+        cursor: pointer;
+    }
+
+    .action-menu-content {
+        display: none;
+        position: absolute;
+        background: #fff;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        z-index: 1;
+        min-width: 100px;
+    }
+
+
+
+    .action-menu-content a,
+    .action-menu-content button {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        padding: 8px;
+        border: none;
+        background: none;
+        text-align: left;
+        cursor: pointer;
+        text-decoration: none;
+        color: #000;
+    }
+
+    .action-menu-content .action-item {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        width: 100%;
+        text-decoration: none;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-family: Poppins, sans-serif;
+        font-size: 14px;
+        color: #000;
+    }
+
+    /* spacing for the icons */
+    .action-menu-content .action-item img {
+        width: 16px;
+        margin-right: 8px;
+    }
+
+    /* specific colors */
+    .action-menu-content .action-item.verify {
+        color: #009A49;
+    }
+
+    .action-menu-content .action-item.reject {
+        color: #FF3B30;
+    }
+
+    /* hover state */
+    .action-menu-content .action-item:hover {
+        background: #f0f0f0;
+    }
+
+
+
+    .action-menu-content img {
+        width: 16px;
+        margin-right: 5px;
+    }
+
+    .status-pending {
+        background: #fff3cd;
+    }
+
+    .status-verified {
+        background: #d4edda;
+    }
+
+    .status-rejected {
+        background: #f8d7da;
+    }
+
+    .filter-button {
+        padding: 10px 16px;
+        background: none;
+        color: #01017A;
+        border: none;
+        cursor: pointer;
+        border-radius: 10px;
+        border: 2px solid #01017A;
+        font-weight: 700;
+    }
+
+    .filter-button:hover {
+        background: #01017A;
+        color: white;
+    }
+
+    .doc-link {
+        color: black;
+        text-decoration: underline;
+    }
+
+    .doc-link:hover {
+        text-decoration: underline;
+    }
+
+    .pagination {
+        margin: 20px 0;
+        text-align: center;
+    }
+
+    .pagination a {
+        padding: 8px 12px;
+        margin: 0 4px;
+        border: 1px solid #ddd;
+        text-decoration: none;
+        color: #01017A;
+    }
+
+    .pagination a.active {
+        background: #01017A;
+        color: #fff;
+        border: 1px solid #01017A;
+    }
+
+    .pagination a:hover {
+        background: #f0f0f0;
+    }
+
+    @media (max-width: 768px) {
+        .sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
         }
-        @media (min-width: 769px) {
-            .mobile-menu-btn, .sidebar-overlay { display: none; }
-            .sidebar { transform: translateX(0); }
+
+        .sidebar.active {
+            transform: translateX(0);
         }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+
+        .main-content {
+            margin-left: 0;
+        }
+
+        .mobile-menu-btn {
+            display: block;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        .docs-table {
+            min-width: 600px;
+        }
+
+        .date-filter {
+            flex-direction: column;
+        }
+
+        .date-input {
+            margin-bottom: 5px;
+        }
+
+        .filter-button {
+            width: 100%;
+        }
+    }
+
+    @media (min-width: 769px) {
+
+        .mobile-menu-btn,
+        .sidebar-overlay {
+            display: none;
+        }
+
+        .sidebar {
+            transform: translateX(0);
+        }
+    }
     </style>
 </head>
+
 <body>
     <div class="dashboard-container">
         <!-- Sidebar -->
@@ -243,15 +419,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
                 <div class="sidebar-menu">
                     <div class="menu-items">
                         <a href="admin.php" class="menu-item">
-                            <div class="menu-icon"><img src="src/assets/images/home.svg" alt="Dashboard Icon"></div>
+                            <div class="menu-icon"><img src="src/assets/images/home white.svg" alt="Dashboard Icon">
+                            </div>
                             <div class="menu-text">Dashboard</div>
                         </a>
                         <a href="verifications.php" class="menu-item active">
-                            <div class="menu-icon"><img src="src/assets/images/verification.svg" alt="Verifications Icon"></div>
+                            <div class="menu-icon"><img src="src/assets/images/verification purple.svg"
+                                    alt="Verifications Icon"></div>
                             <div class="menu-text active-text">Verifications</div>
                         </a>
                         <a href="analytics.php" class="menu-item">
-                            <div class="menu-icon"><img src="src/assets/images/analytics.svg" alt="Analytics Icon"></div>
+                            <div class="menu-icon"><img src="src/assets/images/analytics.svg" alt="Analytics Icon">
+                            </div>
                             <div class="menu-text">Analytics</div>
                         </a>
                         <a href="settings.php" class="menu-item">
@@ -276,19 +455,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
                 <div class="search-container">
                     <div class="search-box">
                         <div class="search-icon"><img src="src/assets/images/search-normal.svg" alt="Search Icon"></div>
-                        <input type="text" placeholder="Search here" class="search-input" id="search-input" value="<?php echo htmlspecialchars($search); ?>">
+                        <input type="text" placeholder="Search here" class="search-input" id="search-input"
+                            value="Search here">
                     </div>
                     <div class="date-filter">
                         <form id="date-filter-form" action="verifications.php" method="GET">
                             <input type="hidden" name="tab" value="<?php echo htmlspecialchars($tab); ?>">
-                            <input type="hidden" name="search" id="form-search" value="<?php echo htmlspecialchars($search); ?>">
+                            <input type="hidden" name="search" id="form-search" value="Search Here">
                             <div class="date-input">
-                                <input type="date" name="start_date" id="start-date" value="<?php echo htmlspecialchars($start_date); ?>">
+                                <input type="date" name="start_date" id="start-date"
+                                    value="<?php echo htmlspecialchars($start_date); ?>">
                                 <img src="src/assets/images/calendar.svg" alt="Calendar">
                             </div>
                             <span>-</span>
                             <div class="date-input">
-                                <input type="date" name="end_date" id="end-date" value="<?php echo htmlspecialchars($end_date); ?>">
+                                <input type="date" name="end_date" id="end-date"
+                                    value="<?php echo htmlspecialchars($end_date); ?>">
                                 <img src="src/assets/images/calendar.svg" alt="Calendar">
                             </div>
                             <button type="submit" class="filter-button">Apply Filter</button>
@@ -296,7 +478,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
                     </div>
                 </div>
                 <div class="header-right">
-                    <div class="notification-icon"><img src="src/assets/images/notification-bing.svg" alt="Notification Icon"></div>
+                    <div class="notification-icon"><img src="src/assets/images/notification-bing.svg"
+                            alt="Notification Icon"></div>
                     <div class="user-profile">
                         <img class="avatar" src="src/assets/images/admin-avatar.png" alt="Admin Avatar">
                         <div class="user-info">
@@ -310,18 +493,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
 
             <!-- Admin Feedback -->
             <?php if (isset($_SESSION['admin_message'])): ?>
-                <div class="admin-message <?php echo strpos($_SESSION['admin_message'], 'successfully') !== false ? 'success' : 'error'; ?>">
-                    <?php echo htmlspecialchars($_SESSION['admin_message']); unset($_SESSION['admin_message']); ?>
-                </div>
+            <div
+                class="admin-message <?php echo strpos($_SESSION['admin_message'], 'successfully') !== false ? 'success' : 'error'; ?>">
+                <?php echo htmlspecialchars($_SESSION['admin_message']); unset($_SESSION['admin_message']); ?>
+            </div>
             <?php endif; ?>
 
             <div class="uploads-content">
                 <div class="uploads-tabs">
                     <div class="tabs-left">
-                        <a href="verifications.php?tab=all&start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>&search=<?php echo urlencode($search); ?>" class="tab-item <?php echo $tab === 'all' ? 'active' : ''; ?>">All Documents</a>
-                        <a href="verifications.php?tab=pending&start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>&search=<?php echo urlencode($search); ?>" class="tab-item <?php echo $tab === 'pending' ? 'active' : ''; ?>">Documents to be Verified</a>
-                        <a href="verifications.php?tab=verified&start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>&search=<?php echo urlencode($search); ?>" class="tab-item <?php echo $tab === 'verified' ? 'active' : ''; ?>">Documents Verified</a>
-                        <a href="verifications.php?tab=rejected&start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>&search=<?php echo urlencode($search); ?>" class="tab-item <?php echo $tab === 'rejected' ? 'active' : ''; ?>">Rejected Documents</a>
+                        <a href="verifications.php?tab=all&start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>&search=<?php echo urlencode($search); ?>"
+                            class="tab-item <?php echo $tab === 'all' ? 'active' : ''; ?>">Documents Uploaded</a>
+                        <a href="verifications.php?tab=pending&start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>&search=<?php echo urlencode($search); ?>"
+                            class="tab-item <?php echo $tab === 'pending' ? 'active' : ''; ?>">Documents to be
+                            Verified</a>
+                        <a href="verifications.php?tab=verified&start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>&search=<?php echo urlencode($search); ?>"
+                            class="tab-item <?php echo $tab === 'verified' ? 'active' : ''; ?>">Documents Verified</a>
+                        <a href="verifications.php?tab=rejected&start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>&search=<?php echo urlencode($search); ?>"
+                            class="tab-item <?php echo $tab === 'rejected' ? 'active' : ''; ?>">Rejected Documents</a>
                     </div>
                 </div>
                 <div class="table-section">
@@ -341,62 +530,92 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
                             </thead>
                             <tbody>
                                 <?php if (empty($documents)): ?>
-                                    <tr><td colspan="8">No documents found.</td></tr>
+                                <tr>
+                                    <td colspan="8">No documents found.</td>
+                                </tr>
                                 <?php else: ?>
-                                    <?php foreach ($documents as $index => $doc): ?>
-                                        <tr class="status-<?php echo strtolower($doc['status']); ?>">
-                                            <td><?php echo ($page - 1) * $per_page + $index + 1; ?>.</td>
-                                            <td><?php echo htmlspecialchars($doc['full_name']); ?></td>
-                                            <td><?php echo htmlspecialchars($doc['department']); ?></td>
-                                            <td><?php echo htmlspecialchars($doc['level']); ?></td>
-                                            <td><a href="verification_detail.php?doc_id=<?php echo $doc['id']; ?>" class="doc-link"><?php echo htmlspecialchars($doc['document_name']); ?></a></td>
-                                            <td><?php echo htmlspecialchars($doc['session']); ?></td>
-                                            <td><?php echo htmlspecialchars($doc['status']); ?></td>
-                                            <td>
-                                                <?php if ($doc['status'] === 'Pending'): ?>
-                                                    <div class="action-menu">
-                                                        <img src="src/assets/images/more.svg" alt="More Options">
-                                                        <div class="action-menu-content">
-                                                            <a href="verification_detail.php?doc_id=<?php echo $doc['id']; ?>">View Details</a>
-                                                            <form action="verifications.php?tab=<?php echo urlencode($tab); ?>&start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>&search=<?php echo urlencode($search); ?>&page=<?php echo $page; ?>" method="POST" style="display: inline;">
-                                                                <input type="hidden" name="doc_id" value="<?php echo $doc['id']; ?>">
-                                                                <input type="hidden" name="action" value="verify">
-                                                                <button type="submit">Verify</button>
-                                                            </form>
-                                                            <form action="verifications.php?tab=<?php echo urlencode($tab); ?>&start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>&search=<?php echo urlencode($search); ?>&page=<?php echo $page; ?>" method="POST" style="display: inline;">
-                                                                <input type="hidden" name="doc_id" value="<?php echo $doc['id']; ?>">
-                                                                <input type="hidden" name="action" value="reject">
-                                                                <button type="submit">Reject</button>
-                                                            </form>
-                                                        </div>
-                                                    </div>
-                                                <?php else: ?>
-                                                    <div class="action-menu">
-                                                        <img src="src/assets/images/more.svg" alt="More Options">
-                                                        <div class="action-menu-content">
-                                                            <a href="verification_detail.php?doc_id=<?php echo $doc['id']; ?>">View Details</a>
-                                                        </div>
-                                                    </div>
-                                                <?php endif; ?>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
+                                <?php foreach ($documents as $index => $doc): ?>
+                                <tr class="status-<?php echo strtolower($doc['status']); ?>">
+                                    <td><?php echo ($page - 1) * $per_page + $index + 1; ?>.</td>
+                                    <td><?php echo htmlspecialchars($doc['full_name']); ?></td>
+                                    <td><?php echo htmlspecialchars($doc['department']); ?></td>
+                                    <td><?php echo htmlspecialchars($doc['level']); ?></td>
+                                    <td><a href="verification_detail.php?doc_id=<?php echo $doc['id']; ?>"
+                                            class="doc-link"><?php echo htmlspecialchars($doc['document_name']); ?></a>
+                                    </td>
+                                    <td><?php echo htmlspecialchars($doc['session']); ?></td>
+                                    <td><?php echo htmlspecialchars($doc['status']); ?></td>
+                                    <td class="td-action">
+                                        <?php if ($doc['status'] === 'Pending'): ?>
+                                        <div class="action-menu">
+                                            <img src="src/assets/images/more.svg" alt="More" class="action-btn">
+                                            <div class="action-menu-content">
+                                                <!-- View -->
+                                                <a href="verification_detail.php?doc_id=<?php echo $doc['id']; ?>"
+                                                    class="action-item">
+                                                    <img src="src/assets/images/Bold Eye.svg" alt="View"> View
+                                                </a>
+                                                <!-- Verify -->
+                                                <form action="verifications.php?tab=<?php echo urlencode($tab); ?>
+                                                    &start_date=<?php echo urlencode($start_date); ?>
+                                                    &end_date=<?php echo urlencode($end_date); ?>
+                                                    &search=<?php echo urlencode($search); ?>
+                                                    &page=<?php echo $page; ?>" method="POST">
+                                                    <input type="hidden" name="doc_id"
+                                                        value="<?php echo $doc['id']; ?>">
+                                                    <input type="hidden" name="action" value="verify">
+                                                    <button type="submit" class="action-item verify">
+                                                        <img src="src/assets/images/Check.svg" alt="Verify"> Verify
+                                                    </button>
+                                                </form>
+                                                <!-- Reject -->
+                                                <form action="verifications.php?tab=<?php echo urlencode($tab); ?>
+                                                    &start_date=<?php echo urlencode($start_date); ?>
+                                                    &end_date=<?php echo urlencode($end_date); ?>
+                                                    &search=<?php echo urlencode($search); ?>
+                                                    &page=<?php echo $page; ?>" method="POST">
+                                                    <input type="hidden" name="doc_id"
+                                                        value="<?php echo $doc['id']; ?>">
+                                                    <input type="hidden" name="action" value="reject">
+                                                    <button type="submit" class="action-item reject">
+                                                        <img src="src/assets/images/Trash.svg" alt="Reject"> Reject
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                        <?php else: ?>
+                                        <div class="action-menu">
+                                            <img src="src/assets/images/more.svg" alt="More Options" class="action-btn">
+                                            <div class="action-menu-content">
+                                                <a href="verification_detail.php?doc_id=<?php echo $doc['id']; ?>"
+                                                    class="action-item">
+                                                    <img src="src/assets/images/Bold Eye.svg" alt="View"> View
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
                                 <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
                     <?php if ($total_pages > 1): ?>
-                        <div class="pagination">
-                            <?php if ($page > 1): ?>
-                                <a href="verifications.php?tab=<?php echo urlencode($tab); ?>&start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>&search=<?php echo urlencode($search); ?>&page=<?php echo $page - 1; ?>">Previous</a>
-                            <?php endif; ?>
-                            <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                                <a href="verifications.php?tab=<?php echo urlencode($tab); ?>&start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>&search=<?php echo urlencode($search); ?>&page=<?php echo $i; ?>" class="<?php echo $i === $page ? 'active' : ''; ?>"><?php echo $i; ?></a>
-                            <?php endfor; ?>
-                            <?php if ($page < $total_pages): ?>
-                                <a href="verifications.php?tab=<?php echo urlencode($tab); ?>&start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>&search=<?php echo urlencode($search); ?>&page=<?php echo $page + 1; ?>">Next</a>
-                            <?php endif; ?>
-                        </div>
+                    <div class="pagination">
+                        <?php if ($page > 1): ?>
+                        <a
+                            href="verifications.php?tab=<?php echo urlencode($tab); ?>&start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>&search=<?php echo urlencode($search); ?>&page=<?php echo $page - 1; ?>">Previous</a>
+                        <?php endif; ?>
+                        <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                        <a href="verifications.php?tab=<?php echo urlencode($tab); ?>&start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>&search=<?php echo urlencode($search); ?>&page=<?php echo $i; ?>"
+                            class="<?php echo $i === $page ? 'active' : ''; ?>"><?php echo $i; ?></a>
+                        <?php endfor; ?>
+                        <?php if ($page < $total_pages): ?>
+                        <a
+                            href="verifications.php?tab=<?php echo urlencode($tab); ?>&start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>&search=<?php echo urlencode($search); ?>&page=<?php echo $page + 1; ?>">Next</a>
+                        <?php endif; ?>
+                    </div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -406,4 +625,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
     <script src="admin_verifications.js"></script>
     <script src="admin.js"></script>
 </body>
+
 </html>

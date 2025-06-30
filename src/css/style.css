@@ -96,6 +96,7 @@
     position: absolute;
     left: 0;
     z-index: 1;
+    height: auto;
 }
 
 .log-in .text-wrapper {
@@ -120,6 +121,7 @@
     align-self: stretch;
     width: 100%;
     flex: 0 0 auto;
+    top: 54px;
 }
 
 .log-in .frame-3 {

@@ -129,7 +129,7 @@ file_put_contents('debug.txt', "Bar Chart: Months: " . print_r($months, true) . 
 
 // Chart Data: Verification Breakdown
 $sql_breakdown = "SELECT status, COUNT(*) as count 
-                  FROM documents 
+                FROM documents 
                   WHERE created_at BETWEEN ? AND ?
                   GROUP BY status";
 $stmt_breakdown = $conn->prepare($sql_breakdown);
@@ -197,6 +197,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -204,36 +205,120 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
     <link rel="stylesheet" href="src/css/global.css">
     <link rel="stylesheet" href="src/css/dashboard.css">
     <link rel="stylesheet" href="src/css/admin.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+        rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <style>
-        .admin-message { margin: 10px 0; font-size: 14px; text-align: center; }
-        .admin-message.success { color: green; }
-        .admin-message.error { color: red; }
-        .action-menu { position: relative; display: inline-block; }
-        .action-menu-content { display: none; position: absolute; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1; }
-        .action-menu:hover .action-menu-content { display: block; }
-        .action-menu-content button { display: block; width: 100%; padding: 8px; border: none; background: none; text-align: left; cursor: pointer; }
-        .action-menu-content button:hover { background: #f0f0f0; }
-        @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); transition: transform 0.3s ease; }
-            .sidebar.active { transform: translateX(0); }
-            .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; }
-            .sidebar-overlay.active { display: block; }
-            .main-content { margin-left: 0; }
-            .mobile-menu-btn { display: block; }
-            .kpi-cards { flex-direction: column; }
-            .charts-row { flex-direction: column; }
-            .table-wrapper { overflow-x: auto; }
-            .docs-table { min-width: 600px; }
+    .admin-message {
+        margin: 10px 0;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    .admin-message.success {
+        color: green;
+    }
+
+    .admin-message.error {
+        color: red;
+    }
+
+    .action-menu {
+        position: relative;
+        display: inline-block;
+    }
+
+    .action-menu-content {
+        display: none;
+        position: absolute;
+        background: #fff;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        z-index: 1;
+    }
+
+    .action-menu:hover .action-menu-content {
+        display: block;
+    }
+
+    .action-menu-content button {
+        display: block;
+        width: 100%;
+        padding: 8px;
+        border: none;
+        background: none;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .action-menu-content button:hover {
+        background: #f0f0f0;
+    }
+
+    @media (max-width: 768px) {
+        .sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
         }
-        @media (min-width: 769px) {
-            .mobile-menu-btn, .sidebar-overlay { display: none; }
-            .sidebar { transform: translateX(0); }
+
+        .sidebar.active {
+            transform: translateX(0);
         }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+
+        .main-content {
+            margin-left: 0;
+        }
+
+        .mobile-menu-btn {
+            display: block;
+        }
+
+        .kpi-cards {
+            flex-direction: column;
+        }
+
+        .charts-row {
+            flex-direction: column;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        .docs-table {
+            min-width: 600px;
+        }
+    }
+
+    @media (min-width: 769px) {
+
+        .mobile-menu-btn,
+        .sidebar-overlay {
+            display: none;
+        }
+
+        .sidebar {
+            transform: translateX(0);
+        }
+    }
     </style>
 </head>
+
 <body>
     <div class="dashboard-container">
         <!-- Sidebar -->
@@ -248,11 +333,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
                             <div class="menu-text active-text">Dashboard</div>
                         </a>
                         <a href="verifications.php" class="menu-item">
-                            <div class="menu-icon"><img src="src/assets/images/verification.svg" alt="Verifications Icon"></div>
+                            <div class="menu-icon"><img src="src/assets/images/verification.svg"
+                                    alt="Verifications Icon"></div>
                             <div class="menu-text">Verifications</div>
                         </a>
                         <a href="analytics.php" class="menu-item">
-                            <div class="menu-icon"><img src="src/assets/images/analytics.svg" alt="Analytics Icon"></div>
+                            <div class="menu-icon"><img src="src/assets/images/analytics.svg" alt="Analytics Icon">
+                            </div>
                             <div class="menu-text">Analytics</div>
                         </a>
                         <a href="settings.php" class="menu-item">
@@ -282,7 +369,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
                     <div class="date-filter">
                         <form action="admin.php" method="GET">
                             <div class="date-input">
-                                <input type="date" name="start_date" value="<?php echo htmlspecialchars($start_date); ?>">
+                                <input type="date" name="start_date"
+                                    value="<?php echo htmlspecialchars($start_date); ?>">
                                 <img src="src/assets/images/calendar.svg" alt="Calendar">
                             </div>
                             <span>-</span>
@@ -295,7 +383,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
                     </div>
                 </div>
                 <div class="header-right">
-                    <div class="notification-icon"><img src="src/assets/images/notification-bing.svg" alt="Notification Icon"></div>
+                    <div class="notification-icon"><img src="src/assets/images/notification-bing.svg"
+                            alt="Notification Icon"></div>
                     <div class="user-profile">
                         <img class="avatar" src="src/assets/images/admin-avatar.png" alt="Admin Avatar">
                         <div class="user-info">
@@ -308,9 +397,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
 
             <!-- Admin Feedback -->
             <?php if (isset($_SESSION['admin_message'])): ?>
-                <div class="admin-message <?php echo strpos($_SESSION['admin_message'], 'successfully') !== false ? 'success' : 'error'; ?>">
-                    <?php echo htmlspecialchars($_SESSION['admin_message']); unset($_SESSION['admin_message']); ?>
-                </div>
+            <div
+                class="admin-message <?php echo strpos($_SESSION['admin_message'], 'successfully') !== false ? 'success' : 'error'; ?>">
+                <?php echo htmlspecialchars($_SESSION['admin_message']); unset($_SESSION['admin_message']); ?>
+            </div>
             <?php endif; ?>
 
             <!-- KPI Cards -->
@@ -370,35 +460,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
                         </thead>
                         <tbody>
                             <?php if (empty($documents)): ?>
-                                <tr><td colspan="7">No pending documents found.</td></tr>
+                            <tr>
+                                <td colspan="7">No pending documents found.</td>
+                            </tr>
                             <?php else: ?>
-                                <?php foreach ($documents as $index => $doc): ?>
-                                    <tr>
-                                        <td><?php echo $index + 1; ?>.</td>
-                                        <td><?php echo htmlspecialchars($doc['full_name']); ?></td>
-                                        <td><?php echo htmlspecialchars($doc['department']); ?></td>
-                                        <td><?php echo htmlspecialchars($doc['level']); ?></td>
-                                        <td><?php echo htmlspecialchars(basename($doc['file_path'])); ?></td>
-                                        <td><?php echo htmlspecialchars($doc['session']); ?></td>
-                                        <td>
-                                            <div class="action-menu">
-                                                <img src="src/assets/images/more.svg" alt="More Options">
-                                                <div class="action-menu-content">
-                                                    <form action="admin.php?start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>" method="POST" style="display: inline;">
-                                                        <input type="hidden" name="doc_id" value="<?php echo $doc['id']; ?>">
-                                                        <input type="hidden" name="action" value="verify">
-                                                        <button type="submit">Verify</button>
-                                                    </form>
-                                                    <form action="admin.php?start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>" method="POST" style="display: inline;">
-                                                        <input type="hidden" name="doc_id" value="<?php echo $doc['id']; ?>">
-                                                        <input type="hidden" name="action" value="reject">
-                                                        <button type="submit">Reject</button>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
+                            <?php foreach ($documents as $index => $doc): ?>
+                            <tr>
+                                <td><?php echo $index + 1; ?>.</td>
+                                <td><?php echo htmlspecialchars($doc['full_name']); ?></td>
+                                <td><?php echo htmlspecialchars($doc['department']); ?></td>
+                                <td><?php echo htmlspecialchars($doc['level']); ?></td>
+                                <td><?php echo htmlspecialchars(basename($doc['file_path'])); ?></td>
+                                <td><?php echo htmlspecialchars($doc['session']); ?></td>
+                                <td>
+                                    <div class="action-menu">
+                                        <img src="src/assets/images/more.svg" alt="More Options">
+                                        <div class="action-menu-content">
+                                            <form
+                                                action="admin.php?start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>"
+                                                method="POST" style="display: inline;">
+                                                <input type="hidden" name="doc_id" value="<?php echo $doc['id']; ?>">
+                                                <input type="hidden" name="action" value="verify">
+                                                <button type="submit">Verify</button>
+                                            </form>
+                                            <form
+                                                action="admin.php?start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>"
+                                                method="POST" style="display: inline;">
+                                                <input type="hidden" name="doc_id" value="<?php echo $doc['id']; ?>">
+                                                <input type="hidden" name="action" value="reject">
+                                                <button type="submit">Reject</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
                             <?php endif; ?>
                         </tbody>
                     </table>
@@ -409,77 +505,139 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
 
     <script src="admin.js"></script>
     <script>
-        // Sidebar Toggle
-        const toggleBtn = document.getElementById('mobile-menu-toggle');
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('mobile-sidebar-overlay');
+    // Sidebar Toggle
+    const toggleBtn = document.getElementById('mobile-menu-toggle');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('mobile-sidebar-overlay');
 
-        toggleBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
+    toggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('active');
+        overlay.classList.toggle('active');
+    });
+
+    overlay.addEventListener('click', () => {
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
+    });
+
+    document.querySelectorAll('.date-input').forEach(function(container) {
+        const img = container.querySelector('img');
+        const input = container.querySelector('input');
+
+        img.addEventListener('click', function() {
+            if (input.showPicker) {
+                input.showPicker();
+            } else {
+                input.focus();
+            }
         });
+    });
 
-        overlay.addEventListener('click', () => {
-            sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-        });
-
-        // Bar Chart
-        const barChart = new Chart(document.getElementById('barChart'), {
-            type: 'bar',
-            data: {
-                labels: <?php echo json_encode($months); ?>,
-                datasets: [{
-                    label: 'Document Uploads',
-                    data: <?php echo json_encode($upload_counts); ?>,
-                    backgroundColor: '#4e73df',
-                    borderColor: '#4e73df',
-                    borderWidth: 1
-                }]
+    // Bar Chart
+    const barChart = new Chart(document.getElementById('barChart'), {
+        type: 'bar',
+        data: {
+            labels: <?php echo json_encode($months); ?>,
+            datasets: [{
+                label: 'Document Uploads',
+                data: <?php echo json_encode($upload_counts); ?>,
+                backgroundColor: '#01017A',
+                borderRadius: 4,
+                barThickness: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: 0
             },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: { display: true, text: 'Number of Uploads' }
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 200,
+                        color: '#999999',
+                        font: {
+                            family: 'Poppins',
+                            size: 14
+                        }
                     },
-                    x: {
-                        title: { display: true, text: 'Month' }
+                    grid: {
+                        drawBorder: false,
+                        color: 'rgba(128,128,128,0.3)',
+                        borderDash: [5, 5],
+                        lineWidth: 1
                     }
                 },
-                plugins: {
-                    legend: { display: true },
-                    tooltip: { enabled: true }
+                x: {
+                    ticks: {
+                        maxRotation: 0,
+                        autoSkip: true,
+                        color: '#999999',
+                        font: {
+                            family: 'Poppins',
+                            size: 12
+                        }
+                    },
+                    grid: {
+                        display: false
+                    }
                 }
-            }
-        });
-
-        // Pie Chart
-        const pieChart = new Chart(document.getElementById('pieChart'), {
-            type: 'pie',
-            data: {
-                labels: ['Pending', 'Verified', 'Failed'],
-                datasets: [{
-                    data: <?php echo json_encode($breakdown_counts); ?>,
-                    backgroundColor: ['#f6c23e', '#1cc88a', '#e74a3b'],
-                    borderColor: ['#ffffff', '#ffffff', '#ffffff'],
-                    borderWidth: 1
-                }]
             },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: 'top' },
-                    tooltip: { enabled: true }
+            plugins: {
+                legend: {
+                    display: false
                 }
             }
-        });
+        }
+    });
 
-        // Date Filter Auto-Submit
-        document.querySelectorAll('.date-input input').forEach(input => {
-            input.addEventListener('change', () => input.closest('form').submit());
-        });
+    // Pie Chart
+    const pieChart = new Chart(document.getElementById('pieChart'), {
+        type: 'pie',
+        data: {
+            labels: ['Pending', 'Verified', 'Failed'],
+            datasets: [{
+                data: <?php echo json_encode($breakdown_counts); ?>,
+                backgroundColor: ['#FAA62C', '#009A49', '#FF3B30'],
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: 0
+            },
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        boxWidth: 10,
+                        padding: 20,
+                        color: '#999999',
+                        font: {
+                            family: 'Poppins',
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => `${ctx.label}: ${ctx.parsed}`
+                    }
+                }
+            }
+        }
+    });
+
+    // Date Filter Auto-Submit
+    document.querySelectorAll('.date-input input').forEach(input => {
+        input.addEventListener('change', () => input.closest('form').submit());
+    });
     </script>
 </body>
+
 </html>
