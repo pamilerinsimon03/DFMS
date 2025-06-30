@@ -64666,3 +64666,1965 @@ Login attempt: Matric Number: E050238
 Login successful: User ID: 2, is_admin: 0
 Index ID: 2 (Type: integer)
 User admin status: 0
+Index ID: 2 (Type: integer)
+User admin status: 0
+Index ID: 2 (Type: integer)
+User admin status: 0
+Index ID: 2 (Type: integer)
+User admin status: 0
+Index ID: 2 (Type: integer)
+User admin status: 0
+Index ID: 2 (Type: integer)
+User admin status: 0
+Index ID: 2 (Type: integer)
+User admin status: 0
+Index ID: 2 (Type: integer)
+User admin status: 0
+Index ID: 2 (Type: integer)
+User admin status: 0
+Index ID: 2 (Type: integer)
+User admin status: 0
+Index ID: 2 (Type: integer)
+User admin status: 0
+Login attempt: Matric Number: E0500627
+Login successful: User ID: 1, is_admin: 1
+Admin ID: 1 (Type: integer)
+User: Array
+(
+    [full_name] => Professor Afolabi Samuel
+    [is_admin] => 1
+)
+
+Bar Chart: Months: Array
+(
+    [0] => May 2025
+    [1] => Jun 2025
+    [2] => Jul 2025
+)
+
+Counts: Array
+(
+    [0] => 3
+    [1] => 4
+    [2] => 0
+)
+
+Pie Chart: Statuses: Array
+(
+    [0] => Pending
+    [1] => Verified
+    [2] => Failed
+)
+
+Counts: Array
+(
+    [0] => 1
+    [1] => 5
+    [2] => 1
+)
+
+Total Docs: 7, Verified: 5, Pending: 1
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 8
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+)
+
+Index ID: 1 (Type: integer)
+User admin status: 1
+Admin ID: 1 (Type: integer)
+User: Array
+(
+    [full_name] => Professor Afolabi Samuel
+    [is_admin] => 1
+)
+
+Bar Chart: Months: Array
+(
+    [0] => May 2025
+    [1] => Jun 2025
+    [2] => Jul 2025
+)
+
+Counts: Array
+(
+    [0] => 3
+    [1] => 4
+    [2] => 0
+)
+
+Pie Chart: Statuses: Array
+(
+    [0] => Pending
+    [1] => Verified
+    [2] => Failed
+)
+
+Counts: Array
+(
+    [0] => 1
+    [1] => 5
+    [2] => 1
+)
+
+Total Docs: 7, Verified: 5, Pending: 1
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 8
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+)
+
+Index ID: 1 (Type: integer)
+User admin status: 1
+Admin ID: 1 (Type: integer)
+User: Array
+(
+    [full_name] => Professor Afolabi Samuel
+    [is_admin] => 1
+)
+
+Bar Chart: Months: Array
+(
+    [0] => May 2025
+    [1] => Jun 2025
+    [2] => Jul 2025
+)
+
+Counts: Array
+(
+    [0] => 3
+    [1] => 4
+    [2] => 0
+)
+
+Pie Chart: Statuses: Array
+(
+    [0] => Pending
+    [1] => Verified
+    [2] => Failed
+)
+
+Counts: Array
+(
+    [0] => 1
+    [1] => 5
+    [2] => 1
+)
+
+Total Docs: 7, Verified: 5, Pending: 1
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 8
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+)
+
+Verifications ID: 1 (Type: integer)
+User: Array
+(
+    [full_name] => Professor Afolabi Samuel
+    [is_admin] => 1
+)
+
+Raw documents: Array
+(
+    [0] => Array
+        (
+            [id] => 11
+            [user_id] => 2
+            [document_name] => Assignment
+            [status] => Pending
+            [created_at] => 2025-06-30 16:31:26
+        )
+
+    [1] => Array
+        (
+            [id] => 10
+            [user_id] => 2
+            [document_name] => FFG
+            [status] => Verified
+            [created_at] => 2025-06-22 21:33:17
+        )
+
+    [2] => Array
+        (
+            [id] => 9
+            [user_id] => 2
+            [document_name] => Admission Letter
+            [status] => Verified
+            [created_at] => 2025-06-22 20:00:53
+        )
+
+    [3] => Array
+        (
+            [id] => 8
+            [user_id] => 2
+            [document_name] => Faculty Registration Receipt
+            [status] => Pending
+            [created_at] => 2025-06-22 18:59:57
+        )
+
+    [4] => Array
+        (
+            [id] => 7
+            [user_id] => 1
+            [document_name] => NACOSS Receipt
+            [status] => Verified
+            [created_at] => 2025-06-15 20:53:45
+        )
+
+    [5] => Array
+        (
+            [id] => 4
+            [user_id] => 1
+            [document_name] => Faculty Registration Receipt
+            [status] => Failed
+            [created_at] => 2025-05-28 22:50:13
+        )
+
+    [6] => Array
+        (
+            [id] => 3
+            [user_id] => 1
+            [document_name] => Course Registration Form
+            [status] => Verified
+            [created_at] => 2025-05-28 22:05:22
+        )
+
+    [7] => Array
+        (
+            [id] => 2
+            [user_id] => 1
+            [document_name] => Admission Letter
+            [status] => Verified
+            [created_at] => 2025-05-28 21:59:18
+        )
+
+)
+
+Document user counts: Array
+(
+    [1] => 4
+    [2] => 4
+)
+
+SQL: SELECT d.id, d.user_id, d.document_name, d.file_path, d.status, u.full_name, u.programme as department, u.level, u.session 
+             FROM documents d 
+             JOIN users u ON d.user_id = u.id 
+             WHERE d.created_at BETWEEN ? AND ?  
+             ORDER BY d.created_at DESC 
+             LIMIT ? OFFSET ?
+Params: Array
+(
+    [0] => 2025-05-28
+    [1] => 2025-06-30
+    [2] => 50
+    [3] => 0
+)
+
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 10
+            [user_id] => 2
+            [document_name] => FFG
+            [file_path] => Uploads/1750624397_GRAPHICBUNDLE-675-GB-PLAN-si8jx2 (1).pdf
+            [status] => Verified
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+    [1] => Array
+        (
+            [id] => 9
+            [user_id] => 2
+            [document_name] => Admission Letter
+            [file_path] => Uploads/1750618852_Afolabi Ezekiel Oluwasegun 220595.pdf
+            [status] => Verified
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+    [2] => Array
+        (
+            [id] => 8
+            [user_id] => 2
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [status] => Pending
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+    [3] => Array
+        (
+            [id] => 7
+            [user_id] => 1
+            [document_name] => NACOSS Receipt
+            [file_path] => Uploads/1750017225_400L.pdf
+            [status] => Verified
+            [full_name] => Professor Afolabi Samuel
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 500L
+            [session] => 2023/2024
+        )
+
+    [4] => Array
+        (
+            [id] => 4
+            [user_id] => 1
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1748469013_TIME TABLE.pdf
+            [status] => Failed
+            [full_name] => Professor Afolabi Samuel
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 500L
+            [session] => 2023/2024
+        )
+
+    [5] => Array
+        (
+            [id] => 3
+            [user_id] => 1
+            [document_name] => Course Registration Form
+            [file_path] => uploads/1748466322_Oladunjoye Esther_CHAPTER_(1-5).pdf
+            [status] => Verified
+            [full_name] => Professor Afolabi Samuel
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 500L
+            [session] => 2023/2024
+        )
+
+    [6] => Array
+        (
+            [id] => 2
+            [user_id] => 1
+            [document_name] => Admission Letter
+            [file_path] => uploads/1748465958_AFOLABI SAMUEL CV.pdf
+            [status] => Verified
+            [full_name] => Professor Afolabi Samuel
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 500L
+            [session] => 2023/2024
+        )
+
+)
+
+Total: 7
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Admin ID: 1 (Type: integer)
+User: Array
+(
+    [full_name] => Professor Afolabi Samuel
+    [is_admin] => 1
+)
+
+Bar Chart: Months: Array
+(
+    [0] => May 2025
+    [1] => Jun 2025
+    [2] => Jul 2025
+)
+
+Counts: Array
+(
+    [0] => 3
+    [1] => 4
+    [2] => 0
+)
+
+Pie Chart: Statuses: Array
+(
+    [0] => Pending
+    [1] => Verified
+    [2] => Failed
+)
+
+Counts: Array
+(
+    [0] => 1
+    [1] => 5
+    [2] => 1
+)
+
+Total Docs: 7, Verified: 5, Pending: 1
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 8
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+)
+
+Admin ID: 1 (Type: integer)
+User: Array
+(
+    [full_name] => Professor Afolabi Samuel
+    [is_admin] => 1
+)
+
+Bar Chart: Months: Array
+(
+    [0] => May 2025
+    [1] => Jun 2025
+    [2] => Jul 2025
+)
+
+Counts: Array
+(
+    [0] => 3
+    [1] => 4
+    [2] => 0
+)
+
+Pie Chart: Statuses: Array
+(
+    [0] => Pending
+    [1] => Verified
+    [2] => Failed
+)
+
+Counts: Array
+(
+    [0] => 1
+    [1] => 5
+    [2] => 1
+)
+
+Total Docs: 7, Verified: 5, Pending: 1
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 8
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+)
+
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Admin ID: 1 (Type: integer)
+User: Array
+(
+    [full_name] => Professor Afolabi Samuel
+    [is_admin] => 1
+)
+
+Bar Chart: Months: Array
+(
+    [0] => May 2025
+    [1] => Jun 2025
+    [2] => Jul 2025
+)
+
+Counts: Array
+(
+    [0] => 3
+    [1] => 4
+    [2] => 0
+)
+
+Pie Chart: Statuses: Array
+(
+    [0] => Pending
+    [1] => Verified
+    [2] => Failed
+)
+
+Counts: Array
+(
+    [0] => 1
+    [1] => 5
+    [2] => 1
+)
+
+Total Docs: 7, Verified: 5, Pending: 1
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 8
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+)
+
+Admin ID: 1 (Type: integer)
+User: Array
+(
+    [full_name] => Professor Afolabi Samuel
+    [is_admin] => 1
+)
+
+Bar Chart: Months: Array
+(
+    [0] => May 2025
+    [1] => Jun 2025
+    [2] => Jul 2025
+)
+
+Counts: Array
+(
+    [0] => 3
+    [1] => 4
+    [2] => 0
+)
+
+Pie Chart: Statuses: Array
+(
+    [0] => Pending
+    [1] => Verified
+    [2] => Failed
+)
+
+Counts: Array
+(
+    [0] => 1
+    [1] => 5
+    [2] => 1
+)
+
+Total Docs: 7, Verified: 5, Pending: 1
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 8
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+)
+
+Verifications ID: 1 (Type: integer)
+User: Array
+(
+    [full_name] => Professor Afolabi Samuel
+    [is_admin] => 1
+)
+
+Raw documents: Array
+(
+    [0] => Array
+        (
+            [id] => 11
+            [user_id] => 2
+            [document_name] => Assignment
+            [status] => Pending
+            [created_at] => 2025-06-30 16:31:26
+        )
+
+    [1] => Array
+        (
+            [id] => 10
+            [user_id] => 2
+            [document_name] => FFG
+            [status] => Verified
+            [created_at] => 2025-06-22 21:33:17
+        )
+
+    [2] => Array
+        (
+            [id] => 9
+            [user_id] => 2
+            [document_name] => Admission Letter
+            [status] => Verified
+            [created_at] => 2025-06-22 20:00:53
+        )
+
+    [3] => Array
+        (
+            [id] => 8
+            [user_id] => 2
+            [document_name] => Faculty Registration Receipt
+            [status] => Pending
+            [created_at] => 2025-06-22 18:59:57
+        )
+
+    [4] => Array
+        (
+            [id] => 7
+            [user_id] => 1
+            [document_name] => NACOSS Receipt
+            [status] => Verified
+            [created_at] => 2025-06-15 20:53:45
+        )
+
+    [5] => Array
+        (
+            [id] => 4
+            [user_id] => 1
+            [document_name] => Faculty Registration Receipt
+            [status] => Failed
+            [created_at] => 2025-05-28 22:50:13
+        )
+
+    [6] => Array
+        (
+            [id] => 3
+            [user_id] => 1
+            [document_name] => Course Registration Form
+            [status] => Verified
+            [created_at] => 2025-05-28 22:05:22
+        )
+
+    [7] => Array
+        (
+            [id] => 2
+            [user_id] => 1
+            [document_name] => Admission Letter
+            [status] => Verified
+            [created_at] => 2025-05-28 21:59:18
+        )
+
+)
+
+Document user counts: Array
+(
+    [1] => 4
+    [2] => 4
+)
+
+SQL: SELECT d.id, d.user_id, d.document_name, d.file_path, d.status, u.full_name, u.programme as department, u.level, u.session 
+             FROM documents d 
+             JOIN users u ON d.user_id = u.id 
+             WHERE d.created_at BETWEEN ? AND ? AND d.status = 'Pending' 
+             ORDER BY d.created_at DESC 
+             LIMIT ? OFFSET ?
+Params: Array
+(
+    [0] => 2025-05-28
+    [1] => 2025-06-30
+    [2] => 50
+    [3] => 0
+)
+
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 8
+            [user_id] => 2
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [status] => Pending
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+)
+
+Total: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Admin ID: 1 (Type: integer)
+User: Array
+(
+    [full_name] => Professor Afolabi Samuel
+    [is_admin] => 1
+)
+
+Bar Chart: Months: Array
+(
+    [0] => May 2025
+    [1] => Jun 2025
+    [2] => Jul 2025
+)
+
+Counts: Array
+(
+    [0] => 3
+    [1] => 4
+    [2] => 0
+)
+
+Pie Chart: Statuses: Array
+(
+    [0] => Pending
+    [1] => Verified
+    [2] => Failed
+)
+
+Counts: Array
+(
+    [0] => 1
+    [1] => 5
+    [2] => 1
+)
+
+Total Docs: 7, Verified: 5, Pending: 1
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 8
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+)
+
+Admin ID: 1 (Type: integer)
+User: Array
+(
+    [full_name] => Professor Afolabi Samuel
+    [is_admin] => 1
+)
+
+Bar Chart: Months: Array
+(
+    [0] => May 2025
+    [1] => Jun 2025
+    [2] => Jul 2025
+)
+
+Counts: Array
+(
+    [0] => 3
+    [1] => 4
+    [2] => 0
+)
+
+Pie Chart: Statuses: Array
+(
+    [0] => Pending
+    [1] => Verified
+    [2] => Failed
+)
+
+Counts: Array
+(
+    [0] => 1
+    [1] => 5
+    [2] => 1
+)
+
+Total Docs: 7, Verified: 5, Pending: 1
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 8
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+)
+
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Admin ID: 1 (Type: integer)
+User: Array
+(
+    [full_name] => Professor Afolabi Samuel
+    [is_admin] => 1
+)
+
+Bar Chart: Months: Array
+(
+    [0] => May 2025
+    [1] => Jun 2025
+    [2] => Jul 2025
+)
+
+Counts: Array
+(
+    [0] => 3
+    [1] => 4
+    [2] => 0
+)
+
+Pie Chart: Statuses: Array
+(
+    [0] => Pending
+    [1] => Verified
+    [2] => Failed
+)
+
+Counts: Array
+(
+    [0] => 1
+    [1] => 5
+    [2] => 1
+)
+
+Total Docs: 7, Verified: 5, Pending: 1
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 8
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+)
+
+Admin ID: 1 (Type: integer)
+User: Array
+(
+    [full_name] => Professor Afolabi Samuel
+    [is_admin] => 1
+)
+
+Bar Chart: Months: Array
+(
+    [0] => May 2025
+    [1] => Jun 2025
+    [2] => Jul 2025
+)
+
+Counts: Array
+(
+    [0] => 3
+    [1] => 4
+    [2] => 0
+)
+
+Pie Chart: Statuses: Array
+(
+    [0] => Pending
+    [1] => Verified
+    [2] => Failed
+)
+
+Counts: Array
+(
+    [0] => 1
+    [1] => 5
+    [2] => 1
+)
+
+Total Docs: 7, Verified: 5, Pending: 1
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 8
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+)
+
+Verification Detail ID: 1 (Type: integer)
+Index ID: 1 (Type: integer)
+User admin status: 1
+Admin ID: 1 (Type: integer)
+User: Array
+(
+    [full_name] => Professor Afolabi Samuel
+    [is_admin] => 1
+)
+
+Bar Chart: Months: Array
+(
+    [0] => May 2025
+    [1] => Jun 2025
+    [2] => Jul 2025
+)
+
+Counts: Array
+(
+    [0] => 3
+    [1] => 4
+    [2] => 0
+)
+
+Pie Chart: Statuses: Array
+(
+    [0] => Pending
+    [1] => Verified
+    [2] => Failed
+)
+
+Counts: Array
+(
+    [0] => 1
+    [1] => 5
+    [2] => 1
+)
+
+Total Docs: 7, Verified: 5, Pending: 1
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 8
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+)
+
+Verifications ID: 1 (Type: integer)
+User: Array
+(
+    [full_name] => Professor Afolabi Samuel
+    [is_admin] => 1
+)
+
+Raw documents: Array
+(
+    [0] => Array
+        (
+            [id] => 11
+            [user_id] => 2
+            [document_name] => Assignment
+            [status] => Pending
+            [created_at] => 2025-06-30 16:31:26
+        )
+
+    [1] => Array
+        (
+            [id] => 10
+            [user_id] => 2
+            [document_name] => FFG
+            [status] => Verified
+            [created_at] => 2025-06-22 21:33:17
+        )
+
+    [2] => Array
+        (
+            [id] => 9
+            [user_id] => 2
+            [document_name] => Admission Letter
+            [status] => Verified
+            [created_at] => 2025-06-22 20:00:53
+        )
+
+    [3] => Array
+        (
+            [id] => 8
+            [user_id] => 2
+            [document_name] => Faculty Registration Receipt
+            [status] => Pending
+            [created_at] => 2025-06-22 18:59:57
+        )
+
+    [4] => Array
+        (
+            [id] => 7
+            [user_id] => 1
+            [document_name] => NACOSS Receipt
+            [status] => Verified
+            [created_at] => 2025-06-15 20:53:45
+        )
+
+    [5] => Array
+        (
+            [id] => 4
+            [user_id] => 1
+            [document_name] => Faculty Registration Receipt
+            [status] => Failed
+            [created_at] => 2025-05-28 22:50:13
+        )
+
+    [6] => Array
+        (
+            [id] => 3
+            [user_id] => 1
+            [document_name] => Course Registration Form
+            [status] => Verified
+            [created_at] => 2025-05-28 22:05:22
+        )
+
+    [7] => Array
+        (
+            [id] => 2
+            [user_id] => 1
+            [document_name] => Admission Letter
+            [status] => Verified
+            [created_at] => 2025-05-28 21:59:18
+        )
+
+)
+
+Document user counts: Array
+(
+    [1] => 4
+    [2] => 4
+)
+
+SQL: SELECT d.id, d.user_id, d.document_name, d.file_path, d.status, u.full_name, u.programme as department, u.level, u.session 
+             FROM documents d 
+             JOIN users u ON d.user_id = u.id 
+             WHERE d.created_at BETWEEN ? AND ?  
+             ORDER BY d.created_at DESC 
+             LIMIT ? OFFSET ?
+Params: Array
+(
+    [0] => 2025-05-28
+    [1] => 2025-06-30
+    [2] => 50
+    [3] => 0
+)
+
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 10
+            [user_id] => 2
+            [document_name] => FFG
+            [file_path] => Uploads/1750624397_GRAPHICBUNDLE-675-GB-PLAN-si8jx2 (1).pdf
+            [status] => Verified
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+    [1] => Array
+        (
+            [id] => 9
+            [user_id] => 2
+            [document_name] => Admission Letter
+            [file_path] => Uploads/1750618852_Afolabi Ezekiel Oluwasegun 220595.pdf
+            [status] => Verified
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+    [2] => Array
+        (
+            [id] => 8
+            [user_id] => 2
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [status] => Pending
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+    [3] => Array
+        (
+            [id] => 7
+            [user_id] => 1
+            [document_name] => NACOSS Receipt
+            [file_path] => Uploads/1750017225_400L.pdf
+            [status] => Verified
+            [full_name] => Professor Afolabi Samuel
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 500L
+            [session] => 2023/2024
+        )
+
+    [4] => Array
+        (
+            [id] => 4
+            [user_id] => 1
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1748469013_TIME TABLE.pdf
+            [status] => Failed
+            [full_name] => Professor Afolabi Samuel
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 500L
+            [session] => 2023/2024
+        )
+
+    [5] => Array
+        (
+            [id] => 3
+            [user_id] => 1
+            [document_name] => Course Registration Form
+            [file_path] => uploads/1748466322_Oladunjoye Esther_CHAPTER_(1-5).pdf
+            [status] => Verified
+            [full_name] => Professor Afolabi Samuel
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 500L
+            [session] => 2023/2024
+        )
+
+    [6] => Array
+        (
+            [id] => 2
+            [user_id] => 1
+            [document_name] => Admission Letter
+            [file_path] => uploads/1748465958_AFOLABI SAMUEL CV.pdf
+            [status] => Verified
+            [full_name] => Professor Afolabi Samuel
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 500L
+            [session] => 2023/2024
+        )
+
+)
+
+Total: 7
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Admin ID: 1 (Type: integer)
+User: Array
+(
+    [full_name] => Professor Afolabi Samuel
+    [is_admin] => 1
+)
+
+Bar Chart: Months: Array
+(
+    [0] => May 2025
+    [1] => Jun 2025
+    [2] => Jul 2025
+)
+
+Counts: Array
+(
+    [0] => 3
+    [1] => 4
+    [2] => 0
+)
+
+Pie Chart: Statuses: Array
+(
+    [0] => Pending
+    [1] => Verified
+    [2] => Failed
+)
+
+Counts: Array
+(
+    [0] => 1
+    [1] => 5
+    [2] => 1
+)
+
+Total Docs: 7, Verified: 5, Pending: 1
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 8
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+)
+
+Admin ID: 1 (Type: integer)
+User: Array
+(
+    [full_name] => Professor Afolabi Samuel
+    [is_admin] => 1
+)
+
+Bar Chart: Months: Array
+(
+    [0] => May 2025
+    [1] => Jun 2025
+    [2] => Jul 2025
+)
+
+Counts: Array
+(
+    [0] => 3
+    [1] => 4
+    [2] => 0
+)
+
+Pie Chart: Statuses: Array
+(
+    [0] => Pending
+    [1] => Verified
+    [2] => Failed
+)
+
+Counts: Array
+(
+    [0] => 1
+    [1] => 5
+    [2] => 1
+)
+
+Total Docs: 7, Verified: 5, Pending: 1
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 8
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+)
+
+Index ID: 1 (Type: integer)
+User admin status: 1
+Admin ID: 1 (Type: integer)
+User: Array
+(
+    [full_name] => Professor Afolabi Samuel
+    [is_admin] => 1
+)
+
+Bar Chart: Months: Array
+(
+    [0] => May 2025
+    [1] => Jun 2025
+    [2] => Jul 2025
+)
+
+Counts: Array
+(
+    [0] => 3
+    [1] => 4
+    [2] => 0
+)
+
+Pie Chart: Statuses: Array
+(
+    [0] => Pending
+    [1] => Verified
+    [2] => Failed
+)
+
+Counts: Array
+(
+    [0] => 1
+    [1] => 5
+    [2] => 1
+)
+
+Total Docs: 7, Verified: 5, Pending: 1
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 8
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+)
+
+Index ID: 1 (Type: integer)
+User admin status: 1
+Admin ID: 1 (Type: integer)
+User: Array
+(
+    [full_name] => Professor Afolabi Samuel
+    [is_admin] => 1
+)
+
+Bar Chart: Months: Array
+(
+    [0] => May 2025
+    [1] => Jun 2025
+    [2] => Jul 2025
+)
+
+Counts: Array
+(
+    [0] => 3
+    [1] => 4
+    [2] => 0
+)
+
+Pie Chart: Statuses: Array
+(
+    [0] => Pending
+    [1] => Verified
+    [2] => Failed
+)
+
+Counts: Array
+(
+    [0] => 1
+    [1] => 5
+    [2] => 1
+)
+
+Total Docs: 7, Verified: 5, Pending: 1
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 8
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+)
+
+Admin ID: 1 (Type: integer)
+User: Array
+(
+    [full_name] => Professor Afolabi Samuel
+    [is_admin] => 1
+)
+
+Bar Chart: Months: Array
+(
+    [0] => May 2025
+    [1] => Jun 2025
+    [2] => Jul 2025
+)
+
+Counts: Array
+(
+    [0] => 3
+    [1] => 4
+    [2] => 0
+)
+
+Pie Chart: Statuses: Array
+(
+    [0] => Pending
+    [1] => Verified
+    [2] => Failed
+)
+
+Counts: Array
+(
+    [0] => 1
+    [1] => 5
+    [2] => 1
+)
+
+Total Docs: 7, Verified: 5, Pending: 1
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 8
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+)
+
+Index ID: 1 (Type: integer)
+User admin status: 1
+Admin ID: 1 (Type: integer)
+User: Array
+(
+    [full_name] => Professor Afolabi Samuel
+    [is_admin] => 1
+)
+
+Bar Chart: Months: Array
+(
+    [0] => May 2025
+    [1] => Jun 2025
+    [2] => Jul 2025
+)
+
+Counts: Array
+(
+    [0] => 3
+    [1] => 4
+    [2] => 0
+)
+
+Pie Chart: Statuses: Array
+(
+    [0] => Pending
+    [1] => Verified
+    [2] => Failed
+)
+
+Counts: Array
+(
+    [0] => 1
+    [1] => 5
+    [2] => 1
+)
+
+Total Docs: 7, Verified: 5, Pending: 1
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 8
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+)
+
+Index ID: 1 (Type: integer)
+User admin status: 1
+Admin ID: 1 (Type: integer)
+User: Array
+(
+    [full_name] => Professor Afolabi Samuel
+    [is_admin] => 1
+)
+
+Bar Chart: Months: Array
+(
+    [0] => May 2025
+    [1] => Jun 2025
+    [2] => Jul 2025
+)
+
+Counts: Array
+(
+    [0] => 3
+    [1] => 4
+    [2] => 0
+)
+
+Pie Chart: Statuses: Array
+(
+    [0] => Pending
+    [1] => Verified
+    [2] => Failed
+)
+
+Counts: Array
+(
+    [0] => 1
+    [1] => 5
+    [2] => 1
+)
+
+Total Docs: 7, Verified: 5, Pending: 1
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 8
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+)
+
+Login attempt: Matric Number: E050238
+Login successful: User ID: 2, is_admin: 0
+Index ID: 2 (Type: integer)
+User admin status: 0
+Login attempt: Matric Number: E050238
+Login successful: User ID: 2, is_admin: 0
+Index ID: 2 (Type: integer)
+User admin status: 0
+User ID: 2
+Query: SELECT id, document_name, file_path, status, created_at 
+            FROM documents 
+            WHERE user_id = ? 
+            ORDER BY created_at DESC
+Params: user_id=2, status=none
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 11
+            [document_name] => Assignment
+            [file_path] => uploads/1751297486_CSC 301 Assignment.pdf
+            [status] => Pending
+            [created_at] => 2025-06-30 16:31:26
+        )
+
+    [1] => Array
+        (
+            [id] => 10
+            [document_name] => FFG
+            [file_path] => Uploads/1750624397_GRAPHICBUNDLE-675-GB-PLAN-si8jx2 (1).pdf
+            [status] => Verified
+            [created_at] => 2025-06-22 21:33:17
+        )
+
+    [2] => Array
+        (
+            [id] => 9
+            [document_name] => Admission Letter
+            [file_path] => Uploads/1750618852_Afolabi Ezekiel Oluwasegun 220595.pdf
+            [status] => Verified
+            [created_at] => 2025-06-22 20:00:53
+        )
+
+    [3] => Array
+        (
+            [id] => 8
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [status] => Pending
+            [created_at] => 2025-06-22 18:59:57
+        )
+
+)
+
+Index ID: 2 (Type: integer)
+User admin status: 0
+Login attempt: Matric Number: E0500627
+Login successful: User ID: 1, is_admin: 1
+Admin ID: 1 (Type: integer)
+User: Array
+(
+    [full_name] => Professor Afolabi Samuel
+    [is_admin] => 1
+)
+
+Bar Chart: Months: Array
+(
+    [0] => May 2025
+    [1] => Jun 2025
+    [2] => Jul 2025
+)
+
+Counts: Array
+(
+    [0] => 3
+    [1] => 4
+    [2] => 0
+)
+
+Pie Chart: Statuses: Array
+(
+    [0] => Pending
+    [1] => Verified
+    [2] => Failed
+)
+
+Counts: Array
+(
+    [0] => 1
+    [1] => 5
+    [2] => 1
+)
+
+Total Docs: 7, Verified: 5, Pending: 1
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 8
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+)
+
+Index ID: 1 (Type: integer)
+User admin status: 1
+Admin ID: 1 (Type: integer)
+User: Array
+(
+    [full_name] => Professor Afolabi Samuel
+    [is_admin] => 1
+)
+
+Bar Chart: Months: Array
+(
+    [0] => May 2025
+    [1] => Jun 2025
+    [2] => Jul 2025
+)
+
+Counts: Array
+(
+    [0] => 3
+    [1] => 4
+    [2] => 0
+)
+
+Pie Chart: Statuses: Array
+(
+    [0] => Pending
+    [1] => Verified
+    [2] => Failed
+)
+
+Counts: Array
+(
+    [0] => 1
+    [1] => 5
+    [2] => 1
+)
+
+Total Docs: 7, Verified: 5, Pending: 1
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 8
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+)
+
+Index ID: 1 (Type: integer)
+User admin status: 1
+Admin ID: 1 (Type: integer)
+User: Array
+(
+    [full_name] => Professor Afolabi Samuel
+    [is_admin] => 1
+)
+
+Bar Chart: Months: Array
+(
+    [0] => May 2025
+    [1] => Jun 2025
+    [2] => Jul 2025
+)
+
+Counts: Array
+(
+    [0] => 3
+    [1] => 4
+    [2] => 0
+)
+
+Pie Chart: Statuses: Array
+(
+    [0] => Pending
+    [1] => Verified
+    [2] => Failed
+)
+
+Counts: Array
+(
+    [0] => 1
+    [1] => 5
+    [2] => 1
+)
+
+Total Docs: 7, Verified: 5, Pending: 1
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 8
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [full_name] => Demo User
+            [department] => Bachelor Of Science (Computer Science)
+            [level] => 300L
+            [session] => 2023/2024
+        )
+
+)
+
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Login attempt: Matric Number: E050238
+Login successful: User ID: 2, is_admin: 0
+Index ID: 2 (Type: integer)
+User admin status: 0
+Index ID: 2 (Type: integer)
+User admin status: 0
+Login attempt: Matric Number: E0500627
+Login successful: User ID: 1, is_admin: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Login attempt: Matric Number: E050238
+Login successful: User ID: 2, is_admin: 0
+Index ID: 2 (Type: integer)
+User admin status: 0
+Index ID: 2 (Type: integer)
+User admin status: 0
+User ID: 2
+Query: SELECT id, document_name, file_path, status, created_at 
+            FROM documents 
+            WHERE user_id = ? 
+            ORDER BY created_at DESC
+Params: user_id=2, status=none
+Documents: Array
+(
+    [0] => Array
+        (
+            [id] => 13
+            [document_name] => Application
+            [file_path] => uploads/1751301676_Data Science Course Application Form.pdf
+            [status] => Pending
+            [created_at] => 2025-06-30 17:41:16
+        )
+
+    [1] => Array
+        (
+            [id] => 12
+            [document_name] => Random
+            [file_path] => uploads/1751299259_AP Letterhead.pdf
+            [status] => Pending
+            [created_at] => 2025-06-30 17:00:59
+        )
+
+    [2] => Array
+        (
+            [id] => 11
+            [document_name] => Assignment
+            [file_path] => uploads/1751297486_CSC 301 Assignment.pdf
+            [status] => Pending
+            [created_at] => 2025-06-30 16:31:26
+        )
+
+    [3] => Array
+        (
+            [id] => 10
+            [document_name] => FFG
+            [file_path] => Uploads/1750624397_GRAPHICBUNDLE-675-GB-PLAN-si8jx2 (1).pdf
+            [status] => Verified
+            [created_at] => 2025-06-22 21:33:17
+        )
+
+    [4] => Array
+        (
+            [id] => 9
+            [document_name] => Admission Letter
+            [file_path] => Uploads/1750618852_Afolabi Ezekiel Oluwasegun 220595.pdf
+            [status] => Verified
+            [created_at] => 2025-06-22 20:00:53
+        )
+
+    [5] => Array
+        (
+            [id] => 8
+            [document_name] => Faculty Registration Receipt
+            [file_path] => Uploads/1750615197_200 Accommodation.pdf
+            [status] => Pending
+            [created_at] => 2025-06-22 18:59:57
+        )
+
+)
+
+Index ID: 2 (Type: integer)
+User admin status: 0
+Login attempt: Matric Number: E0500627
+Login successful: User ID: 1, is_admin: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1
+Index ID: 1 (Type: integer)
+User admin status: 1

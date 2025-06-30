@@ -3,29 +3,22 @@ require_once 'config.php';
 
 // Prevent redirect loop
 if (isset($_SESSION['redirect_count']) && $_SESSION['redirect_count'] > 5) {
-    file_put_contents('debug.txt', "Redirect loop detected: User ID {$_SESSION['user_id']}\n", FILE_APPEND);
     die("Error: Too many redirects. Please contact support.");
 }
 $_SESSION['redirect_count'] = isset($_SESSION['redirect_count']) ? $_SESSION['redirect_count'] + 1 : 1;
 
 // Redirect to login if not authenticated
 if (!isset($_SESSION['user_id'])) {
-    file_put_contents('debug.txt', "No session user_id\n", FILE_APPEND);
     $_SESSION['redirect_count'] = 0;
     header("Location: index.php");
     exit();
 }
-
-// Debug: Log session
-file_put_contents('debug.txt', "Verifications ID: {$_SESSION['user_id']} (Type: " . gettype($_SESSION['user_id']) . ")\n", FILE_APPEND);
 
 // Fetch user data to check admin status
 $user_id = (int)$_SESSION['user_id'];
 $sql = "SELECT full_name, is_admin FROM users WHERE id = ?";
 $stmt = $conn->prepare($sql);
 if ($stmt === false) {
-    $error = "Prepare failed: " . $conn->error . " | SQL: $sql";
-    file_put_contents('debug.txt', $error . "\n", FILE_APPEND);
     $_SESSION['error'] = "Database error. Please contact support.";
     $_SESSION['redirect_count'] = 0;
     header("Location: index.php");
@@ -36,38 +29,12 @@ $stmt->execute();
 $user = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
-if (!$user || (!$user['is_admin'] && $user_id != 1)) {
+if (!$user || !$user['is_admin']) {
     $_SESSION['error'] = "Access denied. Admin privileges required.";
-    file_put_contents('debug.txt', "Access Denied: User ID $user_id, is_admin: " . ($user['is_admin'] ?? 'N/A') . "\n", FILE_APPEND);
     $_SESSION['redirect_count'] = 0;
     header("Location: dashboard.php");
     exit();
 }
-
-// Debug: Log user data
-file_put_contents('debug.txt', "User: " . print_r($user, true) . "\n", FILE_APPEND);
-
-// Debug: Check all documents (raw)
-$sql_raw = "SELECT id, user_id, document_name, status, created_at FROM documents ORDER BY created_at DESC";
-$result_raw = $conn->query($sql_raw);
-$raw_documents = [];
-if ($result_raw) {
-    while ($row = $result_raw->fetch_assoc()) {
-        $raw_documents[] = $row;
-    }
-}
-file_put_contents('debug.txt', "Raw documents: " . print_r($raw_documents, true) . "\n", FILE_APPEND);
-
-// Debug: Check document user_ids and count per user
-$sql_debug = "SELECT user_id, COUNT(*) as doc_count FROM documents GROUP BY user_id";
-$result_debug = $conn->query($sql_debug);
-$document_user_counts = [];
-if ($result_debug) {
-    while ($row = $result_debug->fetch_assoc()) {
-        $document_user_counts[$row['user_id']] = $row['doc_count'];
-    }
-}
-file_put_contents('debug.txt', "Document user counts: " . print_r($document_user_counts, true) . "\n", FILE_APPEND);
 
 // Reset redirect count
 $_SESSION['redirect_count'] = 0;
@@ -104,9 +71,9 @@ $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $search_filter = '';
 $search_params = [];
 if ($search) {
-    $search = '%' . $conn->real_escape_string($search) . '%';
+    $search_escaped = '%' . $conn->real_escape_string($search) . '%';
     $search_filter = "AND (u.full_name LIKE ? OR u.programme LIKE ? OR d.document_name LIKE ?)";
-    $search_params = [$search, $search, $search];
+    $search_params = [$search_escaped, $search_escaped, $search_escaped];
 }
 
 // Pagination
@@ -115,66 +82,46 @@ $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $offset = ($page - 1) * $per_page;
 
 // Count total documents
-$sql_count = "SELECT COUNT(*) as total 
+$sql_count = "SELECT COUNT(d.id) as total 
               FROM documents d 
               JOIN users u ON d.user_id = u.id 
-              WHERE d.created_at BETWEEN ? AND ? $status_filter $search_filter";
+              WHERE DATE(d.created_at) BETWEEN ? AND ? $status_filter $search_filter";
 $stmt_count = $conn->prepare($sql_count);
-if ($stmt_count) {
-    $count_params = array_merge([$start_date, $end_date], $search_params);
-    $count_types = str_repeat('s', count($count_params));
-    $stmt_count->bind_param($count_types, ...$count_params);
-    $stmt_count->execute();
-    $total = $stmt_count->get_result()->fetch_assoc()['total'];
-    $stmt_count->close();
-} else {
-    $total = 0;
-    file_put_contents('debug.txt', "Count Prepare failed: " . $conn->error . "\n", FILE_APPEND);
-}
+$count_params = array_merge([$start_date, $end_date], $search_params);
+$count_types = 'ss' . str_repeat('s', count($search_params));
+$stmt_count->bind_param($count_types, ...$count_params);
+$stmt_count->execute();
+$total = $stmt_count->get_result()->fetch_assoc()['total'];
+$stmt_count->close();
 $total_pages = ceil($total / $per_page);
 
-// Documents query (all documents)
+// Documents query
 $sql_docs = "SELECT d.id, d.user_id, d.document_name, d.file_path, d.status, u.full_name, u.programme as department, u.level, u.session 
              FROM documents d 
              JOIN users u ON d.user_id = u.id 
-             WHERE d.created_at BETWEEN ? AND ? $status_filter $search_filter
+             WHERE DATE(d.created_at) BETWEEN ? AND ? $status_filter $search_filter
              ORDER BY d.created_at DESC 
              LIMIT ? OFFSET ?";
 $stmt_docs = $conn->prepare($sql_docs);
-if ($stmt_docs === false) {
-    file_put_contents('debug.txt', "Docs Prepare failed: " . $conn->error . "\n", FILE_APPEND);
-    $documents = [];
-} else {
-    $params = array_merge([$start_date, $end_date], $search_params, [$per_page, $offset]);
-    $types = str_repeat('s', count($search_params) + 2) . 'ii';
-    $stmt_docs->bind_param($types, ...$params);
-    $stmt_docs->execute();
-    $documents = $stmt_docs->get_result()->fetch_all(MYSQLI_ASSOC);
-    $stmt_docs->close();
-}
-
-// Debug: Log query and results
-file_put_contents('debug.txt', "SQL: $sql_docs\nParams: " . print_r($params, true) . "\nDocuments: " . print_r($documents, true) . "\nTotal: $total\n", FILE_APPEND);
+$params = array_merge([$start_date, $end_date], $search_params, [$per_page, $offset]);
+$types = 'ss' . str_repeat('s', count($search_params)) . 'ii';
+$stmt_docs->bind_param($types, ...$params);
+$stmt_docs->execute();
+$documents = $stmt_docs->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt_docs->close();
 
 // Handle Verification Actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_POST['doc_id'])) {
     $doc_id = (int)$_POST['doc_id'];
     $action = $_POST['action'] === 'verify' ? 'Verified' : 'Failed';
     
-    $sql_update = "UPDATE documents SET status = ? WHERE id = ? AND status = 'Pending'";
+    $sql_update = "UPDATE documents SET status = ? WHERE id = ?";
     $stmt_update = $conn->prepare($sql_update);
-    if ($stmt_update === false) {
-        file_put_contents('debug.txt', "Update Prepare failed: " . $conn->error . "\n", FILE_APPEND);
-        $_SESSION['admin_message'] = "Database error during update.";
-    } else {
-        $stmt_update->bind_param("si", $action, $doc_id);
-        $stmt_update->execute();
-        $affected = $stmt_update->affected_rows;
-        $stmt_update->close();
-        $_SESSION['admin_message'] = $affected > 0 ? "Document $action successfully." : "Failed to update document status.";
-    }
-    $redirect_url = "verifications.php?tab=$tab&start_date=$start_date&end_date=$end_date&search=" . urlencode($search) . "&page=$page&t=" . time();
-    file_put_contents('debug.txt', "Redirecting to: $redirect_url\n", FILE_APPEND);
+    $stmt_update->bind_param("si", $action, $doc_id);
+    $stmt_update->execute();
+    $stmt_update->close();
+
+    $redirect_url = "verifications.php?tab=$tab&start_date=$start_date&end_date=$end_date&search=" . urlencode($search) . "&page=$page";
     header("Location: $redirect_url");
     exit();
 }
@@ -456,12 +403,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
                     <div class="search-box">
                         <div class="search-icon"><img src="src/assets/images/search-normal.svg" alt="Search Icon"></div>
                         <input type="text" placeholder="Search here" class="search-input" id="search-input"
-                            value="Search here">
+                            value="<?php echo htmlspecialchars($search); ?>">
                     </div>
                     <div class="date-filter">
                         <form id="date-filter-form" action="verifications.php" method="GET">
                             <input type="hidden" name="tab" value="<?php echo htmlspecialchars($tab); ?>">
-                            <input type="hidden" name="search" id="form-search" value="Search Here">
+                            <input type="hidden" name="search" id="form-search"
+                                value="<?php echo htmlspecialchars($search); ?>">
                             <div class="date-input">
                                 <input type="date" name="start_date" id="start-date"
                                     value="<?php echo htmlspecialchars($start_date); ?>">
@@ -490,14 +438,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
                 </div>
             </div>
             <div class="header-divider"></div>
-
-            <!-- Admin Feedback -->
-            <?php if (isset($_SESSION['admin_message'])): ?>
-            <div
-                class="admin-message <?php echo strpos($_SESSION['admin_message'], 'successfully') !== false ? 'success' : 'error'; ?>">
-                <?php echo htmlspecialchars($_SESSION['admin_message']); unset($_SESSION['admin_message']); ?>
-            </div>
-            <?php endif; ?>
 
             <div class="uploads-content">
                 <div class="uploads-tabs">
@@ -535,7 +475,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
                                 </tr>
                                 <?php else: ?>
                                 <?php foreach ($documents as $index => $doc): ?>
-                                <tr class="status-<?php echo strtolower($doc['status']); ?>">
+                                <tr>
                                     <td><?php echo ($page - 1) * $per_page + $index + 1; ?>.</td>
                                     <td><?php echo htmlspecialchars($doc['full_name']); ?></td>
                                     <td><?php echo htmlspecialchars($doc['department']); ?></td>
@@ -546,21 +486,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
                                     <td><?php echo htmlspecialchars($doc['session']); ?></td>
                                     <td><?php echo htmlspecialchars($doc['status']); ?></td>
                                     <td class="td-action">
-                                        <?php if ($doc['status'] === 'Pending'): ?>
                                         <div class="action-menu">
                                             <img src="src/assets/images/more.svg" alt="More" class="action-btn">
                                             <div class="action-menu-content">
-                                                <!-- View -->
                                                 <a href="verification_detail.php?doc_id=<?php echo $doc['id']; ?>"
                                                     class="action-item">
                                                     <img src="src/assets/images/Bold Eye.svg" alt="View"> View
                                                 </a>
-                                                <!-- Verify -->
-                                                <form action="verifications.php?tab=<?php echo urlencode($tab); ?>
-                                                    &start_date=<?php echo urlencode($start_date); ?>
-                                                    &end_date=<?php echo urlencode($end_date); ?>
-                                                    &search=<?php echo urlencode($search); ?>
-                                                    &page=<?php echo $page; ?>" method="POST">
+                                                <?php if ($doc['status'] === 'Pending'): ?>
+                                                <form
+                                                    action="verifications.php?tab=<?php echo urlencode($tab); ?>&start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>&search=<?php echo urlencode($search); ?>&page=<?php echo $page; ?>"
+                                                    method="POST">
                                                     <input type="hidden" name="doc_id"
                                                         value="<?php echo $doc['id']; ?>">
                                                     <input type="hidden" name="action" value="verify">
@@ -568,12 +504,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
                                                         <img src="src/assets/images/Check.svg" alt="Verify"> Verify
                                                     </button>
                                                 </form>
-                                                <!-- Reject -->
-                                                <form action="verifications.php?tab=<?php echo urlencode($tab); ?>
-                                                    &start_date=<?php echo urlencode($start_date); ?>
-                                                    &end_date=<?php echo urlencode($end_date); ?>
-                                                    &search=<?php echo urlencode($search); ?>
-                                                    &page=<?php echo $page; ?>" method="POST">
+                                                <form
+                                                    action="verifications.php?tab=<?php echo urlencode($tab); ?>&start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>&search=<?php echo urlencode($search); ?>&page=<?php echo $page; ?>"
+                                                    method="POST">
                                                     <input type="hidden" name="doc_id"
                                                         value="<?php echo $doc['id']; ?>">
                                                     <input type="hidden" name="action" value="reject">
@@ -581,19 +514,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
                                                         <img src="src/assets/images/Trash.svg" alt="Reject"> Reject
                                                     </button>
                                                 </form>
+                                                <?php endif; ?>
                                             </div>
                                         </div>
-                                        <?php else: ?>
-                                        <div class="action-menu">
-                                            <img src="src/assets/images/more.svg" alt="More Options" class="action-btn">
-                                            <div class="action-menu-content">
-                                                <a href="verification_detail.php?doc_id=<?php echo $doc['id']; ?>"
-                                                    class="action-item">
-                                                    <img src="src/assets/images/Bold Eye.svg" alt="View"> View
-                                                </a>
-                                            </div>
-                                        </div>
-                                        <?php endif; ?>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>

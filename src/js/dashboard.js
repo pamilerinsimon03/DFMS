@@ -28,9 +28,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Navigate to the appropriate page
             if (menuText === 'Dashboard') {
-                window.location.href = 'dashboard.html';
+                window.location.href = 'dashboard.php';
             } else if (menuText === 'My Uploads') {
-                window.location.href = 'uploads.html';
+                window.location.href = 'uploads.php';
             } else {
                 // Other pages not yet implemented
                 alert(`The ${menuText} page will be implemented in a future phase.`);
@@ -45,19 +45,60 @@ document.addEventListener('DOMContentLoaded', function() {
         logoutBtn.addEventListener('click', function() {
             if (confirm('Are you sure you want to log out?')) {
                 // Redirect to login page
-                window.location.href = '/';
+                window.location.href = 'logout.php';
             }
         });
     }
-    
-    // Upload button functionality
-    const uploadBtn = document.querySelector('.upload-btn');
-    
-    if (uploadBtn) {
-        uploadBtn.addEventListener('click', function() {
-            // In a real application, this would open a file selection dialog
-            // For now, we'll just show an alert
-            alert('File uploaded Successfully.');
+
+    // File Upload Functionality
+    const uploadForm = document.getElementById('upload-form');
+    const fileUpload = document.getElementById('file-upload');
+    const fileNameDisplay = document.getElementById('file-name');
+    const uploadButton = document.getElementById('upload-button');
+    const uploadContainer = document.getElementById('upload-container');
+
+    // Trigger form submission when the upload button is clicked
+    if (uploadButton) {
+        uploadButton.addEventListener('click', () => {
+            if (uploadForm.checkValidity()) {
+                uploadForm.submit();
+            } else {
+                // Optionally, display a message to the user that they need to fill out all fields
+                alert('Please provide a document name and select a file.');
+            }
+        });
+    }
+
+    // Update the file name when a file is selected
+    if (fileUpload) {
+        fileUpload.addEventListener('change', () => {
+            if (fileUpload.files.length > 0) {
+                fileNameDisplay.textContent = fileUpload.files[0].name;
+            } else {
+                fileNameDisplay.textContent = '';
+            }
+        });
+    }
+
+    // Drag and drop functionality
+    if (uploadContainer) {
+        uploadContainer.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            uploadContainer.classList.add('dragover');
+        });
+
+        uploadContainer.addEventListener('dragleave', () => {
+            uploadContainer.classList.remove('dragover');
+        });
+
+        uploadContainer.addEventListener('drop', (event) => {
+            event.preventDefault();
+            uploadContainer.classList.remove('dragover');
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                fileUpload.files = files;
+                fileNameDisplay.textContent = files[0].name;
+            }
         });
     }
     
@@ -78,7 +119,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const fileName = this.querySelector('.file-name').textContent;
             const status = this.querySelector('.file-status').classList.contains('verified') ? 'Verified' : 'Pending';
             
-            alert(`File: ${fileName}\nStatus: ${status}\n\nDetailed view will be implemented in Phase 4.`);
+            alert(`File: ${fileName}
+Status: ${status}
+
+Detailed view will be implemented in Phase 4.`);
         });
     });
     const burger = document.getElementById('mobile-menu-toggle');

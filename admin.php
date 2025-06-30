@@ -7,16 +7,11 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Debug: Log session
-file_put_contents('debug.txt', "Admin ID: {$_SESSION['user_id']} (Type: " . gettype($_SESSION['user_id']) . ")\n", FILE_APPEND);
-
 // Fetch user data to check admin status
 $user_id = (int)$_SESSION['user_id'];
 $sql = "SELECT full_name, is_admin FROM users WHERE id = ?";
 $stmt = $conn->prepare($sql);
 if ($stmt === false) {
-    $error = "Prepare failed: " . $conn->error . " | SQL: $sql";
-    file_put_contents('debug.txt', $error . "\n", FILE_APPEND);
     $_SESSION['error'] = "Database error. Please contact support.";
     header("Location: index.php");
     exit();
@@ -26,153 +21,108 @@ $stmt->execute();
 $user = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
-if (!$user || (!$user['is_admin'] && $user_id != 1)) {
+if (!$user || !$user['is_admin']) {
     $_SESSION['error'] = "Access denied. Admin privileges required.";
-    file_put_contents('debug.txt', "Access Denied: User ID $user_id, is_admin: " . ($user['is_admin'] ?? 'N/A') . "\n", FILE_APPEND);
     header("Location: dashboard.php");
     exit();
 }
 
-// Debug: Log user data
-file_put_contents('debug.txt', "User: " . print_r($user, true) . "\n", FILE_APPEND);
-
 // Handle date filter
-// Set default to earliest document date to today
 $sql_min_date = "SELECT MIN(created_at) as min_date FROM documents";
 $result_min_date = $conn->query($sql_min_date);
 $min_date = $result_min_date ? $result_min_date->fetch_assoc()['min_date'] : date('Y-m-01');
 $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : ($min_date ? date('Y-m-d', strtotime($min_date)) : date('Y-m-01'));
 $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-d');
-$date_filter = "WHERE d.created_at BETWEEN ? AND ?";
 
 // KPI Queries
-$sql_total = "SELECT COUNT(*) as count FROM documents d $date_filter";
+$sql_total = "SELECT COUNT(id) as count FROM documents WHERE DATE(created_at) BETWEEN ? AND ?";
 $stmt_total = $conn->prepare($sql_total);
-if ($stmt_total === false) {
-    file_put_contents('debug.txt', "Total Prepare failed: " . $conn->error . "\n", FILE_APPEND);
-    $total_docs = 0;
-} else {
-    $stmt_total->bind_param("ss", $start_date, $end_date);
-    $stmt_total->execute();
-    $total_docs = $stmt_total->get_result()->fetch_assoc()['count'];
-    $stmt_total->close();
-}
+$stmt_total->bind_param("ss", $start_date, $end_date);
+$stmt_total->execute();
+$total_docs = $stmt_total->get_result()->fetch_assoc()['count'];
+$stmt_total->close();
 
-$sql_verified = "SELECT COUNT(*) as count FROM documents d $date_filter AND d.status = 'Verified'";
+$sql_verified = "SELECT COUNT(id) AS count FROM documents WHERE status='Verified' AND DATE(created_at) BETWEEN ? AND ?";
 $stmt_verified = $conn->prepare($sql_verified);
-if ($stmt_verified === false) {
-    file_put_contents('debug.txt', "Verified Prepare failed: " . $conn->error . "\n", FILE_APPEND);
-    $verified_docs = 0;
-} else {
-    $stmt_verified->bind_param("ss", $start_date, $end_date);
-    $stmt_verified->execute();
-    $verified_docs = $stmt_verified->get_result()->fetch_assoc()['count'];
-    $stmt_verified->close();
-}
+$stmt_verified->bind_param("ss", $start_date, $end_date);
+$stmt_verified->execute();
+$verified_docs = $stmt_verified->get_result()->fetch_assoc()['count'];
+$stmt_verified->close();
 
-$sql_pending = "SELECT COUNT(*) as count FROM documents d $date_filter AND d.status = 'Pending'";
+$sql_pending  = "SELECT COUNT(id) AS count FROM documents WHERE status='Pending'  AND DATE(created_at) BETWEEN ? AND ?";
 $stmt_pending = $conn->prepare($sql_pending);
-if ($stmt_pending === false) {
-    file_put_contents('debug.txt', "Pending Prepare failed: " . $conn->error . "\n", FILE_APPEND);
-    $pending_docs = 0;
-} else {
-    $stmt_pending->bind_param("ss", $start_date, $end_date);
-    $stmt_pending->execute();
-    $pending_docs = $stmt_pending->get_result()->fetch_assoc()['count'];
-    $stmt_pending->close();
-}
+$stmt_pending->bind_param("ss", $start_date, $end_date);
+$stmt_pending->execute();
+$pending_docs = $stmt_pending->get_result()->fetch_assoc()['count'];
+$stmt_pending->close();
 
 // Chart Data: Uploads by Month
-$sql_uploads = "SELECT DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as count 
-                FROM documents 
-                WHERE created_at BETWEEN ? AND ?
+$sql_uploads = "SELECT DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(id) as count 
+                FROM documents
+                WHERE DATE(created_at) BETWEEN ? AND ?
                 GROUP BY month 
                 ORDER BY month";
 $stmt_uploads = $conn->prepare($sql_uploads);
 $months = [];
 $upload_counts = [];
-if ($stmt_uploads === false) {
-    file_put_contents('debug.txt', "Uploads Prepare failed: " . $conn->error . "\n", FILE_APPEND);
-} else {
-    $stmt_uploads->bind_param("ss", $start_date, $end_date);
-    $stmt_uploads->execute();
-    $uploads_data = $stmt_uploads->get_result()->fetch_all(MYSQLI_ASSOC);
-    $stmt_uploads->close();
+$stmt_uploads->bind_param("ss", $start_date, $end_date);
+$stmt_uploads->execute();
+$uploads_data = $stmt_uploads->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt_uploads->close();
 
-    // Generate all months in range
-    $start = new DateTime($start_date);
-    $end = new DateTime($end_date);
-    $interval = new DateInterval('P1M');
-    $period = new DatePeriod($start, $interval, $end->modify('+1 month'));
-    $month_map = [];
-    foreach ($period as $dt) {
-        $month_key = $dt->format('Y-m');
-        $month_map[$month_key] = ['label' => $dt->format('M Y'), 'count' => 0];
-    }
+$start = new DateTime($start_date);
+$end = new DateTime($end_date);
+$interval = new DateInterval('P1M');
+$period = new DatePeriod($start, $interval, $end->modify('+1 month'));
+$month_map = [];
+foreach ($period as $dt) {
+    $month_key = $dt->format('Y-m');
+    $month_map[$month_key] = ['label' => $dt->format('M Y'), 'count' => 0];
+}
 
-    // Fill counts from query
-    foreach ($uploads_data as $row) {
-        if (isset($month_map[$row['month']])) {
-            $month_map[$row['month']]['count'] = (int)$row['count'];
-        }
-    }
-
-    // Build arrays for chart
-    foreach ($month_map as $data) {
-        $months[] = $data['label'];
-        $upload_counts[] = $data['count'];
+foreach ($uploads_data as $row) {
+    if (isset($month_map[$row['month']])) {
+        $month_map[$row['month']]['count'] = (int)$row['count'];
     }
 }
 
-// Debug: Log chart data
-file_put_contents('debug.txt', "Bar Chart: Months: " . print_r($months, true) . "\nCounts: " . print_r($upload_counts, true) . "\n", FILE_APPEND);
+foreach ($month_map as $data) {
+    $months[] = $data['label'];
+    $upload_counts[] = $data['count'];
+}
 
 // Chart Data: Verification Breakdown
-$sql_breakdown = "SELECT status, COUNT(*) as count 
-                FROM documents 
-                  WHERE created_at BETWEEN ? AND ?
+$sql_breakdown = "SELECT status, COUNT(id) as count 
+                  FROM documents
+                  WHERE DATE(created_at) BETWEEN ? AND ?
                   GROUP BY status";
 $stmt_breakdown = $conn->prepare($sql_breakdown);
 $statuses = ['Pending', 'Verified', 'Failed'];
 $breakdown_counts = [0, 0, 0];
-if ($stmt_breakdown === false) {
-    file_put_contents('debug.txt', "Breakdown Prepare failed: " . $conn->error . "\n", FILE_APPEND);
-} else {
-    $stmt_breakdown->bind_param("ss", $start_date, $end_date);
-    $stmt_breakdown->execute();
-    $breakdown_data = $stmt_breakdown->get_result()->fetch_all(MYSQLI_ASSOC);
-    $stmt_breakdown->close();
-    foreach ($breakdown_data as $row) {
-        $index = array_search($row['status'], $statuses);
-        if ($index !== false) {
-            $breakdown_counts[$index] = (int)$row['count'];
-        }
+$stmt_breakdown->bind_param("ss", $start_date, $end_date);
+$stmt_breakdown->execute();
+$breakdown_data = $stmt_breakdown->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt_breakdown->close();
+foreach ($breakdown_data as $row) {
+    $index = array_search($row['status'], $statuses);
+    if ($index !== false) {
+        $breakdown_counts[$index] = (int)$row['count'];
     }
 }
-
-// Debug: Log pie chart data
-file_put_contents('debug.txt', "Pie Chart: Statuses: " . print_r($statuses, true) . "\nCounts: " . print_r($breakdown_counts, true) . "\n", FILE_APPEND);
 
 // Documents Table: Pending Documents
 $sql_docs = "SELECT d.id, d.document_name, d.file_path, u.full_name, u.programme as department, u.level, u.session 
              FROM documents d 
              JOIN users u ON d.user_id = u.id 
-             WHERE d.status = 'Pending' AND d.created_at BETWEEN ? AND ?
+             WHERE d.status = 'Pending' AND DATE(d.created_at) BETWEEN ? AND ?
              ORDER BY d.created_at DESC 
              LIMIT 10";
 $stmt_docs = $conn->prepare($sql_docs);
 $documents = [];
-if ($stmt_docs === false) {
-    file_put_contents('debug.txt', "Docs Prepare failed: " . $conn->error . "\n", FILE_APPEND);
-} else {
-    $stmt_docs->bind_param("ss", $start_date, $end_date);
-    $stmt_docs->execute();
-    $documents = $stmt_docs->get_result()->fetch_all(MYSQLI_ASSOC);
-    $stmt_docs->close();
-}
-
-// Debug: Log queries
-file_put_contents('debug.txt', "Total Docs: $total_docs, Verified: $verified_docs, Pending: $pending_docs\nDocuments: " . print_r($documents, true) . "\n", FILE_APPEND);
+$stmt_docs->bind_param("ss", $start_date, $end_date);
+$stmt_docs->execute();
+$documents = $stmt_docs->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt_docs->close();
 
 // Handle Verification Actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_POST['doc_id'])) {
@@ -181,16 +131,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
     
     $sql_update = "UPDATE documents SET status = ? WHERE id = ? AND status = 'Pending'";
     $stmt_update = $conn->prepare($sql_update);
-    if ($stmt_update === false) {
-        file_put_contents('debug.txt', "Update Prepare failed: " . $conn->error . "\n", FILE_APPEND);
-        $_SESSION['admin_message'] = "Database error during update.";
-    } else {
-        $stmt_update->bind_param("si", $action, $doc_id);
-        $stmt_update->execute();
-        $affected = $stmt_update->affected_rows;
-        $stmt_update->close();
-        $_SESSION['admin_message'] = $affected > 0 ? "Document $action successfully." : "Failed to update document status.";
-    }
+    $stmt_update->bind_param("si", $action, $doc_id);
+    $stmt_update->execute();
+    $stmt_update->close();
+    
     header("Location: admin.php?start_date=$start_date&end_date=$end_date");
     exit();
 }
@@ -394,14 +338,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
                     </div>
                 </div>
             </div>
-
-            <!-- Admin Feedback -->
-            <?php if (isset($_SESSION['admin_message'])): ?>
-            <div
-                class="admin-message <?php echo strpos($_SESSION['admin_message'], 'successfully') !== false ? 'success' : 'error'; ?>">
-                <?php echo htmlspecialchars($_SESSION['admin_message']); unset($_SESSION['admin_message']); ?>
-            </div>
-            <?php endif; ?>
 
             <!-- KPI Cards -->
             <div class="kpi-cards">

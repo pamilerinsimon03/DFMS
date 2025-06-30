@@ -605,7 +605,7 @@ html, body {
 .upload-section {
     width: 100%;
     max-width: 360px;
-    height: 240px;
+    height: auto;
     background-color: white;
     border-radius: 10px;
     display: flex;
@@ -613,21 +613,26 @@ html, body {
     justify-content: center;
     align-items: center;
     margin: 0 auto;
-    padding: 37px 24px;
+    padding: 24px;
     box-sizing: border-box;
 }
 
 .upload-container {
-    width: 312px;
-    height: 160px;
-    padding: 24px 0;
+    width: 100%;
+    border: 2px dashed #E0E0E0;
     border-radius: 12px;
-    border: 1px solid rgba(189, 189, 189, 0.4);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    padding: 24px;
+    gap: 16px;
+    text-align: center;
+}
+
+.upload-container.dragover {
+    border-color: #01017A;
+    background-color: #F7F7FD;
 }
 
 .upload-icon {
@@ -649,7 +654,7 @@ html, body {
     font-size: 14px;
     font-weight: 400;
     line-height: 20px;
-    text-align: center;
+    margin-bottom: 8px;
 }
 
 .upload-note {
@@ -657,21 +662,56 @@ html, body {
     font-size: 8px;
     font-weight: 400;
     line-height: 14px;
-    text-align: center;
+}
+
+.upload-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #E0E0E0;
+    border-radius: 6px;
+    font-size: 14px;
+    margin-top: 16px;
+}
+
+.upload-file-input {
+    display: none;
+}
+
+.custom-file-upload {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #FAA62C;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    margin-top: 16px;
+}
+
+.file-name {
+    font-size: 12px;
+    color: #666;
+    margin-top: 8px;
 }
 
 .upload-btn {
-    height: 32px;
-    padding: 0 40px;
+    width: 100%;
+    padding: 12px;
     background-color: #01017A;
-    border-radius: 5px;
+    border-radius: 6px;
     color: #FAFDFF;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
-    line-height: 24px;
     border: none;
     cursor: pointer;
     margin-top: 16px;
+}
+
+#upload-form {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
 }
 
 /* Files to upload section styles */
