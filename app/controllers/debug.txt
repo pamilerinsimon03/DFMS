@@ -1,0 +1,10 @@
+
+--- verifications.php Access ---
+SESSION: Array
+(
+    [user_id] => 1
+    [full_name] => Professor Afolabi Samuel
+)
+
+Current user ID: 1
+Is user admin: Yes
