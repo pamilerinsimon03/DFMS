@@ -100,7 +100,7 @@
                     <td><?php echo htmlspecialchars($doc['session']); ?></td>
                     <td>
                         <div class="action-menu">
-                            <img src="/app/src/assets/images/more.svg" alt="More Options">
+                            <img src="/app/src/assets/images/more.svg" alt=" More Options">
                             <div class="action-menu-content">
                                 <form
                                     action="/app/controllers/admin.php?start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>"

@@ -339,3 +339,148 @@ td:nth-child(7) {
   width: 16px;
   height: 16px;
 }
+.admin-message {
+  margin: 10px 0;
+  font-size: 14px;
+  text-align: center;
+}
+
+.admin-message.success {
+  color: green;
+}
+
+.admin-message.error {
+  color: red;
+}
+
+.action-menu {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.action-menu-content {
+  display: none;
+  position: absolute;
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  min-width: 100px;
+}
+
+
+
+.action-menu-content a,
+.action-menu-content button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 8px;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    text-decoration: none;
+    color: #000;
+}
+
+.action-menu-content .action-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    width: 100%;
+    text-decoration: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: Poppins, sans-serif;
+    font-size: 14px;
+    color: #000;
+}
+
+/* spacing for the icons */
+.action-menu-content .action-item img {
+    width: 16px;
+    margin-right: 8px;
+}
+
+/* specific colors */
+.action-menu-content .action-item.verify {
+    color: #009A49;
+}
+
+.action-menu-content .action-item.reject {
+    color: #FF3B30;
+}
+
+/* hover state */
+.action-menu-content .action-item:hover {
+    background: #f0f0f0;
+}
+
+
+
+.action-menu-content img {
+    width: 16px;
+    margin-right: 5px;
+}
+
+.status-pending {
+    background: #fff3cd;
+}
+
+.status-verified {
+    background: #d4edda;
+}
+
+.status-rejected {
+    background: #f8d7da;
+}
+
+.filter-button {
+    padding: 10px 16px;
+    background: none;
+    color: #01017A;
+    border: none;
+    cursor: pointer;
+    border-radius: 10px;
+    border: 2px solid #01017A;
+    font-weight: 700;
+}
+
+.filter-button:hover {
+    background: #01017A;
+    color: white;
+}
+
+.doc-link {
+    color: black;
+    text-decoration: underline;
+}
+
+.doc-link:hover {
+    text-decoration: underline;
+}
+
+.pagination {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.pagination a {
+    padding: 8px 12px;
+    margin: 0 4px;
+    border: 1px solid #ddd;
+    text-decoration: none;
+    color: #01017A;
+}
+
+.pagination a.active {
+    background: #01017A;
+    color: #fff;
+    border: 1px solid #01017A;
+}
+
+.pagination a:hover {
+    background: #f0f0f0;
+}
