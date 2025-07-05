@@ -47,8 +47,8 @@ document.addEventListener('DOMContentLoaded', function() {
       const dropdown = document.createElement('div');
       dropdown.classList.add('action-dropdown');
       dropdown.innerHTML = `
-        <div class="action-item" style="color: #01017A;"><img src="../assets/images/Bold Eye.svg" alt="">View</div>
-        <div class="action-item" style="color: #FF3B30;"><img src="../assets/images/Trash.svg" alt="">Delete</div>
+        <div class="action-item" style="color: #01017A;"><img src="/app/src/assets/images/Bold Eye.svg" alt="Bold Eye">View</div>
+        <div class="action-item" style="color: #FF3B30;"><img src="/app/src/assets/images/Trash.svg" alt="Trash">Delete</div>
       `;
       cell.appendChild(dropdown);
       // add View/Delete click handlers
@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const [viewItem, deleteItem] = actionItems;
         viewItem.addEventListener('click', e => {
           e.stopPropagation();
-          window.location.href = '../pages/verification_detail.html';
+          window.location.href = '/app/views/verification_detail.php';
         });
         deleteItem.addEventListener('click', e => {
           e.stopPropagation();
