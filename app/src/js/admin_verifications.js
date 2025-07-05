@@ -6,7 +6,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const tableRows = document.querySelectorAll('.docs-table tbody tr');
 
   tabItems.forEach(tab => {
-    tab.addEventListener('click', function() {
+    tab.addEventListener('click', function (e) {
+      e.preventDefault();
       tabItems.forEach(item => item.classList.remove('active'));
       this.classList.add('active');
       const statusMap = {

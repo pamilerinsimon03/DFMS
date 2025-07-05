@@ -60,11 +60,11 @@
 <div class="charts-row">
     <div class="chart-container">
         <h3>Uploads This Session</h3>
-        <canvas id="barChart"></canvas>
+        <canvas id="uploads-by-month"></canvas>
     </div>
     <div class="chart-container">
         <h3>Verification Breakdown</h3>
-        <canvas id="pieChart"></canvas>
+        <canvas id="uploads-by-status"></canvas>
     </div>
 </div>
 <div class="table-section">

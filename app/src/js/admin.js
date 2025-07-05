@@ -1,68 +1,4 @@
 /* stylelint-disable */
-// Bar chart: “Uploads This Session”
-const barCanvas = document.getElementById('barChart');
-if (barCanvas) {
-  const barCtx = barCanvas.getContext('2d');
-  new Chart(barCtx, {
-    type: 'bar',
-    data: {
-      labels: ['Apr 10','11','15','16','20','22','23','24','25','26','28','29','30','Jun 3','4'],
-      datasets: [{
-      label: 'Uploads',
-      data: [350,700,550,700,150,350,700,550,700,30,350,700,550,700,500],
-      backgroundColor: '#01017A',
-      borderRadius: 4,
-      barThickness: 10
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      layout: { padding: 0 },
-      scales: {
-      y: {
-        beginAtZero: true,
-        ticks: { stepSize: 200, color: '#999999', font: { family: 'Poppins', size: 14 } },
-        grid: { drawBorder: false, color: 'rgba(128,128,128,0.3)', borderDash: [5,5], lineWidth: 1 }
-      },
-      x: {
-        ticks: { maxRotation: 0, autoSkip: true, color: '#999999', font: { family: 'Poppins', size: 12 } },
-        grid: { display: false }
-      }
-      },
-      plugins: { legend:{ display:false } }
-    }
-  });
-}
-
-// Pie chart: “Verified / Pending / Rejected”
-const pieCanvas = document.getElementById('pieChart');
-if (pieCanvas) {
-  const pieCtx = pieCanvas.getContext('2d');
-  new Chart(pieCtx, {
-  type: 'pie',
-  data: {
-    labels: ['Verified','Pending','Rejected'],
-    datasets: [{
-    data: [4900,50,100],
-    backgroundColor: ['#009A49','#FAA62C','#FF3B30']
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    layout: { padding: 0 },
-    plugins: {
-    legend: {
-      position: 'bottom',
-      labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 10, padding: 20, color:'#999999', font:{ family:'Poppins', size:12 } }
-    },
-    tooltip: { callbacks:{ label: ctx => `${ctx.label}: ${ctx.parsed}` } }
-    }
-  }
-});
-}
-
 document.addEventListener('DOMContentLoaded', function() {
   // Menu item click functionality
   const menuItems = document.querySelectorAll('.menu-item');
@@ -72,29 +8,15 @@ document.addEventListener('DOMContentLoaded', function() {
       // Skip if it's already active or it's the logout item
       if (this.classList.contains('active') || this.classList.contains('logout')) return;
       
-      // Remove active class from current active item
-      document.querySelector('.menu-item.active').classList.remove('active');
-      document.querySelector('.menu-text.active-text').classList.remove('active-text');
-      document.querySelector('.menu-bg')?.remove();
-      
-      // Add active class to clicked item
-      this.classList.add('active');
-      this.querySelector('.menu-text').classList.add('active-text');
-      
-      // Create background element
-      const bg = document.createElement('div');
-      bg.classList.add('menu-bg');
-      this.prepend(bg);
-      
       // Handle page navigation
       const menuText = this.querySelector('.menu-text').textContent.trim();
       console.log(`Navigating to: ${menuText}`);
       
       // Navigate to the appropriate page
       if (menuText === 'Dashboard') {
-        window.location.href = '/app/views/admin.php';
+        window.location.href = 'admin.php';
       } else if (menuText === 'Verifications') {
-        window.location.href = '/app/views/verifications.php';
+        window.location.href = 'verifications.php';
       } else {
         // Other pages not yet implemented
         alert(`The ${menuText} page will be implemented in a future phase.`);
@@ -135,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const [viewItem, deleteItem] = actionItems;
         viewItem.addEventListener('click', e => {
           e.stopPropagation();
-          window.location.href = '/app/views/verification_detail.php';
+          window.location.href = '../pages/verification_detail.html';
         });
         deleteItem.addEventListener('click', e => {
           e.stopPropagation();
@@ -155,4 +77,54 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   // close dropdown on outside click
   document.addEventListener('click', () => document.querySelectorAll('.action-dropdown').forEach(dd => dd.style.display = 'none'));
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const barChartCanvas = document.getElementById('uploads-by-month');
+    const pieChartCanvas = document.getElementById('uploads-by-status');
+
+    if (barChartCanvas) {
+        new Chart(barChartCanvas, {
+            type: 'bar',
+            data: barChartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            display: true
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    if (pieChartCanvas) {
+        new Chart(pieChartCanvas, {
+            type: 'pie',
+            data: pieChartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    }
 });

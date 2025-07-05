@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id']) || !User::isAdmin($_SESSION['user_id'])) {
 
 $user = User::getById($_SESSION['user_id']);
 
-$start_date = $_GET['start_date'] ?? date('Y-m-01');
+$start_date = $_GET['start_date'] ?? '1970-01-01';
 $end_date = $_GET['end_date'] ?? date('Y-m-d');
 
 $total_docs = Document::countByDateRange($start_date, $end_date);

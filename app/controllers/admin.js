@@ -32,20 +32,10 @@ function initCharts() {
     const barCanvas = document.getElementById('uploads-by-month');
     const pieCanvas = document.getElementById('uploads-by-status');
 
-    if (barCanvas) {
-        const barData = {
-            labels: ['May 2025', 'Jun 2025'],
-            datasets: [{
-                label: 'Documents Uploaded',
-                data: [3, 1],
-                backgroundColor: "#01017A",
-                borderRadius: 4,
-                barThickness: 10
-            }]
-        };
+    if (barCanvas && typeof barChartData !== 'undefined') {
         new Chart(barCanvas, {
             type: 'bar',
-            data: barData,
+            data: barChartData,
             options: {
                 responsive: false,
                 maintainAspectRatio: false,
@@ -64,20 +54,13 @@ function initCharts() {
                 plugins: { legend:{ display:false } }
             }
         });
-        logEvent('Bar chart initialized: ' + JSON.stringify(barData));
+        logEvent('Bar chart initialized: ' + JSON.stringify(barChartData));
     }
 
-    if (pieCanvas) {
-        const pieData = {
-            labels: ['Pending', 'Verified', 'Failed'],
-            datasets: [{
-                data: [4, 0, 0],
-                backgroundColor: ['#009A49','#FAA62C','#FF3B30']
-            }]
-        };
+    if (pieCanvas && typeof pieChartData !== 'undefined') {
         new Chart(pieCanvas, {
             type: 'pie',
-            data: pieData,
+            data: pieChartData,
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -91,7 +74,7 @@ function initCharts() {
                 }
             }
         });
-        logEvent('Pie chart initialized: ' + JSON.stringify(pieData));
+        logEvent('Pie chart initialized: ' + JSON.stringify(pieChartData));
     }
 }
 
