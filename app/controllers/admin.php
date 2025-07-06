@@ -22,7 +22,7 @@ $months = array_keys($uploads_data);
 $upload_counts = array_values($uploads_data);
 
 $breakdown_data = Document::getVerificationBreakdown($start_date, $end_date);
-$statuses = ['Pending', 'Verified', 'Failed'];
+$statuses = ['Pending', 'Verified', 'Rejected'];
 $breakdown_counts = array_map(fn($status) => $breakdown_data[$status] ?? 0, $statuses);
 
 $documents = Document::getPendingDocuments($start_date, $end_date, 10);

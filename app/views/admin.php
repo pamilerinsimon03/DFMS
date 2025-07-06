@@ -98,23 +98,31 @@
                     <td><?php echo htmlspecialchars($doc['level']); ?></td>
                     <td><?php echo htmlspecialchars(basename($doc['file_path'])); ?></td>
                     <td><?php echo htmlspecialchars($doc['session']); ?></td>
-                    <td>
+                    <td class="td-action">
                         <div class="action-menu">
-                            <img src="/app/src/assets/images/more.svg" alt=" More Options">
+                            <img src="/app/src/assets/images/more.svg" alt="More" class="action-btn">
                             <div class="action-menu-content">
+                                <a href="/app/controllers/verification_detail.php?doc_id=<?php echo $doc['id']; ?>"
+                                    class="action-item">
+                                    <img src="/app/src/assets/images/Bold Eye.svg" alt="View"> View
+                                </a>
                                 <form
-                                    action="/app/controllers/admin.php?start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>"
-                                    method="POST" style="display: inline;">
+                                    action="/app/controllers/verifications.php?tab=<?php echo urlencode($tab); ?>&start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>&search=<?php echo urlencode($search); ?>&page=<?php echo $page; ?>"
+                                    method="POST">
                                     <input type="hidden" name="doc_id" value="<?php echo $doc['id']; ?>">
                                     <input type="hidden" name="action" value="verify">
-                                    <button type="submit">Verify</button>
+                                    <button type="submit" class="action-item verify">
+                                        <img src="/app/src/assets/images/Check.svg" alt="Verify"> Verify
+                                    </button>
                                 </form>
                                 <form
-                                    action="/app/controllers/admin.php?start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>"
-                                    method="POST" style="display: inline;">
+                                    action="/app/controllers/verifications.php?tab=<?php echo urlencode($tab); ?>&start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>&search=<?php echo urlencode($search); ?>&page=<?php echo $page; ?>"
+                                    method="POST">
                                     <input type="hidden" name="doc_id" value="<?php echo $doc['id']; ?>">
                                     <input type="hidden" name="action" value="reject">
-                                    <button type="submit">Reject</button>
+                                    <button type="submit" class="action-item reject">
+                                        <img src="/app/src/assets/images/Trash.svg" alt="Reject"> Reject
+                                    </button>
                                 </form>
                             </div>
                         </div>
@@ -139,7 +147,7 @@ const barChartData = {
 };
 
 const pieChartData = {
-    labels: ['Pending', 'Verified', 'Failed'],
+    labels: ['Pending', 'Verified', 'Rejected'],
     datasets: [{
         data: <?php echo json_encode($breakdown_counts); ?>,
         backgroundColor: ['#FAA62C', '#009A49', '#FF3B30'],

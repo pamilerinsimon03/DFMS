@@ -74,7 +74,8 @@
                     </tr>
                     <?php else: ?>
                     <?php foreach ($documents as $index => $doc): ?>
-                    <tr>
+                    <?php $status_slug = 'status-' . strtolower($doc['status']); ?>
+                    <tr class="<?php echo $status_slug; ?>">
                         <td><?php echo ($page - 1) * $per_page + $index + 1; ?>.</td>
                         <td><?php echo htmlspecialchars($doc['full_name']); ?></td>
                         <td><?php echo htmlspecialchars($doc['department']); ?></td>

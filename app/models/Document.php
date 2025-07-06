@@ -105,7 +105,7 @@ class Document {
 
     public static function updateStatus($doc_id, $action) {
         global $conn;
-        $status = $action === 'verify' || $action === 'approve' ? 'Verified' : 'Failed';
+        $status = $action === 'verify' || $action === 'approve' ? 'Verified' : 'Rejected';
         $sql = "UPDATE documents SET status = ? WHERE id = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("si", $status, $doc_id);

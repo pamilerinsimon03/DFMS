@@ -155,41 +155,6 @@
   /* so border-radius applies */
 }
 
-.docs-table th:nth-child(1),
-td:nth-child(1) {
-  width: 50px;
-}
-
-.docs-table th:nth-child(2),
-td:nth-child(2) {
-  width: 200px;
-}
-
-.docs-table th:nth-child(3),
-td:nth-child(3) {
-  width: 180px;
-}
-
-.docs-table th:nth-child(4),
-td:nth-child(4) {
-  width: 100px;
-}
-
-.docs-table th:nth-child(5),
-td:nth-child(5) {
-  width: 250px;
-}
-
-.docs-table th:nth-child(6),
-td:nth-child(6) {
-  width: 120px;
-}
-
-.docs-table th:nth-child(7),
-td:nth-child(7) {
-  width: 50px;
-}
-
 /* Ensure action cells are positioned relative for dropdown */
 .td-action {
   position: relative;
@@ -294,6 +259,11 @@ td:nth-child(7) {
 .header-right {
   display: flex;
   gap: 19px;
+}
+
+.active-text {
+    color: #01017A;
+    font-weight: 500;
 }
 
 /* Responsive adjustments */

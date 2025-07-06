@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const menuItems = document.querySelectorAll('.menu-item');
     
     menuItems.forEach(item => {
-        item.addEventListener('click', function() {
+        item.addEventListener('click', function () {
             // Skip if it's already active or it's the logout item
             if (this.classList.contains('active') || this.classList.contains('logout')) return;
             
@@ -31,12 +31,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.location.href = 'dashboard.php';
             } else if (menuText === 'My Uploads') {
                 window.location.href = 'uploads.php';
-            } else {
-                // Other pages not yet implemented
-                alert(`The ${menuText} page will be implemented in a future phase.`);
-            }
+            } //else {
+            // Other pages not yet implemented
+            //alert(`The ${menuText} page will be implemented in a future phase.`);
         });
-    });
+        });
     
     // Logout functionality
     const logoutBtn = document.querySelector('.menu-item.logout');
@@ -243,7 +242,8 @@ Detailed view will be implemented in Phase 4.`);
             rightSidebar.appendChild(todoFiles);
             }
         }
-        }
+    }
+
 
     // Run on load, then again on every resize:
     reorderForMobile();
