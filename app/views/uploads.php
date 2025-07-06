@@ -48,8 +48,8 @@
                 class="tab-item <?php echo $tab === 'pending' ? 'active' : ''; ?>">Pending Verification</a>
             <a href="/app/controllers/uploads.php?tab=verified"
                 class="tab-item <?php echo $tab === 'verified' ? 'active' : ''; ?>">Verified</a>
-            <a href="/app/controllers/uploads.php?tab=failed"
-                class="tab-item <?php echo $tab === 'failed' ? 'active' : ''; ?>">Failed</a>
+            <a href="/app/controllers/uploads.php?tab=Rejected"
+                class="tab-item <?php echo $tab === 'Rejected' ? 'active' : ''; ?>">Rejected</a>
         </div>
     </div>
     <div class="uploads-table">
@@ -85,7 +85,7 @@
                 <div class="status-text"><?php echo htmlspecialchars($doc['status']); ?></div>
             </div>
             <div class="td-action">
-                <?php if ($doc['status'] === 'Failed'): ?>
+                <?php if ($doc['status'] === 'Rejected'): ?>
                 <form action="/app/controllers/uploads.php?tab=<?php echo htmlspecialchars($tab); ?>" method="POST"
                     enctype="multipart/form-data" style="display: inline;">
                     <input type="hidden" name="reupload_id" value="<?php echo $doc['id']; ?>">

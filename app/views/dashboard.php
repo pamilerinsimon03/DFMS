@@ -126,3 +126,4 @@
         </div>
     </div>
 </div>
+<script src="../src/js/dashboard.js"></script>
