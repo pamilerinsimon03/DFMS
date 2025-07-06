@@ -6,14 +6,20 @@
             <div class="menu-items">
                 <a href="/app/controllers/admin.php"
                     class="menu-item <?php echo $active_page === 'admin' ? 'active' : ''; ?>">
-                    <div class="menu-icon"><img src="/app/src/assets/images/home.svg" alt="Dashboard Icon"></div>
-                    <div class="menu-text">Dashboard</div>
+                    <div class="menu-icon"><img
+                            src="/app/src/assets/images/<?php echo $active_page === 'admin' ? 'home.svg' : 'home white.svg'; ?>"
+                            alt="Dashboard Icon"></div>
+                    <div class="menu-text <?php echo $active_page === 'admin' ? 'active-text' : ''; ?>">Dashboard
+                    </div>
                 </a>
                 <a href="/app/controllers/verifications.php"
                     class="menu-item <?php echo $active_page === 'verifications' ? 'active' : ''; ?>">
-                    <div class="menu-icon"><img src="/app/src/assets/images/verification.svg" alt="Verifications Icon">
+                    <div class="menu-icon"><img
+                            src="/app/src/assets/images/<?php echo $active_page === 'verifications' ? 'verification.svg' : 'verification purple.svg'; ?> alt="
+                            Verifications Icon">
                     </div>
-                    <div class="menu-text">Verifications</div>
+                    <div class="menu-text <?php echo $active_page === 'verifications' ? 'active-text' : ''; ?>">
+                        Verifications</div>
                 </a>
                 <a href="#" class="menu-item">
                     <div class="menu-icon"><img src="/app/src/assets/images/analytics.svg" alt="Analytics Icon"></div>
