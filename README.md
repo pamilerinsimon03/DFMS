@@ -61,17 +61,3 @@ DFMS/
 
 ### Phase 6 – Deployment & Handover
 - [ ] Docker static host configs, CI/CD scripts, training docs
-
-## Getting Started
-
-1. Replace the placeholder logo images in `src/assets/images/` with the actual University of Ibadan logo files:
-   - `ui-logo.png` - The logo for the sidebar (142px × 152px)
-   - `ui-logo-watermark.png` - The logo for the background watermark (568px × 608px)
-
-2. Open `index.html` in a web browser to view the login page.
-
-## Notes for Future Development
-
-- The login page is currently static with client-side validation only.
-- Backend integration with Supabase will be implemented in Phase 2.
-- Role-based access control will be implemented once the dashboard pages are created.
