@@ -2,62 +2,92 @@
 
 A web portal for students, administrators, and lecturers to manage academic documents.
 
-## Project Overview
-
-The University of Ibadan DFMS is a web-based system that allows:
-
-- Students to upload academic documents (fees receipts, course registration forms, O'Level results, birth certificates)
-- Administrators to verify, approve, or reject uploads
-- Lecturers to view only verified documents
-
 ## Tech Stack
 
-- HTML5 for markup
-- CSS3 for styling
-- Vanilla JavaScript (ES6+) for interactivity & state
-- Supabase JS Client via CDN for Auth, Database, and Storage
-- No build tools—all files served statically
+- **Backend:** PHP
+- **Frontend:** HTML5, CSS3, Vanilla JavaScript (ES6+)
+- **Database:** MySQL
+
+## Server Requirements
+
+For the application to run correctly, the server must meet the following requirements:
+
+- PHP 7.4 or higher
+- MySQL 5.7 or higher
+- A web server such as Apache or Nginx
+
+### Image Quality Validation (Optional but Recommended)
+
+To enable the automated rejection of blurry or unreadable documents, the following must be installed and configured.
+
+#### For Linux (Debian/Ubuntu)
+
+1.  **Install Dependencies:**
+    ```bash
+    sudo apt-get update
+    sudo apt-get install php-imagick tesseract-ocr
+    ```
+2.  **Restart Web Server:**
+    ```bash
+    sudo systemctl restart apache2 # or php-fpm
+    ```
+
+#### For Windows (XAMPP/WAMP)
+
+**1. Configure `php.ini`:**
+
+-   Open your `php.ini` file (e.g., in `C:\xampp\php\php.ini`).
+-   Enable the `fileinfo` and `imagick` extensions by uncommenting them:
+    ```ini
+    extension=fileinfo
+    extension=imagick
+    ```
+
+**2. Install ImageMagick:**
+
+-   **Important:** You must install the correct version of ImageMagick that matches your PHP environment's architecture (x64 vs x86) and thread safety (TS vs NTS). Find this in the first few lines of a `phpinfo()` page.
+-   Download the corresponding ImageMagick "dll" binary from the [PECL website](https://mlocati.github.io/pecl-imagemagick-windows/).
+-   Extract the downloaded zip file.
+-   Copy all the `.dll` files from the `bin` subdirectory of the extracted files and paste them into your PHP's `ext` directory (e.g., `C:\xampp\php\ext`).
+-   Copy all the other `.dll` files (from the root of the extracted files) and paste them into Apache's `bin` directory (e.g., `C:\xampp\apachein`). This makes them available to Apache.
+
+**3. Install Tesseract OCR:**
+
+-   Download and run the Tesseract installer from the [official UB-Mannheim repository](https://github.com/UB-Mannheim/tesseract/wiki).
+-   During installation, ensure you select the option to **"Add Tesseract to the system PATH."** This allows PHP to find the `tesseract.exe` command.
+
+**4. Restart Apache:**
+s
+-   After completing these steps, you **must restart your Apache server** from the XAMPP/WAMP control panel for the changes to take effect.
+
+---
+
+## Getting Started
+
+1. **Clone the repository:**
+   ```bash
+   git clone <repository_url>
+   ```
+2. **Database Setup:**
+   - Import the `dfms.sql` file into your MySQL database.
+   - Configure the database connection in `app/config/config.php`.
+3. **Install Dependencies:**
+   - Follow the server requirement steps above.
+4. **Web Server Configuration:**
+   - Point the document root of your web server to the `/public` directory.
 
 ## Project Structure
-
 ```
 DFMS/
-├── index.html               # Login page
-├── src/
-│   ├── assets/
-│   │   └── images/          # Images and icons
-│   ├── css/
-│   │   ├── global.css       # Global reset and base styles
-│   │   ├── style.css        # Main styling for the login page
-│   │   └── styleguide.css   # Design tokens and variables
-│   ├── js/
-│   │   └── login.js         # Login page functionality
-│   └── pages/               # Other HTML pages (to be added)
-└── README.md                # Project documentation
+├── app/
+│   ├── config/      # Database and app configuration
+│   ├── controllers/ # Handles user requests and business logic
+│   ├── models/      # Database interaction and data models
+│   ├── views/       # PHP templates for the UI
+│   └── src/         # CSS, JS, and image assets
+├── public/
+│   ├── index.php    # Front controller
+│   └── uploads/     # Directory for user-uploaded files
+├── dfms.sql         # Database schema
+└── README.md
 ```
-
-## Development Phases
-
-### Phase 1 – Frontend Development
-- [x] Stage 1: Login & Authentication screen
-- [ ] Stage 2: Role-based Dashboard (student, admin, lecturer)
-- [ ] Stage 3: Document Upload Form
-- [ ] Stage 4: Verification Queue & Detail View (admin)
-- [ ] Stage 5: Search & Document Preview (lecturer)
-
-### Phase 2 – Backend Integration
-- [ ] Hook static pages up to Supabase Auth and Realtime DB
-- [ ] Configure Row-Level Security policies
-
-### Phase 3 – Core File Management
-- [ ] File upload, versioning, metadata entry, tagging
-- [ ] Notifications (email/SMS/webhooks)
-
-### Phase 4 – Admin & Reporting
-- [ ] Audit trail UI, reporting dashboards, role management
-
-### Phase 5 – QA & Accessibility
-- [ ] WCAG 2.1 AA compliance, performance tuning, cross-browser testing
-
-### Phase 6 – Deployment & Handover
-- [ ] Docker static host configs, CI/CD scripts, training docs

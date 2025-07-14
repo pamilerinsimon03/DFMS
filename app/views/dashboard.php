@@ -89,8 +89,8 @@
             <div class="upload-container" id="upload-container">
                 <?php if (isset($_SESSION['upload_message'])): ?>
                 <div
-                    class="upload-message <?php echo strpos($_SESSION['upload_message'], 'successfully') !== false ? 'success' : 'error'; ?>">
-                    <?php echo htmlspecialchars($_SESSION['upload_message']); unset($_SESSION['upload_message']); ?>
+                    class="upload-message <?php echo (isset($_SESSION['upload_status']) && $_SESSION['upload_status'] === 'success') ? 'success' : 'error'; ?>">
+                    <?php echo htmlspecialchars($_SESSION['upload_message']); unset($_SESSION['upload_message']); unset($_SESSION['upload_status']); ?>
                 </div>
                 <?php endif; ?>
                 <form action="/app/controllers/upload_file.php" method="POST" enctype="multipart/form-data"
@@ -101,10 +101,10 @@
                     <div class="upload-note">File size not more than 5mb, file format pdf/jpeg/png</div>
                     <input type="text" name="document_name" placeholder="Document Name" required class="upload-input">
                     <input type="file" name="file" id="file-upload" accept=".pdf,.jpg,.jpeg,.png" required
-                        class="upload-file-input">
+                        class="upload-file-input" style="display: none;">
                     <label for="file-upload" class="custom-file-upload">Choose File</label>
-                    <span class="file-name" id="file-name"></span>
-                    <button type="button" class="upload-btn" id="upload-button">Upload files</button>
+                    <span id="file-name-display" class="file-name-display"></span>
+                    <button type="submit" class="upload-btn">Upload files</button>
                 </form>
             </div>
         </div>
@@ -125,5 +125,6 @@
             </div>
         </div>
     </div>
+
 </div>
 <script src="../src/js/dashboard.js"></script>
