@@ -4,79 +4,94 @@ A web portal for students, administrators, and lecturers to manage academic docu
 
 ## Tech Stack
 
-- **Backend:** PHP
-- **Frontend:** HTML5, CSS3, Vanilla JavaScript (ES6+)
-- **Database:** MySQL
+* **Backend:** PHP
+* **Frontend:** HTML5, CSS3, Vanilla JavaScript (ES6+)
+* **Database:** MySQL
 
 ## Server Requirements
 
 For the application to run correctly, the server must meet the following requirements:
 
-- PHP 7.4 or higher
-- MySQL 5.7 or higher
-- A web server such as Apache or Nginx
+* PHP 8.0 or higher
+* MySQL 5.7 or higher
+* GD extension (bundled with PHP) for blur detection
+* A web server such as Apache or Nginx
 
-### Image Quality Validation (Optional but Recommended)
+## Image Quality & OCR Validation
 
-To enable the automated rejection of blurry or unreadable documents, the following must be installed and configured.
+These features automate rejection of blurry or unreadable uploads. Install and configure the following:
 
-#### For Linux (Debian/Ubuntu)
+### Linux (Debian/Ubuntu)
 
-1.  **Install Dependencies:**
-    ```bash
-    sudo apt-get update
-    sudo apt-get install php-imagick tesseract-ocr
-    ```
-2.  **Restart Web Server:**
-    ```bash
-    sudo systemctl restart apache2 # or php-fpm
-    ```
+1. **Install Dependencies**:
 
-#### For Windows (XAMPP/WAMP)
+   ```bash
+   sudo apt-get update
+   sudo apt-get install php-gd php-imagick tesseract-ocr ghostscript
+   ```
+2. **Restart Services**:
 
-**1. Configure `php.ini`:**
+   ```bash
+   sudo systemctl restart apache2  # or nginx + php-fpm
+   ```
 
--   Open your `php.ini` file (e.g., in `C:\xampp\php\php.ini`).
--   Enable the `fileinfo` and `imagick` extensions by uncommenting them:
-    ```ini
-    extension=fileinfo
-    extension=imagick
-    ```
+### Windows (XAMPP/WAMP)
 
-**2. Install ImageMagick:**
+1. **Enable PHP Extensions** in `php.ini`:
 
--   **Important:** You must install the correct version of ImageMagick that matches your PHP environment's architecture (x64 vs x86) and thread safety (TS vs NTS). Find this in the first few lines of a `phpinfo()` page.
--   Download the corresponding ImageMagick "dll" binary from the [PECL website](https://mlocati.github.io/pecl-imagemagick-windows/).
--   Extract the downloaded zip file.
--   Copy all the `.dll` files from the `bin` subdirectory of the extracted files and paste them into your PHP's `ext` directory (e.g., `C:\xampp\php\ext`).
--   Copy all the other `.dll` files (from the root of the extracted files) and paste them into Apache's `bin` directory (e.g., `C:\xampp\apachein`). This makes them available to Apache.
+   ```ini
+   extension=gd
+   extension=imagick
+   extension=fileinfo
+   ```
 
-**3. Install Tesseract OCR:**
+2. **Install ImageMagick**:
 
--   Download and run the Tesseract installer from the [official UB-Mannheim repository](https://github.com/UB-Mannheim/tesseract/wiki).
--   During installation, ensure you select the option to **"Add Tesseract to the system PATH."** This allows PHP to find the `tesseract.exe` command.
+   * Download matching ImageMagick **DLL** binary (x64/TS or NTS)
+   * Extract ZIP, copy `php_imagick.dll` to `C:\xampp\php\ext`.
+   * Copy supporting `CORE_RL_*.dll` to Apache’s `bin` folder (e.g. `C:\xampp\apache\bin`).
 
-**4. Restart Apache:**
-s
--   After completing these steps, you **must restart your Apache server** from the XAMPP/WAMP control panel for the changes to take effect.
+3. **Install Ghostscript**:
+
+   * Download and install from [https://www.ghostscript.com/download/gsdnld.html](https://www.ghostscript.com/download/gsdnld.html)
+   * Add `C:\Program Files\gs\gs<version>\bin` to **System PATH**.
+   * Create a `gs.bat` in that folder with:
+
+     ```bat
+     @echo off
+     "C:\Program Files\gs\gs<version>\bin\gswin64c.exe" %*
+     ```
+
+4. **Install Tesseract OCR**:
+
+   * Download from [https://github.com/UB-Mannheim/tesseract/wiki](https://github.com/UB-Mannheim/tesseract/wiki)
+   * Ensure **"Add to PATH"** is checked.
+
+5. **Restart Apache/WAMP** from control panel.
 
 ---
 
 ## Getting Started
 
 1. **Clone the repository:**
+
    ```bash
    git clone <repository_url>
+   cd DFMS
    ```
 2. **Database Setup:**
-   - Import the `dfms.sql` file into your MySQL database.
-   - Configure the database connection in `app/config/config.php`.
+
+   * Import the `dfms.sql` file into MySQL database.
+   * Configure the database connection in `app/config/config.php`.
 3. **Install Dependencies:**
-   - Follow the server requirement steps above.
+
+   * Follow the steps under **Image Quality & OCR Validation** if you need automated checks.
 4. **Web Server Configuration:**
-   - Point the document root of your web server to the `/public` directory.
+
+   * Point your web server’s document root to the `/public` directory.
 
 ## Project Structure
+
 ```
 DFMS/
 ├── app/
@@ -89,5 +104,5 @@ DFMS/
 │   ├── index.php    # Front controller
 │   └── uploads/     # Directory for user-uploaded files
 ├── dfms.sql         # Database schema
-└── README.md
+└── README.md        # This file
 ```

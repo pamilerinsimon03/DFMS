@@ -21,3 +21,7 @@
 [2025-07-14 02:06:48] User 2: [Debug: Running: "C:\Program Files\Tesseract-OCR\tesseract.exe" "C:\Users\pamil\AppData\Local\Temp\php5009.tmp" "C:\Users\pamil\AppData\Local\Temp\ocr50E5.tmp" tsv -l eng --psm 3 2>&1] [Debug: Tesseract produced no output.]
 [2025-07-14 02:08:26] User 2: [Debug: Running OCR command: "C:\Program Files\Tesseract-OCR\tesseract.exe" "C:\Users\pamil\AppData\Local\Temp\phpCDE1.tmp" "C:\Users\pamil\AppData\Local\Temp\ocrCEBD.tmp" tsv -l eng --psm 3 2>&1] [Debug: Tesseract produced no output.]
 [2025-07-14 02:10:22] User 2: [Debug: PDF rasterized to C:\Users\pamil\AppData\Local\Temp\ocr8940.tmp.png] [Debug: Running OCR command: "C:\Program Files\Tesseract-OCR\tesseract.exe" "C:\Users\pamil\AppData\Local\Temp\ocr8940.tmp.png" "C:\Users\pamil\AppData\Local\Temp\ocr8D39.tmp" tsv -l eng --psm 3 2>&1] [Debug: OCR Confidence 95%]
+[2025-07-14 02:16:43] User 2: [Rasterized PDF → C:\Users\pamil\AppData\Local\Temp\ocr53DE.tmp.png] [OCR cmd: "C:\Program Files\Tesseract-OCR\tesseract.exe" "C:\Users\pamil\AppData\Local\Temp\ocr53DE.tmp.png" "C:\Users\pamil\AppData\Local\Temp\ocr5B03.tmp" tsv -l eng --psm 3 2>&1] [OCR Conf: 77%]
+[2025-07-14 02:17:01] User 2: [Blur score: 6.81]
+[2025-07-14 12:38:12] User 2: 
+[2025-07-15 21:33:32] User 2: [Rasterized PDF → C:\Users\pamil\AppData\Local\Temp\ocr2D70.tmp.png] [OCR cmd: "C:\Program Files\Tesseract-OCR\tesseract.exe" "C:\Users\pamil\AppData\Local\Temp\ocr2D70.tmp.png" "C:\Users\pamil\AppData\Local\Temp\ocr31A7.tmp" tsv -l eng --psm 3 2>&1] [OCR Conf: 54%]

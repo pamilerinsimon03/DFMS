@@ -52,57 +52,69 @@
                 class="tab-item <?php echo $tab === 'Rejected' ? 'active' : ''; ?>">Rejected</a>
         </div>
     </div>
-    <div class="uploads-table">
-        <div class="table-header">
-            <div class="th-sn"><span>SN</span><img src="/app/src/assets/images/arrow-down-small.svg" alt="Sort"></div>
-            <div class="th-name">Name</div>
-            <div class="th-document">Document Name</div>
-            <div class="th-date"><span>Date</span><img src="/app/src/assets/images/arrow-down-small.svg" alt="Sort">
-            </div>
-            <div class="th-status">Status</div>
-            <div class="th-action">Action</div>
-        </div>
-        <?php if (empty($documents)): ?>
-        <div class="table-row">
-            <div class="td-sn" colspan="6">
-                No documents found.
-                <?php if ($tab !== 'total'): ?>
-                Try switching to "Total Uploads".
-                <?php else: ?>
-                Upload documents via the Dashboard.
-                <?php endif; ?>
-            </div>
-        </div>
-        <?php else: ?>
-        <?php foreach ($documents as $index => $doc): ?>
-        <div class="table-row">
-            <div class="td-sn"><?php echo $index + 1; ?>.</div>
-            <div class="td-name"><?php echo htmlspecialchars($doc['document_name']); ?></div>
-            <div class="td-document"><?php echo htmlspecialchars(basename($doc['file_path'])); ?></div>
-            <div class="td-date"><?php echo date('d/m/Y', strtotime($doc['created_at'])); ?></div>
-            <div class="td-status <?php echo strtolower($doc['status']); ?>">
-                <div class="status-dot"></div>
-                <div class="status-text"><?php echo htmlspecialchars($doc['status']); ?></div>
-            </div>
-            <div class="td-action">
-                <?php if ($doc['status'] === 'Rejected'): ?>
-                <form action="/app/controllers/uploads.php?tab=<?php echo htmlspecialchars($tab); ?>" method="POST"
-                    enctype="multipart/form-data" style="display: inline;">
-                    <input type="hidden" name="reupload_id" value="<?php echo $doc['id']; ?>">
-                    <input type="file" name="file" accept=".pdf,.jpg,.jpeg,.png" required class="reupload-input"
-                        id="reupload-<?php echo $doc['id']; ?>" onchange="this.form.submit()">
-                    <button type="button" class="btn-danger"
-                        onclick="document.getElementById('reupload-<?php echo $doc['id']; ?>').click()">Reupload
-                        Document</button>
-                </form>
-                <?php elseif ($doc['status'] === 'Verified'): ?>
-                <button class="btn-success" disabled>Successful</button>
-                <?php else: ?>
-                <button class="btn-warning" disabled>Awaiting Verification</button>
-                <?php endif; ?>
-            </div>
-        </div>
-        <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
+    <table class="uploads-table">
+        <thead>
+            <tr>
+                <th>SN</th>
+                <th>Name</th>
+                <th>Document Name</th>
+                <th>
+                    <span>Date</span>
+                    <img src="/app/src/assets/images/arrow-down-small.svg" alt="Sort">
+                </th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if (empty($documents)): ?>
+            <tr class="table-row">
+                <td colspan="6" class="td-sn">
+                    No documents found.
+                    <?php if ($tab !== 'total'): ?>
+                    Try switching to "Total Uploads".
+                    <?php else: ?>
+                    Upload documents via the Dashboard.
+                    <?php endif; ?>
+                </td>
+            </tr>
+            <?php else: ?>
+            <?php foreach ($documents as $index => $doc): ?>
+            <tr class="table-row">
+                <td class="td-sn"><?php echo $index + 1; ?>.</td>
+                <td class="td-name"><?php echo htmlspecialchars($doc['document_name']); ?></td>
+                <td class="td-document"><?php echo htmlspecialchars(basename($doc['file_path'])); ?></td>
+                <td class="td-date"><?php echo date('d/m/Y', strtotime($doc['created_at'])); ?></td>
+                <td class="td-status <?php echo strtolower($doc['status']); ?>">
+                    <span class="status-wrapper">
+                        <span class="status-dot"></span>
+                        <span class="status-text">
+                            <?php echo htmlspecialchars($doc['status']); ?>
+                        </span>
+                    </span>
+                </td>
+                <td class="td-action">
+                    <?php if ($doc['status'] === 'Rejected'): ?>
+                    <form action="/app/controllers/uploads.php?tab=<?php echo htmlspecialchars($tab); ?>" method="POST"
+                        enctype="multipart/form-data" style="display: inline;">
+                        <input type="hidden" name="reupload_id" value="<?php echo $doc['id']; ?>">
+                        <input type="file" id="reupload-<?php echo $doc['id']; ?>" name="file"
+                            accept=".pdf,.jpg,.jpeg,.png" required style="display: none;" onchange="this.form.submit()">
+                        <label for="reupload-<?php echo $doc['id']; ?>" class="btn-danger">
+                            Reupload Document
+                        </label>
+                    </form>
+                    <?php elseif ($doc['status'] === 'Verified'): ?>
+                    <button class="btn-success" disabled>Successful</button>
+                    <?php else: ?>
+                    <button class="btn-warning" disabled>
+                        Awaiting Verification
+                    </button>
+                    <?php endif; ?>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+            <?php endif; ?>
+        </tbody>
+    </table>
 </div>

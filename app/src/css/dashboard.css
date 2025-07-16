@@ -558,12 +558,19 @@ html, body {
     border-radius: 50%;
 }
 
-.verified .status-dot {
-    background-color: #54C242;
+.verified .status-dot,
+.approved .status-dot {
+    background-color: #54C242; /* Green for Approved */
 }
 
-.pending .status-dot {
-    background-color: #F3CA12;
+.pending .status-dot,
+.pending-approval .status-dot,
+.pending-quality-check .status-dot {
+    background-color: #F3CA12; /* Yellow for all pending states */
+}
+
+.rejected .status-dot {
+    background-color: #F21B3F; /* Red for Rejected */
 }
 
 .status-text {

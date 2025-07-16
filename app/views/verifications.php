@@ -92,14 +92,14 @@
                                         class="action-item">
                                         <img src="/app/src/assets/images/Bold Eye.svg" alt="View"> View
                                     </a>
-                                    <?php if ($doc['status'] === 'Pending'): ?>
+                                    <?php if ($doc['status'] === 'Pending Approval'): ?>
                                     <form
                                         action="/app/controllers/verifications.php?tab=<?php echo urlencode($tab); ?>&start_date=<?php echo urlencode($start_date); ?>&end_date=<?php echo urlencode($end_date); ?>&search=<?php echo urlencode($search); ?>&page=<?php echo $page; ?>"
                                         method="POST">
                                         <input type="hidden" name="doc_id" value="<?php echo $doc['id']; ?>">
                                         <input type="hidden" name="action" value="verify">
-                                        <button type="submit" class="action-item verify">
-                                            <img src="/app/src/assets/images/Check.svg" alt="Verify"> Verify
+                                        <button type="submit" class="action-item verify"><img
+                                                src="/app/src/assets/images/Check.svg" alt="Verify">Verify
                                         </button>
                                     </form>
                                     <form

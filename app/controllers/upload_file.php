@@ -1,7 +1,11 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../models/Document.php';
+require_once __DIR__ . '/../models/User.php';
+require_once __DIR__ . '/../services/FilenameGenerator.php';
+require_once __DIR__ . '/../services/AcademicCalendarService.php';
 
+// Ensure the user is logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: /public/index.php");
     exit();
@@ -271,19 +275,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header("Location: /app/controllers/dashboard.php");
             exit();
         }
+
+    $userId = $_SESSION['user_id'];
+    $documentName = $_POST['document_name'];
+    $file = $_FILES['file'];
+
+    $user = User::getById($userId);
+    if (!$user) {
+        $message = "Upload failed: Your user data could not be found.";
+        $_SESSION['upload_status'] = 'error';
     } else {
-        // other file types? treat as image skip
-        $debug_messages[] = '[Info: File type not image/pdf—skipping checks.]';
+            // Automatically determine the current semester
+            $semester = AcademicCalendarService::getCurrentSemester();
+            // Get the original file's extension
+            $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+            
+            // Generate the standardized filename
+            $generatedFilename = FilenameGenerator::generate($userId, $documentName, $semester, $extension);
+            
+            if ($generatedFilename) {
+                // Prepare the classification data that will be stored with the document
+                $classificationData = [
+                    'level' => preg_replace('/[^0-9]/', '', $user['level']), // "500L" -> 500
+                    'semester' => $semester,
+                    'program_type' => $user['program_type'],
+                    'mode' => $user['mode'],
+                    'department_id' => $user['department_id']
+                ];
+
+                // Upload the document with an initial status of 'Pending Review'
+                $result = Document::upload($userId, $documentName, $generatedFilename, $file, $classificationData);
+                $message = $result['message'];
+                $_SESSION['upload_status'] = $result['success'] ? 'success' : 'error';
+            } else {
+                $message = "Upload failed: Could not generate a standard filename. Please ensure your profile is complete.";
+                $_SESSION['upload_status'] = 'error';
+            }
+        }
+        
+        // Provide feedback to the user and redirect back to the dashboard
+        $_SESSION['upload_message'] = $message;
+        header("Location: /app/controllers/dashboard.php");
+        exit();
     }
-
-    $result = Document::upload($user_id, $document_name, $file);
-    $_SESSION['upload_message'] = $result['message'];
-    $_SESSION['upload_status'] = $result['success'] ? 'success' : 'error';
-
-    if (!empty($debug_messages)) {
-        logDebugMessages($user_id, $debug_messages);
-    }
-
-    header("Location: /app/controllers/dashboard.php");
-    exit();
 }

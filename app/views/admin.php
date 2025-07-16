@@ -147,7 +147,7 @@ const barChartData = {
 };
 
 const pieChartData = {
-    labels: ['Pending', 'Verified', 'Rejected'],
+    labels: ['Pending', 'Approved', 'Rejected'],
     datasets: [{
         data: <?php echo json_encode($breakdown_counts); ?>,
         backgroundColor: ['#FAA62C', '#009A49', '#FF3B30'],

@@ -1,5 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../models/User.php'; 
+require_once __DIR__ . '/../services/AcademicCalendarService.php';
 
 class Document {
     public static function getById($id) {
@@ -94,7 +96,7 @@ class Document {
         $sql = "SELECT d.id, d.document_name, d.file_path, u.full_name, u.programme as department, u.level, u.session
              FROM documents d
              JOIN users u ON d.user_id = u.id
-             WHERE d.status = 'Pending' AND DATE(d.created_at) BETWEEN ? AND ?
+             WHERE d.status = 'Pending Approval' AND DATE(d.created_at) BETWEEN ? AND ?
              ORDER BY d.created_at DESC
              LIMIT ?";
         $stmt = $conn->prepare($sql);
@@ -105,7 +107,7 @@ class Document {
 
     public static function updateStatus($doc_id, $action) {
         global $conn;
-        $status = $action === 'verify' || $action === 'approve' ? 'Verified' : 'Rejected';
+        $status = $action === 'verify' || $action === 'approve' ? 'Approved' : 'Rejected';
         $sql = "UPDATE documents SET status = ? WHERE id = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("si", $status, $doc_id);
@@ -157,44 +159,102 @@ class Document {
         return $stmt->get_result()->fetch_assoc()['total'];
     }
 
-    public static function upload($user_id, $document_name, $file) {
+    /**
+     * Uploads a document file, stores it on disk, and records it in the database
+     * along with classification data.
+     *
+     * @param int    $user_id
+     * @param string $document_name
+     * @param string $generated_filename
+     * @param array  $file               The $_FILES['file'] array
+     * @param array  $classification_data ['level'=>int, 'semester'=>string, 'program_type'=>string, 'mode'=>string, 'department_id'=>int]
+     * @return array ['success'=>bool,'message'=>string]
+     */
+    public static function upload($user_id, $document_name, $generated_filename, $file, $classification_data) {
         global $conn;
 
+        // 1) Basic upload error check
         if ($file['error'] !== UPLOAD_ERR_OK) {
-            return ['success' => false, 'message' => 'An error occurred during upload.'];
+            return ['success' => false, 'message' => 'An error occurred during file upload.'];
         }
 
-        $allowed_types = ['application/pdf', 'image/jpeg', 'image/png'];
-        $allowed_exts = ['pdf', 'jpeg', 'jpg', 'png'];
-        $file_ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-        
-        if ($file['size'] > 5 * 1024 * 1024) { // 5MB limit
-            return ['success' => false, 'message' => 'File size exceeds 5MB limit.'];
-        } elseif (!in_array($file['type'], $allowed_types) || !in_array($file_ext, $allowed_exts)) {
-            return ['success' => false, 'message' => 'Invalid file type. Only PDF, JPEG, and PNG are allowed.'];
+        // 2) Validate file size & type
+        $allowed_types = ['application/pdf','image/jpeg','image/png'];
+        $allowed_exts  = ['pdf','jpeg','jpg','png'];
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+        if ($file['size'] > 5 * 1024 * 1024) {
+            return ['success' => false, 'message' => 'File size exceeds 5 MB limit.'];
+        }
+        if (! in_array($file['type'], $allowed_types) || ! in_array($ext, $allowed_exts)) {
+            return ['success' => false, 'message' => 'Invalid file type. Only PDF, JPEG, and PNG allowed.'];
         }
 
-        $upload_dir = __DIR__ . '/../../public/uploads/';
-        if (!is_dir($upload_dir)) {
+        // 3) Move uploaded file into public/uploads/
+        $upload_dir  = __DIR__ . '/../../public/uploads/';
+        if (! is_dir($upload_dir)) {
             mkdir($upload_dir, 0755, true);
         }
+        $file_path   = 'uploads/' . $generated_filename;
+        $destination = $upload_dir . $generated_filename;
 
-        $unique_file_name = time() . '_' . basename($file['name']);
-        $file_path = 'uploads/' . $unique_file_name;
-        $destination = $upload_dir . $unique_file_name;
-
-        if (move_uploaded_file($file['tmp_name'], $destination)) {
-            $sql = "INSERT INTO documents (user_id, document_name, file_path, status, created_at) VALUES (?, ?, ?, 'Pending', NOW())";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("iss", $user_id, $document_name, $file_path);
-
-            if ($stmt->execute()) {
-                return ['success' => true, 'message' => 'File uploaded successfully.'];
-            } else {
-                return ['success' => false, 'message' => 'Database error: ' . $stmt->error];
-            }
-        } else {
-            return ['success' => false, 'message' => 'Failed to upload file. Please try again.'];
+        if (! move_uploaded_file($file['tmp_name'], $destination)) {
+            return ['success' => false, 'message' => 'Failed to move uploaded file.'];
         }
-    }
+
+        // 4) Insert into database including classification fields
+        $sql = "
+            INSERT INTO documents
+              (user_id,
+               document_name,
+               file_path,
+               status,
+               level,
+               semester,
+               program_type,
+               mode,
+               department_id,
+               created_at)
+            VALUES
+              (?,       ?,             ?,         'Pending Approval',
+               ?,       ?,            ?,         ?,            ?,
+               NOW())
+        ";
+        $stmt = $conn->prepare($sql);
+        if (! $stmt) {
+            // roll back file move
+            unlink($destination);
+            return ['success' => false, 'message' => 'DB prepare failed: ' . $conn->error];
+        }
+
+        // Bind exactly eight parameters in order of the placeholders:
+        // i = user_id
+        // s = document_name
+        // s = file_path
+        // i = level
+        // s = semester
+        // s = program_type
+        // s = mode
+        // i = department_id
+        $stmt->bind_param(
+            'ississsi',
+            $user_id,
+            $document_name,
+            $file_path,
+            $classification_data['level'],
+            $classification_data['semester'],
+            $classification_data['program_type'],
+            $classification_data['mode'],
+            $classification_data['department_id']
+        );
+
+        if ($stmt->execute()) {
+            return ['success' => true, 'message' => 'File uploaded successfully.'];
+        } else {
+            return ['success' => false, 'message' => 'Database error: ' . $stmt->error];
+            // on failure, remove the file we moved
+            unlink($destination);
+            return ['success' => false, 'message' => 'Database error: ' . $stmt->error];
+        }
+    } 
 }
