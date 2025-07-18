@@ -99,7 +99,16 @@
                     </div>
                     <div class="upload-text">Upload files</div>
                     <div class="upload-note">File size not more than 5mb, file format pdf/jpeg/png</div>
-                    <input type="text" name="document_name" placeholder="Document Name" required class="upload-input">
+                    <div class="custom-select-wrapper">
+                        <select name="document_name" required>
+                            <option value="" disabled selected>Select Document Type</option>
+                            <?php foreach ($document_types as $key => $value): ?>
+                            <option value="<?php echo htmlspecialchars($key); ?>">
+                                <?php echo htmlspecialchars($value); ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                     <input type="file" name="file" id="file-upload" accept=".pdf,.jpg,.jpeg,.png" required
                         class="upload-file-input" style="display: none;">
                     <label for="file-upload" class="custom-file-upload">Choose File</label>

@@ -1,0 +1,5 @@
+ALTER TABLE `documents`
+ADD COLUMN `level` INT(11) NULL,
+ADD COLUMN `semester` VARCHAR(20) NULL,
+ADD COLUMN `program_type` VARCHAR(50) NULL,
+ADD COLUMN `mode` VARCHAR(50) NULL;

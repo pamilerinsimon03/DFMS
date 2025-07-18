@@ -118,3 +118,44 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+document.addEventListener('DOMContentLoaded', function () {
+    // --- Mobile Sidebar Toggle ---
+    const menuToggle = document.getElementById('mobile-menu-toggle');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('mobile-sidebar-overlay');
+    if (menuToggle && sidebar && overlay) {
+        menuToggle.addEventListener('click', function () {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        });
+        overlay.addEventListener('click', function () {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+    }
+    // --- Action Menu Dropdown Logic ---
+    document.body.addEventListener('click', function (e) {
+        // Find all action menu contents that are currently active
+        const openMenus = document.querySelectorAll('.action-menu-content.active');
+        // Check if the click is on an action button
+        const actionButton = e.target.closest('.action-btn');
+        // If the click is on an action button
+        if (actionButton) {
+            e.preventDefault(); // Prevent any default link behavior
+            const menuContent = actionButton.nextElementSibling;
+            
+            // If the clicked menu is already open, close it. Otherwise, close all other menus and open this one.
+            if (menuContent.classList.contains('active')) {
+                menuContent.classList.remove('active');
+            } else {
+                openMenus.forEach(menu => menu.classList.remove('active'));
+                menuContent.classList.add('active');
+            }
+        } else {
+            // If the click is outside an action button and its menu, close all open menus.
+            if (!e.target.closest('.action-menu-content')) {
+                openMenus.forEach(menu => menu.classList.remove('active'));
+            }
+        }
+    });
+});

@@ -303,7 +303,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'department_id' => $user['department_id']
                 ];
 
-                // Upload the document with an initial status of 'Pending Review'
+                // Upload the document with an initial status of 'Pending Approval'
                 $result = Document::upload($userId, $documentName, $generatedFilename, $file, $classificationData);
                 $message = $result['message'];
                 $_SESSION['upload_status'] = $result['success'] ? 'success' : 'error';
