@@ -1,24 +1,25 @@
 <div class="header">
     <button id="mobile-menu-toggle" class="mobile-menu-btn" aria-label="Open Menu">
-        <span class="mobile-menu-icon">
-            <img src="/app/src/assets/images/Menu.svg" alt="Menu Icon">
-        </span>
+        <span class="mobile-menu-icon"><img src="/app/src/assets/images/Menu.svg" alt="Menu Icon"></span>
     </button>
     <div class="welcome">
         <h1>Welcome <?php echo htmlspecialchars(explode(' ', $user['full_name'])[0]); ?></h1>
     </div>
     <div class="header-right">
-        <div class="search-container">
-            <div class="search-box">
-                <div class="search-icon">
-                    <img src="/app/src/assets/images/search-normal.svg" alt="Search Icon">
+        <div class="search-container" id="search-container">
+            <form action="/app/controllers/dashboard.php" method="GET" class="search-form">
+                <div class="search-box">
+                    <button type="button" class="search-icon-btn" id="search-icon-btn" aria-label="Open Search">
+                        <img src="/app/src/assets/images/search-normal.svg" alt="Search Icon" class="search-icon-img">
+                    </button>
+                    <input type="text" name="search" placeholder="Search here" class="search-input"
+                        value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
                 </div>
-                <input type="text" placeholder="Search here" class="search-input">
-            </div>
-            <div class="notification-icon">
-                <img src="/app/src/assets/images/notification-bing.svg" alt="Notification Icon">
-                <div class="notification-dot"></div>
-            </div>
+            </form>
+        </div>
+        <div class="notification-icon">
+            <img src="/app/src/assets/images/notification-bing.svg" alt="Notification Icon">
+            <div class="notification-dot"></div>
         </div>
         <div class="user-profile">
             <img src="/app/src/assets/images/Small Avatar.svg" alt="User Profile" class="avatar">
@@ -26,9 +27,7 @@
                 <div class="user-name"><?php echo htmlspecialchars($user['full_name']); ?></div>
                 <div class="user-id">Matric No: <?php echo htmlspecialchars($user['matric_number']); ?></div>
             </div>
-            <div class="dropdown-icon">
-                <img src="/app/src/assets/images/arrow-down.svg" alt="Dropdown Icon">
-            </div>
+            <div class="dropdown-icon"><img src="/app/src/assets/images/arrow-down.svg" alt="Dropdown Icon"></div>
         </div>
     </div>
 </div>
@@ -44,12 +43,12 @@
         <div class="tabs-left">
             <a href="/app/controllers/uploads.php?tab=total"
                 class="tab-item <?php echo $tab === 'total' ? 'active' : ''; ?>">Total Uploads</a>
-            <a href="/app/controllers/uploads.php?tab=pending"
-                class="tab-item <?php echo $tab === 'pending' ? 'active' : ''; ?>">Pending Verification</a>
-            <a href="/app/controllers/uploads.php?tab=verified"
-                class="tab-item <?php echo $tab === 'verified' ? 'active' : ''; ?>">Verified</a>
+            <a href="/app/controllers/uploads.php?tab=Pending%20Approval"
+                class="tab-item <?php echo $tab === 'pending approval' ? 'active' : ''; ?>">Pending Verification</a>
+            <a href="/app/controllers/uploads.php?tab=Approved"
+                class="tab-item <?php echo $tab === 'approved' ? 'active' : ''; ?>">Verified</a>
             <a href="/app/controllers/uploads.php?tab=Rejected"
-                class="tab-item <?php echo $tab === 'Rejected' ? 'active' : ''; ?>">Rejected</a>
+                class="tab-item <?php echo $tab === 'rejected' ? 'active' : ''; ?>">Rejected</a>
         </div>
     </div>
     <table class="uploads-table">
@@ -104,7 +103,7 @@
                             Reupload Document
                         </label>
                     </form>
-                    <?php elseif ($doc['status'] === 'Verified'): ?>
+                    <?php elseif ($doc['status'] === 'Approved'): ?>
                     <button class="btn-success" disabled>Successful</button>
                     <?php else: ?>
                     <button class="btn-warning" disabled>

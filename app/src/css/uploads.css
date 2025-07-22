@@ -173,6 +173,10 @@
     font-size: 14px;
 }
 
+.search-box {
+    width: 250px;
+}
+
 /* Responsive adjustments */
 @media (max-width: 1200px) {
     .uploads-tabs {
@@ -218,6 +222,28 @@
   /* “Force show” those header parts on uploads page */
     .header .header-right {
         display: flex !important;
+        flex: 1;
+        justify-content: flex-end;
+    }
+    .header-right {
+        display: flex !important;
+    }
+    .header-right {
+        z-index: 9999;
+    }
+    .search-box {
+        background-color: red;
+    }
+    .header .welcome {
+        display: none;
+    }
+    .header .user-profile {
+        display: none;
+    }
+    .header .search-container {
+        display: flex;
+        align-items: center;
+        gap: 16px;
     }
     .uploads-table {
         width: 100%;
@@ -235,4 +261,9 @@
     .td-status {
         display: none;
     }
+}
+
+/* Override for uploads page to show search */
+body.uploads-page .header .header-right {
+    display: flex !important;
 }

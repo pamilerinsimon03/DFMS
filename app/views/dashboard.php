@@ -6,15 +6,20 @@
         <h1>Welcome <?php echo htmlspecialchars(explode(' ', $user['full_name'])[0]); ?></h1>
     </div>
     <div class="header-right">
-        <div class="search-container">
-            <div class="search-box">
-                <div class="search-icon"><img src="/app/src/assets/images/search-normal.svg" alt="Search Icon"></div>
-                <input type="text" placeholder="Search here" class="search-input">
-            </div>
-            <div class="notification-icon">
-                <img src="/app/src/assets/images/notification-bing.svg" alt="Notification Icon">
-                <div class="notification-dot"></div>
-            </div>
+        <div class="search-container" id="search-container">
+            <form action="/app/controllers/dashboard.php" method="GET" class="search-form">
+                <div class="search-box">
+                    <button type="button" class="search-icon-btn" id="search-icon-btn" aria-label="Open Search">
+                        <img src="/app/src/assets/images/search-normal.svg" alt="Search Icon" class="search-icon-img">
+                    </button>
+                    <input type="text" name="search" placeholder="Search here" class="search-input"
+                        value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
+                </div>
+            </form>
+        </div>
+        <div class="notification-icon">
+            <img src="/app/src/assets/images/notification-bing.svg" alt="Notification Icon">
+            <div class="notification-dot"></div>
         </div>
         <div class="user-profile">
             <img src="/app/src/assets/images/Small Avatar.svg" alt="User Profile" class="avatar">

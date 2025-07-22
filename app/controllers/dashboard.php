@@ -34,9 +34,11 @@ if (User::isAdmin($user_id)) {
     require_once __DIR__ . '/../views/admin.php'; // Admin dashboard view
     require_once __DIR__ . '/../views/partials/footer.php';
 } else {
-    // Student view remains the same
-    $documents = Document::getByUserId($user_id);
-    $total_docs = count($documents);
+    // Student view
+    $search = $_GET['search'] ?? null;
+    $documents = Document::getByUserId($user_id, $search);
+    
+    $total_docs = count(Document::getByUserId($user_id));
     $document_types = require __DIR__ . '/../config/document_types.php';
     $required_docs = [
         'Admission Letter' => '2025-06-10',
@@ -46,7 +48,13 @@ if (User::isAdmin($user_id)) {
         'Medical Laboratory Receipt' => '2025-06-10',
         'Hostel Accommodation' => '2025-06-10'
     ];
-    $uploaded_docs = array_map(fn($doc) => $doc['document_name'], $documents);
+    $uploaded_docs = array_map(fn($doc) => $doc['document_name'], Document::getByUserId($user_id));
+
+    if ($search) {
+        $documents = array_filter($documents, function($doc) use ($search) {
+            return stripos($doc['document_name'], $search) !== false;
+        });
+    }
 
     $page_title = 'Dashboard';
     $active_page = 'dashboard';

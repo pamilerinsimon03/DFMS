@@ -1,6 +1,82 @@
 // JavaScript for uploads page functionality
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
+    // Menu item click functionality
+    const menuItems = document.querySelectorAll('.menu-item');
+    
+    menuItems.forEach(item => {
+        item.addEventListener('click', function () {
+            // Skip if it's already active or it's the logout item
+            if (this.classList.contains('active') || this.classList.contains('logout')) return;
+            
+            // Remove active class from current active item
+            document.querySelector('.menu-item.active').classList.remove('active');
+            document.querySelector('.menu-text.active-text').classList.remove('active-text');
+            document.querySelector('.menu-bg')?.remove();
+            
+            // Add active class to clicked item
+            this.classList.add('active');
+            this.querySelector('.menu-text').classList.add('active-text');
+            
+            // Create background element
+            const bg = document.createElement('div');
+            bg.classList.add('menu-bg');
+            this.prepend(bg);
+            
+            // Handle page navigation
+            const menuText = this.querySelector('.menu-text').textContent.trim();
+            console.log(`Navigating to: ${menuText}`);
+            
+            // Navigate to the appropriate page
+            if (menuText === 'Dashboard') {
+                window.location.href = 'dashboard.php';
+            } else if (menuText === 'My Uploads') {
+                window.location.href = 'uploads.php';
+            } //else {
+            // Other pages not yet implemented
+            //alert(`The ${menuText} page will be implemented in a future phase.`);
+        });
+        });
+    
+    // Logout functionality
+    const logoutBtn = document.querySelector('.menu-item.logout');
+    
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to log out?')) {
+                // Redirect to login page
+                window.location.href = '/app/controllers/logout.php';
+            }
+        });
+    }
+
+    const burger = document.getElementById('mobile-menu-toggle');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('mobile-sidebar-overlay');
+
+    function openSidebar() {
+        sidebar.classList.add('open');
+        overlay.classList.add('open');
+    }
+    function closeSidebar() {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('open');
+    }
+
+    burger.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (sidebar.classList.contains('open')) {
+        closeSidebar();
+        } else {
+        openSidebar();
+        }
+    });
+
+    // If you click the overlay itself, close the sidebar
+    overlay.addEventListener('click', function() {
+        closeSidebar();
+    });
+    
     // Tab switching functionality
     const tabItems = document.querySelectorAll('.tab-item');
     
@@ -54,20 +130,25 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to filter table rows based on selected tab
     function filterTableByTab(tabName) {
-        const tableRows = document.querySelectorAll('.table-row');
-        
-        tableRows.forEach(row => {
-            const status = row.querySelector('.td-status').classList;
-            
-            if (tabName === 'Total Uploads') {
-                row.style.display = '';
-            } else if (tabName === 'Pending Verification' && status.contains('pending')) {
-                row.style.display = '';
-            } else if (tabName === 'Verified' && status.contains('verified')) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
+        document.querySelectorAll('.table-row').forEach(row => {
+            const statusText = row.querySelector('.td-status')
+                                .textContent.trim();
+
+            let show = false;
+            switch (tabName) {
+            case 'Total Uploads':
+                show = true; break;
+            case 'Pending Verification':
+                show = (statusText === 'Pending Approval'); break;
+            case 'Verified':
+                show = (statusText === 'Approved'); break;
+            case 'Rejected':
+                show = (statusText === 'Rejected'); break;
+            default:
+                show = true;  // or false, depending on your UX
             }
+
+            row.style.display = show ? '' : 'none';
         });
     }
     

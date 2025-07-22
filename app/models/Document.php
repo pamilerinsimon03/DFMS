@@ -18,12 +18,20 @@ class Document
         return $stmt->get_result()->fetch_assoc();
     }
 
-    public static function getByUserId($user_id)
+    public static function getByUserId($user_id, $search = null)
     {
         global $conn;
         $sql = "SELECT * FROM documents WHERE user_id = ?";
+        $params = [$user_id];
+        $types = "i";
+
+        if ($search) {
+            $sql .= " AND document_name LIKE ?";
+            $params[] = "%" . $search . "%";
+            $types .= "s";
+        }
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $user_id);
+        $stmt->bind_param($types, ...$params);
         $stmt->execute();
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
@@ -105,6 +113,7 @@ class Document
         }
         return $uploads;
     }
+
 
     public static function getVerificationBreakdown($start_date, $end_date, $department_id = null)
     {
@@ -347,7 +356,7 @@ class Document
             $file_path,
             $classification_data['level'],
             $classification_data['semester'],
-            $classification_data['program_type'],
+            $classification['program_type'],
             $classification_data['mode'],
             $classification_data['department_id']
         );

@@ -12,7 +12,24 @@ $user_id = $_SESSION['user_id'];
 $user = User::getById($user_id);
 
 $tab = isset($_GET['tab']) ? strtolower($_GET['tab']) : 'total';
+// but you’d compare against the _lowercased_ real statuses:
 $documents = Document::getByUserIdAndStatus($user_id, $tab);
+$search = $_GET['search'] ?? null;
+
+// Fetch documents based on status and search term
+if ($tab === 'total') {
+    $documents = Document::getByUserId($user_id, $search);
+} else {
+    $all_documents = Document::getByUserIdAndStatus($user_id, $tab);
+    if ($search) {
+        $documents = array_filter($all_documents, function($doc) use ($search) {
+            return stripos($doc['document_name'], $search) !== false;
+        });
+    } else {
+        $documents = $all_documents;
+    }
+}
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reupload_id'])) {
     // Handle reupload logic here

@@ -245,7 +245,7 @@ html, body {
 }
 
 .search-box {
-    width: 260px;
+    width: 250px;
     height: 40px;
     padding: 10px 16px;
     background-color: #F5F5F5;
@@ -842,6 +842,13 @@ html, body {
     line-height: 12px;
 }
 
+.search-icon-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
 @media (min-width: 769px) and (max-width: 1440px) {
     .right-sidebar,
     .documents-counter,
@@ -892,7 +899,8 @@ html, body {
     }
 
     .header {
-        padding: 16px 16px;
+        padding: 16px;
+        justify-content: flex-start;
     }
 
     .mobile-menu-btn {
@@ -906,41 +914,54 @@ html, body {
     #mobile-menu-toggle {
         display: inline-flex;
     }
-    .user-info {
-        display: none;
-        width: 100%;
-        max-width: 100%;
+
+    .header-right {
         margin-left: auto;
-        margin-right: auto;
     }
 
-    .welcome {
+    .user-info, .welcome {
         display: none;
     }
 
-    .welcome h1 {
-        font-size: 24px;         /* shrink heading on mobile */
-        line-height: 32px;
+    .search-container {
+        position: absolute;
+        right: 160px;
+        order: 1;
+    }
+    
+    .notification-icon {
+        order: 2;
     }
 
-    /* Shrink the search box on mobile or hide it entirely if you prefer */
+    .user-profile {
+        order: 3;
+    }
+
     .search-box {
-        width: 38px;
+        background-color: white;
+        border-color: white;
+        width: 40px;
         height: 40px;
         padding: 5px;
-        border-radius: 100%;
+        border-radius: 50%;
+        transition: width 0.3s ease-in-out;
     }
-    .search-icon img{
-        width: 24px;
-        height: 24px;
+    .search-container.active .search-box {
+        border-color: #E0E0E0;
+        background-color: #F5F5F5;
+        width: 150px;
+        border-radius: 100px;
+    }
+    .search-icon-btn {
+        padding: 5px;
     }
     .search-input {
         display: none;
     }
-    .notification-icon img{
-        width: 24px;
-        width: 24px;
+    .search-container.active .search-input {
+        display: block;
     }
+
     .header-divider {
         display: none;
     }
@@ -956,19 +977,7 @@ html, body {
         margin: 0;
         overflow: hidden;
     }
-    #sidebar {
-        overflow: hidden;
-    }
-    .dashboard-content {
-        flex: 0 0 100%;
-        width: 100%;
-        padding: 16px;              
-        gap: 16px;
-        height: auto;
-        margin-top: 16px;
-    }
 
-    /* Sidebar: drop out of absolute positioning and fill full width */
     .right-sidebar {
         flex: 0 0 100%;
         width: 100%;

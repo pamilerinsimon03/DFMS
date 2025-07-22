@@ -101,7 +101,7 @@
             </div>
         </div>
     </div>
-    <?php if ($doc['status'] === 'Pending'): ?>
+    <?php if ($doc['status'] === 'Pending Approval'): ?>
     <div class="action-row">
         <form action="/app/controllers/verification_detail.php?doc_id=<?php echo $doc_id; ?>" method="POST"
             style="display: inline;">

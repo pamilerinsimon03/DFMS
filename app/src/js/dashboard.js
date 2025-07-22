@@ -258,6 +258,21 @@ Detailed view will be implemented in Phase 4.`);
     // Run on load, then again on every resize:
     reorderForMobile();
     window.addEventListener('resize', reorderForMobile);
+
+    const searchContainer = document.getElementById('search-container');
+    const searchIconBtn = document.getElementById('search-icon-btn');
+    const searchInput = document.querySelector('.search-input');
+
+    searchIconBtn.addEventListener('click', (e) => {
+        if (window.innerWidth <= 768) {
+            e.preventDefault();
+            searchContainer.classList.toggle('active');
+            if (searchContainer.classList.contains('active')) {
+                searchInput.focus();
+            }
+        }
+    });
+
 });
 
 document.addEventListener('DOMContentLoaded', () => {
