@@ -1,4 +1,59 @@
-/* KPI cards */
+.header-search-filter {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-grow: 1;
+}
+
+.search-container {
+    flex-grow: 1;
+    max-width: 400px;
+}
+
+.search-box {
+    width: 100%;
+}
+
+.date-filter form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.date-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    background: #FFFFFF;
+    border: 1px solid #E0E0E0;
+    border-radius: 8px;
+}
+
+.date-input input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 14px;
+    color: #333;
+    width: 80px;
+}
+
+.date-input img {
+    opacity: 0.6;
+}
+
+.filter-button {
+    padding: 10px 20px;
+    background-color: #01017A;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
 .kpi-cards {
   display:flex; 
   gap:40px; 
@@ -51,14 +106,12 @@
   height: 40px;
 }
 
-/* Override number and icon colors for green and yellow KPI cards */
 .bg-green .kpi-number { color: #009A49; }
 .bg-yellow .kpi-number { color: #FAA62C; }
 
 .bg-green .kpi-icon { border-color: #009A49; }
 .bg-yellow .kpi-icon { border-color: #FAA62C; }
 
-/* Charts */
 .charts-row {
   display: flex;
   flex-wrap: nowrap;
@@ -93,7 +146,6 @@
   font-weight:600;
 }
 
-/* Table section */
 .table-section {
   margin: 32px;
 }
@@ -152,12 +204,11 @@
   border-radius: 12px;
   margin-bottom: 8px;
   display: table-row;
-  /* so border-radius applies */
 }
 
 .docs-table th a {
-  color: var(--black, #001224); /* Use theme's black color, with a fallback */
-  text-decoration: none; /* Remove the default underline */
+  color: var(--black, #001224);
+  text-decoration: none;
 }
 
 .docs-table .td-status .status-wrapper {
@@ -171,7 +222,7 @@
 }
 
 .docs-table .td-status.approved .status-dot,
-.docs-table .td-status.verified .status-dot { /* 'verified' for consistency */
+.docs-table .td-status.verified .status-dot {
     background-color: #34C759;
 }
 
@@ -203,31 +254,6 @@
   vertical-align: middle;
 }
 
-/* Date Filter Styles */
-.date-filter {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.date-filter form span {
-  display: inline-flex;
-  font-size: 14px;
-  color: #999999;
-}
-
-.date-filter form {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-}
-
-.date-input input {
-  border: none;
-  color: #999999;
-}
-
 .date-input input[type="date"]::-webkit-inner-spin-button,
 .date-input input[type="date"]::-webkit-calendar-picker-indicator {
     display: none;
@@ -237,52 +263,6 @@
 .date-input input[type="date"] {
     position: relative;
     z-index: 1;
-}
-
-.date-input {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
-  background: #FFFFFF;
-  border-radius: 10px;
-  border: 0.5px solid rgba(128,128,128,0.4);
-  color: #999999;
-  font-size: 14px;
-  cursor: pointer;
-  width: 154px;
-}
-
-.date-input img {
-  width: 20px;
-  height: 20px;
-  opacity: 0.4;
-  position: relative;
-  right: 10px;
-}
-
-.search-box {
-  width: 398px;
-  height: 40px;
-  padding: 10px 16px;
-  background-color: #F5F5F5;
-  border-radius: 100px;
-  border: 0.5px solid #E0E0E0;
-  box-shadow: 0px 0px 2px rgba(176, 189, 208, 0.12);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.search-box img {
-  width: 24px;
-  height: 24px;
-}
-
-.search-container {
-  display: flex;
-  align-items: center;
-  gap: 60px;
 }
 
 .notification-icon {
@@ -309,13 +289,15 @@
     font-weight: 500;
 }
 
-/* Responsive adjustments */
 @media(max-width:768px) {
   .kpi-cards { 
     flex-direction:column; 
   }
   .charts-row { 
     flex-direction:column; 
+  }
+  .header-search-filter {
+    display: none;
   }
 }
 
@@ -328,11 +310,10 @@
   }
 }
 
-/* Action dropdown styling */
 .action-menu-content form {
   margin: 0;
   padding: 0;
-  display: block; /* Ensure it doesn't collapse */
+  display: block;
 }
 
 .action-dropdown {
@@ -377,32 +358,31 @@
   position: relative; 
   display: inline-block;
 }
-/* The dropdown menu container */
 .action-menu-content {
-  display: none; /* Hidden by default, toggled by JS */
+  display: none; 
   position: absolute;
-  right: 0; /* Anchor the menu to the right edge of the button */
-  top: 100%; /* Position the menu directly below the button */
-  margin-top: 5px; /* Add a small gap between the button and the menu */
+  right: 0;
+  top: 100%;
+  margin-top: 5px;
   background-color: #ffffff;
-  min-width: 150px; /* Ensure enough space for content */
+  min-width: 150px;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* A clearer, softer shadow */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   z-index: 10;
-  overflow: hidden; /* Keeps the rounded corners on all children */
+  overflow: hidden;
 }
 
 .action-menu-content {
-  display: none; /* Hidden by default */
+  display: none;
   position: absolute;
-  right: 0; /* Align to the right of the parent */
-  left: auto; /* Reset left alignment */
+  right: 0;
+  left: auto;
   background-color: #ffffff;
-  min-width: 140px; /* Provide adequate width */
+  min-width: 140px;
   border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  z-index: 10; /* Ensure it appears above other content */
-  overflow: hidden; /* Ensures child elements conform to border-radius */
+  z-index: 10;
+  overflow: hidden;
   align-items: start;
   vertical-align: top;
 }
@@ -412,18 +392,14 @@
 }
 
 .action-menu-content .action-item {
-    display: flex; /* Use Flexbox for alignment */
-    align-items: center; /* Vertically align icon and text perfectly */
-    gap: 10px; /* Space between icon and text */
+    display: flex;
+    align-items: center;
+    gap: 10px;
     width: 100%;
     padding: 10px 15px;
-    
-    /* Reset all button/link default styles */
     background: none;
     border: none;
     cursor: pointer;
-    
-    /* Consistent text styling */
     font-family: inherit;
     font-size: 14px;
     color: #333;
@@ -446,12 +422,10 @@
     color: #000;
 }
 
-/* spacing for the icons */
 .action-menu-content .action-item img {
     width: 16px;
 }
 
-/* specific colors */
 .action-menu-content .action-item.verify {
     color: #009A49;
 }
@@ -460,7 +434,6 @@
     color: #FF3B30;
 }
 
-/* hover state */
 .action-menu-content .action-item:hover {
     background: #f0f0f0;
 }
@@ -483,22 +456,11 @@
     background: #f8d7da;
 }
 
-.filter-button {
-    padding: 10px 16px;
-    background: none;
-    color: #01017A;
-    border: none;
-    cursor: pointer;
-    border-radius: 10px;
-    border: 2px solid #01017A;
-    font-weight: 700;
-}
-
 .uploads-content .filters {
     display: flex;
-    flex-wrap: wrap; /* Allows filters to wrap on smaller screens */
+    flex-wrap: wrap;
     align-items: center;
-    gap: 16px; /* Consistent spacing between all filter elements */
+    gap: 16px;
     margin: 20px 0;
 }
 
@@ -506,7 +468,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    margin: 0; /* Reset any default margins */
+    margin: 0;
 }
 
 .uploads-content .filters select {
@@ -517,7 +479,7 @@
     background: #FFFFFF;
     border-radius: 10px;
     border: 0.5px solid rgba(128, 128, 128, 0.4);
-    color: #555; /* Darker text for better readability */
+    color: #555;
     font-size: 14px;
     cursor: pointer;
     -webkit-appearance: none;
@@ -531,7 +493,7 @@
 
 .uploads-content .filters .filter-button {
     padding: 10px 24px;
-    background-color: #01017A; /* Primary theme color */
+    background-color: #01017A;
     color: #FFFFFF;
     border: none;
     border-radius: 10px;
@@ -542,7 +504,7 @@
 }
 
 .uploads-content .filters .filter-button:hover {
-    background-color: #00005a; /* Slightly darker shade for hover */
+    background-color: #00005a;
 }
 
 .doc-link {

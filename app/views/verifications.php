@@ -38,13 +38,14 @@
         <div class="filters">
             <div class="date-filter">
                 <div class="date-input">
-                    <input type="date" name="start_date" id="start-date"
+                    <input type="text" name="start_date" id="start_date" placeholder="Start Date"
                         value="<?php echo htmlspecialchars($start_date); ?>">
                     <img src="/app/src/assets/images/calendar.svg" alt="Calendar">
                 </div>
                 <span>-</span>
                 <div class="date-input">
-                    <input type="date" name="end_date" id="end-date" value="<?php echo htmlspecialchars($end_date); ?>">
+                    <input type="text" name="end_date" id="end_date" placeholder="End Date"
+                        value="<?php echo htmlspecialchars($end_date); ?>">
                     <img src="/app/src/assets/images/calendar.svg" alt="Calendar">
                 </div>
             </div>

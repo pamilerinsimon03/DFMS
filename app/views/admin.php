@@ -2,21 +2,25 @@
     <button id="mobile-menu-toggle" class="mobile-menu-btn" aria-label="Open Menu">
         <span class="mobile-menu-icon"><img src="/app/src/assets/images/Menu.svg" alt="Menu Icon"></span>
     </button>
-    <div class="search-container">
-        <form action="/app/controllers/verifications.php" method="GET" class="search-box">
-            <div class="search-icon"><img src="/app/src/assets/images/search-normal.svg" alt="Search Icon"></div>
-            <input type="text" placeholder="Search here" class="search-input" name="search" id="search-input"
-                value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>">
-        </form>
+    <div class="header-search-filter">
+        <div class="search-container">
+            <form action="/app/controllers/verifications.php" method="GET" class="search-box">
+                <div class="search-icon"><img src="/app/src/assets/images/search-normal.svg" alt="Search Icon"></div>
+                <input type="text" placeholder="Search here" class="search-input" id="search-input" name="search"
+                    value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>">
+            </form>
+        </div>
         <div class="date-filter">
-            <form action="" method="GET">
+            <form action="" method="GET" id="date-filter-form">
                 <div class="date-input">
-                    <input type="date" name="start_date" value="<?php echo htmlspecialchars($start_date); ?>">
+                    <input type="text" name="start_date" id="start_date" placeholder="Start Date"
+                        value="<?php echo htmlspecialchars($start_date); ?>">
                     <img src="/app/src/assets/images/calendar.svg" alt="Calendar">
                 </div>
                 <span>-</span>
                 <div class="date-input">
-                    <input type="date" name="end_date" value="<?php echo htmlspecialchars($end_date); ?>">
+                    <input type="text" name="end_date" id="end_date" placeholder="End Date"
+                        value="<?php echo htmlspecialchars($end_date); ?>">
                     <img src="/app/src/assets/images/calendar.svg" alt="Calendar">
                 </div>
                 <button type="submit" class="filter-button">Filter</button>
@@ -35,7 +39,6 @@
         </div>
     </div>
 </div>
-
 <div class="kpi-cards">
     <div class="kpi-card bg-blue">
         <div>
@@ -59,7 +62,6 @@
         <div class="kpi-icon"><img src="/app/src/assets/images/Loading.svg" alt="Loading Icon"></div>
     </div>
 </div>
-
 <div class="charts-row">
     <div class="chart-container">
         <h3>Uploads This Session</h3>
@@ -70,7 +72,6 @@
         <canvas id="uploads-by-status"></canvas>
     </div>
 </div>
-
 <div class="table-section">
     <div class="table-header">
         <h3>Documents to be Verified <?php echo $user['department_id'] ? '(My Dept)' : ''; ?></h3>
@@ -116,7 +117,6 @@
         </table>
     </div>
 </div>
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const barChartCtx = document.getElementById('uploads-by-month').getContext('2d');
@@ -142,7 +142,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
-
     const pieChartCtx = document.getElementById('uploads-by-status').getContext('2d');
     new Chart(pieChartCtx, {
         type: 'pie',

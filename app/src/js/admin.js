@@ -147,14 +147,26 @@ document.addEventListener('DOMContentLoaded', function () {
             if (window.location.pathname.includes('admin.php')) {
                 window.location.href = `/app/controllers/verifications.php?search=${encodeURIComponent(searchTerm)}`;
                 return;
-            }
-            // On the verifications page, update the hidden search field in the filter form and submit
-            if (filterForm && formSearchInput) {
+            }  else if (filterForm && formSearchInput) {
                 formSearchInput.value = searchTerm;
                 filterForm.submit();
             }
         });
     };
+    // --- Datepicker Initialization ---
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
+    if (startDateInput && endDateInput) {
+        const endDatePicker = flatpickr(endDateInput, {
+            dateFormat: "Y-m-d",
+        });
+        const startDatePicker = flatpickr(startDateInput, {
+            dateFormat: "Y-m-d",
+            onChange: function(selectedDates, dateStr, instance) {
+                endDatePicker.set('minDate', dateStr);
+            }
+        });
+    }
     // --- Action Menu Dropdown Logic ---
     document.body.addEventListener('click', function (e) {
         // Find all action menu contents that are currently active
