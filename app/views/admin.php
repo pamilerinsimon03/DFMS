@@ -3,10 +3,11 @@
         <span class="mobile-menu-icon"><img src="/app/src/assets/images/Menu.svg" alt="Menu Icon"></span>
     </button>
     <div class="search-container">
-        <div class="search-box">
+        <form action="/app/controllers/verifications.php" method="GET" class="search-box">
             <div class="search-icon"><img src="/app/src/assets/images/search-normal.svg" alt="Search Icon"></div>
-            <input type="text" placeholder="Search here" class="search-input">
-        </div>
+            <input type="text" placeholder="Search here" class="search-input" name="search" id="search-input"
+                value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>">
+        </form>
         <div class="date-filter">
             <form action="" method="GET">
                 <div class="date-input">

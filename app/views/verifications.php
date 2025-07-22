@@ -3,11 +3,11 @@
         <span class="mobile-menu-icon"><img src="/app/src/assets/images/Menu.svg" alt="Menu Icon"></span>
     </button>
     <div class="search-container">
-        <div class="search-box">
+        <form action="" method="GET" class="search-box">
             <div class="search-icon"><img src="/app/src/assets/images/search-normal.svg" alt="Search Icon"></div>
-            <input type="text" placeholder="Search here" class="search-input" id="search-input"
+            <input type="text" placeholder="Search here" class="search-input" name="search" id="search-input"
                 value="<?php echo htmlspecialchars($search); ?>">
-        </div>
+        </form>
     </div>
     <div class="header-right">
         <div class="notification-icon"><img src="/app/src/assets/images/notification-bing.svg" alt="Notification Icon">
@@ -151,22 +151,6 @@
                                     <a href="/app/controllers/verification_detail.php?doc_id=<?php echo $doc['id']; ?>"
                                         class="action-item"><img src="/app/src/assets/images/Bold Eye.svg" alt="View">
                                         View</a>
-                                    <?php if ($doc['status'] === 'Pending Approval'): ?>
-                                    <form action="?<?php echo http_build_query($_GET); ?>" method="POST"
-                                        style="display:inline;">
-                                        <input type="hidden" name="doc_id" value="<?php echo $doc['id']; ?>">
-                                        <input type="hidden" name="action" value="approve">
-                                        <button type="submit" class="action-item approve"><img
-                                                src="/app/src/assets/images/Check.svg" alt="Approve"> Approve</button>
-                                    </form>
-                                    <form action="?<?php echo http_build_query($_GET); ?>" method="POST"
-                                        style="display:inline;">
-                                        <input type="hidden" name="doc_id" value="<?php echo $doc['id']; ?>">
-                                        <input type="hidden" name="action" value="reject">
-                                        <button type="submit" class="action-item reject"><img
-                                                src="/app/src/assets/images/Trash.svg" alt="Reject"> Reject</button>
-                                    </form>
-                                    <?php endif; ?>
                                 </div>
                             </div>
                         </td>

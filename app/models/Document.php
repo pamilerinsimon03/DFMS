@@ -368,4 +368,48 @@ class Document
             return ['success' => false, 'message' => 'Database error: ' . $stmt->error];
         }
     }
+
+    public static function reupload($doc_id, $new_file, $generated_filename)
+    {
+        global $conn;
+
+        // 1. Validate the file
+        if ($new_file['error'] !== UPLOAD_ERR_OK) {
+            return ['success' => false, 'message' => 'An error occurred during file upload.'];
+        }
+        $allowed_types = ['application/pdf', 'image/jpeg', 'image/png'];
+        $allowed_exts  = ['pdf', 'jpeg', 'jpg', 'png'];
+        $ext = strtolower(pathinfo($new_file['name'], PATHINFO_EXTENSION));
+
+        if ($new_file['size'] > 5 * 1024 * 1024) {
+            return ['success' => false, 'message' => 'File size exceeds 5 MB limit.'];
+        }
+        if (!in_array($new_file['type'], $allowed_types) || !in_array($ext, $allowed_exts)) {
+            return ['success' => false, 'message' => 'Invalid file type. Only PDF, JPEG, and PNG allowed.'];
+        }
+
+        // 2. Move the new file
+        $upload_dir  = __DIR__ . '/../../public/uploads/';
+        $new_file_path = 'uploads/' . $generated_filename;
+        $destination = $upload_dir . $generated_filename;
+        if (!move_uploaded_file($new_file['tmp_name'], $destination)) {
+            return ['success' => false, 'message' => 'Failed to move uploaded file.'];
+        }
+
+        // 3. Update the database
+        $sql = "UPDATE documents SET file_path = ?, status = 'Pending Approval', created_at = NOW() WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            unlink($destination); // Clean up uploaded file
+            return ['success' => false, 'message' => 'DB prepare failed: ' . $conn->error];
+        }
+        $stmt->bind_param('si', $new_file_path, $doc_id);
+
+        if ($stmt->execute()) {
+            return ['success' => true, 'message' => 'File re-uploaded successfully.'];
+        } else {
+            unlink($destination); // Clean up uploaded file
+            return ['success' => false, 'message' => 'Database error: ' . $stmt->error];
+        }
+    }
 }

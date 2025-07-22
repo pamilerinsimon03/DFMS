@@ -33,12 +33,6 @@
 </div>
 <div class="header-divider"></div>
 <div class="uploads-content">
-    <?php if (isset($_SESSION['upload_message'])): ?>
-    <div
-        class="upload-message <?php echo strpos($_SESSION['upload_message'], 'successfully') !== false ? 'success' : 'error'; ?>">
-        <?php echo htmlspecialchars($_SESSION['upload_message']); unset($_SESSION['upload_message']); ?>
-    </div>
-    <?php endif; ?>
     <div class="uploads-tabs">
         <div class="tabs-left">
             <a href="/app/controllers/uploads.php?tab=total"
@@ -84,7 +78,7 @@
                 <td class="td-name"><?php echo htmlspecialchars($doc['document_name']); ?></td>
                 <td class="td-document"><?php echo htmlspecialchars(basename($doc['file_path'])); ?></td>
                 <td class="td-date"><?php echo date('d/m/Y', strtotime($doc['created_at'])); ?></td>
-                <td class="td-status <?php echo strtolower($doc['status']); ?>">
+                <td class="td-status <?php echo strtolower(str_replace(' ', '-', $doc['status'])); ?>">
                     <span class="status-wrapper">
                         <span class="status-dot"></span>
                         <span class="status-text">
@@ -116,4 +110,9 @@
             <?php endif; ?>
         </tbody>
     </table>
+    <?php if (isset($_SESSION['upload_message'])): ?>
+    <div class="upload-message">
+        <?php echo htmlspecialchars($_SESSION['upload_message']); unset($_SESSION['upload_message']); ?>
+    </div>
+    <?php endif; ?>
 </div>

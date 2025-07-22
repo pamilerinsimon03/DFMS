@@ -133,6 +133,28 @@ document.addEventListener('DOMContentLoaded', function () {
             overlay.classList.remove('active');
         });
     }
+    const searchForm = document.querySelector('.search-box');
+    const searchInput = document.getElementById('search-input');
+    const filterForm = document.getElementById('filter-sort-form');
+    const formSearchInput = document.getElementById('form-search');
+    // Handle search input submission
+    if (searchForm) {
+        searchForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const searchTerm = searchInput.value.trim();
+            
+            // On the main admin dashboard, redirect to the verifications page with the search query
+            if (window.location.pathname.includes('admin.php')) {
+                window.location.href = `/app/controllers/verifications.php?search=${encodeURIComponent(searchTerm)}`;
+                return;
+            }
+            // On the verifications page, update the hidden search field in the filter form and submit
+            if (filterForm && formSearchInput) {
+                formSearchInput.value = searchTerm;
+                filterForm.submit();
+            }
+        });
+    };
     // --- Action Menu Dropdown Logic ---
     document.body.addEventListener('click', function (e) {
         // Find all action menu contents that are currently active
