@@ -38,7 +38,8 @@
                     </div>
                 </a>
             </div>
-            <a href="/app/controllers/logout.php" class="menu-item logout">
+            <a href="/app/controllers/logout.php" class="menu-item logout"
+                onclick="return confirm('Are you sure you want to log out?');">
                 <div class="menu-icon"><img src="/app/src/assets/images/log-out.svg" alt="Logout Icon"></div>
                 <div class="menu-text">Log out</div>
             </a>

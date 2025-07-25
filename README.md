@@ -106,3 +106,22 @@ DFMS/
 ├── dfms.sql         # Database schema
 └── README.md        # This file
 ```
+
+## Login Credentials
+
+Default Password for all users: test101
+
+Admin Logins:
+
+Psychology Admin: ADMIN_PSYC
+English Admin: ADMIN_ENG
+Sociology Admin: ADMIN_SOC
+Linguistics Admin: ADMIN_LING
+Super Admin: SUPER_ADMIN
+Student Logins:
+
+Computer Science: U123001, U123002
+Psychology: U123003, U123004
+English: U123005, U123006
+Sociology: U123007, U123008
+Linguistics: U123009, U123010

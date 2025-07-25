@@ -18,6 +18,18 @@ class Document
         return $stmt->get_result()->fetch_assoc();
     }
 
+    public static function getDocumentsByUserId($user_id) {
+        global $conn;
+        $sql = "SELECT d.id, d.document_name, d.file_path, d.status, d.level, u.session, d.semester 
+                FROM documents d 
+                JOIN users u ON d.user_id = u.id
+                WHERE d.user_id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
     public static function getByUserId($user_id, $search = null)
     {
         global $conn;

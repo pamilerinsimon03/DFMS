@@ -37,18 +37,6 @@ document.addEventListener('DOMContentLoaded', function () {
             //alert(`The ${menuText} page will be implemented in a future phase.`);
         });
         });
-    
-    // Logout functionality
-    const logoutBtn = document.querySelector('.menu-item.logout');
-    
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', function() {
-            if (confirm('Are you sure you want to log out?')) {
-                // Redirect to login page
-                window.location.href = '/app/controllers/logout.php';
-            }
-        });
-    }
 
     const burger = document.getElementById('mobile-menu-toggle');
     const sidebar = document.getElementById('sidebar');

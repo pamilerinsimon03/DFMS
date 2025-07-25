@@ -57,7 +57,7 @@
                 $departments = [['id' => 1, 'name' => 'Computer Science'], ['id' => 2, 'name' => 'Psychology'], ['id' => 3, 'name' => 'English'], ['id' => 4, 'name' => 'Sociology'], ['id' => 5, 'name' => 'Linguistics']];
                 foreach ($departments as $dept): ?>
                 <option value="<?php echo $dept['id']; ?>"
-                    <?php echo ($department == $dept['id']) ? 'selected' : ''; ?>>
+                    <?php echo ($department_id == $dept['id']) ? 'selected' : ''; ?>>
                     <?php echo htmlspecialchars($dept['name']); ?>
                 </option>
                 <?php endforeach; ?>

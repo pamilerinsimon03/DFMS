@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
 
 // --- Parameters for Filtering and Sorting ---
 $tab = $_GET['tab'] ?? 'all';
-$start_date = !empty($_GET['start_date']) ? $_GET['start_date'] : '1970-01-01';
+$start_date = !empty($_GET['start_date']) ? $_GET['start_date'] : '2025-01-01';
 $end_date = !empty($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-d');
 $search = $_GET['search'] ?? '';
 $page = (int)($_GET['page'] ?? 1);

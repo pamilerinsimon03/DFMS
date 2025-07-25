@@ -46,11 +46,8 @@
     <div class="detail-row">
         <div class="doc-preview-container">
             <div class="doc-preview">
-                <object class="doc-embed"
-                    data="/public/uploads/<?php echo htmlspecialchars(basename($doc['file_path'])); ?>"
-                    type="application/pdf">
-                    <img src="/app/src/assets/images/PDF Icon Pic.png" alt="Document Preview">
-                </object>
+                <iframe class="doc-embed"
+                    src="/public/uploads/<?php echo htmlspecialchars(basename($doc['file_path'])); ?>"></iframe>
                 <div class="zoom-icon"><img src="/app/src/assets/images/Zoom - In.svg" alt="Zoom"></div>
             </div>
         </div>
@@ -118,9 +115,14 @@
     </div>
     <?php endif; ?>
 </div>
-<div class="doc-modal">
-    <div class="doc-modal-content">
-        <img id="modal-img" src="" alt="Full Document">
-        <div class="close-modal"><img src="/app/src/assets/images/Close.svg" alt="Close"></div>
+<div id="doc-modal" class="doc-modal" data-doc-name="<?php echo htmlspecialchars(basename($doc['file_path'])); ?>">
+    <span class="close-modal">
+        <img src="/app/src/assets/images/Close.svg" alt="Close" />
+    </span>
+    <div class="doc-modal-main">
+        <iframe id="modal-iframe" src=""></iframe>
+    </div>
+    <div class="doc-modal-caption">
+        <p id="doc-modal-caption-text"></p>
     </div>
 </div>
