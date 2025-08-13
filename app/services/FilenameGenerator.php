@@ -14,7 +14,7 @@ class FilenameGenerator {
     public static function generate($userId, $documentName, $semester, $originalFileExtension) {
         $user = User::getById($userId);
 
-        if (!$user || empty($user['department_code'])) {
+        if (!$user || empty($user['department_id'])) {
             // Cannot generate a name if user or department info is missing
             return false;
         }
@@ -25,7 +25,7 @@ class FilenameGenerator {
         $semesterCode = (str_contains($semester, '1st')) ? '1st' : '2nd';
         $programTypeCode = ($user['program_type'] === 'Undergraduate') ? 'Undergrad' : 'PG';
         $modeCode = ($user['mode'] === 'Regular') ? 'Regular' : 'DL';
-        $departmentCode = $user['department_code'];
+        $department_id = $user['department_id'];
         
         // Sanitize the document name to be filesystem-safe
         $safeDocumentName = preg_replace('/[^a-zA-Z0-9-]/', '_', $documentName);
@@ -37,7 +37,7 @@ class FilenameGenerator {
             $semesterCode,
             $programTypeCode,
             $modeCode,
-            $departmentCode,
+            $department_id,
             $safeDocumentName,
             $originalFileExtension
         );
