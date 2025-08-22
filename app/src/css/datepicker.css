@@ -1,0 +1,203 @@
+/* General calendar styling */
+.flatpickr-calendar {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 340px;
+    padding: 15px;
+}
+
+/* Month and year navigation container */
+.flatpickr-months {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+/* Flexbox container for month and year */
+.flatpickr-month {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+    gap: 8px;
+}
+
+/* Common style for month and year elements */
+.flatpickr-current-month,
+.numInputWrapper {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    font-size: 16px;
+    color: #01017A;
+}
+
+/* Custom styling for the month dropdown */
+select.flatpickr-monthDropdown-months {
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    color: inherit;
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+}
+
+/* Custom styling for the year input */
+.numInput.cur-year {
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    color: inherit;
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    width: 4ch;
+}
+
+/* Navigation arrow styling */
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 32px;
+    height: 32px;
+    color: #01017A;
+    fill: #01017A;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.flatpickr-months .flatpickr-prev-month:hover,
+.flatpickr-months .flatpickr-next-month:hover {
+    background-color: #e9e9ff;
+}
+
+/* Weekday styling */
+.flatpickr-weekdays {
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.flatpickr-weekday {
+    color: #333;
+    font-weight: 600;
+    width: 40px;
+    text-align: center;
+}
+
+/* Day container and individual day styling */
+.dayContainer {
+    padding: 10px 0 0 0;
+}
+
+.flatpickr-day {
+    color: #333;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+}
+
+.flatpickr-day:hover {
+    background: #e9e9ff;
+    border-color: #d0d0ff;
+}
+
+.flatpickr-day.today {
+    border-color: #01017A;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange {
+    background: #01017A;
+    color: #fff;
+    border-color: #01017A;
+}
+
+.flatpickr-day.inRange {
+    background: #e9e9ff;
+    border-color: #d0d0ff;
+    box-shadow: none;
+}
+/* 1) Center the month/year “pill” and absolutely position the arrows */
+.flatpickr-months {
+  position: relative;
+  justify-content: center !important;
+  padding: 0 40px;  /* leave space for arrows */
+}
+
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  fill: #01017A;
+}
+
+.flatpickr-months .flatpickr-prev-month {
+  left: 8px;
+}
+
+.flatpickr-months .flatpickr-next-month {
+  right: 8px;
+}
+
+/* 2) Tightly space the month dropdown and year input */
+.flatpickr-current-month {
+  display: flex !important;
+  align-items: center;
+  gap: 4px !important;
+}
+
+.flatpickr-current-month .numInputWrapper {
+  margin-left: 0;
+}
+
+/* 3) Hide native up/down arrows on the year input */
+.numInput.cur-year input[type="number"]::-webkit-inner-spin-button,
+.numInput.cur-year input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* 4) Style the dropdown arrow for the month selector */
+select.flatpickr-monthDropdown-months {
+  padding-right: 20px;      /* make room for our custom arrow */
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%2301017A' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+
+/* 5) Tweak font‑size/weight if you like */
+.flatpickr-current-month,
+.numInput.cur-year {
+  font-size: 15px;
+  font-weight: 600;
+}
+.flatpickr-current-month {
+    padding-bottom: 8px;
+}
+.numInputWrapper > span {
+    margin-left: 10px;
+}

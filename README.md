@@ -2,76 +2,126 @@
 
 A web portal for students, administrators, and lecturers to manage academic documents.
 
-## Project Overview
-
-The University of Ibadan DFMS is a web-based system that allows:
-
-- Students to upload academic documents (fees receipts, course registration forms, O'Level results, birth certificates)
-- Administrators to verify, approve, or reject uploads
-- Lecturers to view only verified documents
-
 ## Tech Stack
 
-- HTML5 for markup
-- CSS3 for styling
-- Vanilla JavaScript (ES6+) for interactivity & state
-- Supabase JS Client via CDN for Auth, Database, and Storage
-- No build tools—all files served statically
+* **Backend:** PHP
+* **Frontend:** HTML5, CSS3, Vanilla JavaScript (ES6+)
+* **Database:** MySQL
+
+## Server Requirements
+
+For the application to run correctly, the server must meet the following requirements:
+
+* PHP 8.0 or higher
+* MySQL 5.7 or higher
+* GD extension (bundled with PHP) for blur detection
+* A web server such as Apache or Nginx
+
+## Image Quality & OCR Validation
+
+These features automate rejection of blurry or unreadable uploads. Install and configure the following:
+
+### Linux (Debian/Ubuntu)
+
+1. **Install Dependencies**:
+
+   ```bash
+   sudo apt-get update
+   sudo apt-get install php-gd php-imagick tesseract-ocr ghostscript
+   ```
+2. **Restart Services**:
+
+   ```bash
+   sudo systemctl restart apache2  # or nginx + php-fpm
+   ```
+
+### Windows (XAMPP/WAMP)
+
+1. **Enable PHP Extensions** in `php.ini`:
+
+   ```ini
+   extension=gd
+   extension=imagick
+   extension=fileinfo
+   ```
+
+2. **Install ImageMagick**:
+
+   * Download matching ImageMagick **DLL** binary (x64/TS or NTS)
+   * Extract ZIP, copy `php_imagick.dll` to `C:\xampp\php\ext`.
+   * Copy supporting `CORE_RL_*.dll` to Apache’s `bin` folder (e.g. `C:\xampp\apache\bin`).
+
+3. **Install Ghostscript**:
+
+   * Download and install from [https://www.ghostscript.com/download/gsdnld.html](https://www.ghostscript.com/download/gsdnld.html)
+   * Add `C:\Program Files\gs\gs<version>\bin` to **System PATH**.
+   * Create a `gs.bat` in that folder with:
+
+     ```bat
+     @echo off
+     "C:\Program Files\gs\gs<version>\bin\gswin64c.exe" %*
+     ```
+
+4. **Install Tesseract OCR**:
+
+   * Download from [https://github.com/UB-Mannheim/tesseract/wiki](https://github.com/UB-Mannheim/tesseract/wiki)
+   * Ensure **"Add to PATH"** is checked.
+
+5. **Restart Apache/WAMP** from control panel.
+
+---
+
+## Getting Started
+
+1. **Clone the repository:**
+
+   ```bash
+   git clone <repository_url>
+   cd DFMS
+   ```
+2. **Database Setup:**
+
+   * Import the `dfms.sql` file into MySQL database.
+   * Configure the database connection in `app/config/config.php`.
+3. **Install Dependencies:**
+
+   * Follow the steps under **Image Quality & OCR Validation** if you need automated checks.
+4. **Web Server Configuration:**
+
+   * Point your web server’s document root to the `/public` directory.
 
 ## Project Structure
 
 ```
 DFMS/
-├── index.html               # Login page
-├── src/
-│   ├── assets/
-│   │   └── images/          # Images and icons
-│   ├── css/
-│   │   ├── global.css       # Global reset and base styles
-│   │   ├── style.css        # Main styling for the login page
-│   │   └── styleguide.css   # Design tokens and variables
-│   ├── js/
-│   │   └── login.js         # Login page functionality
-│   └── pages/               # Other HTML pages (to be added)
-└── README.md                # Project documentation
+├── app/
+│   ├── config/      # Database and app configuration
+│   ├── controllers/ # Handles user requests and business logic
+│   ├── models/      # Database interaction and data models
+│   ├── views/       # PHP templates for the UI
+│   └── src/         # CSS, JS, and image assets
+├── public/
+│   ├── index.php    # Front controller
+│   └── uploads/     # Directory for user-uploaded files
+├── dfms.sql         # Database schema
+└── README.md        # This file
 ```
 
-## Development Phases
+## Login Credentials
 
-### Phase 1 – Frontend Development
-- [x] Stage 1: Login & Authentication screen
-- [ ] Stage 2: Role-based Dashboard (student, admin, lecturer)
-- [ ] Stage 3: Document Upload Form
-- [ ] Stage 4: Verification Queue & Detail View (admin)
-- [ ] Stage 5: Search & Document Preview (lecturer)
+Default Password for all users: test101
 
-### Phase 2 – Backend Integration
-- [ ] Hook static pages up to Supabase Auth and Realtime DB
-- [ ] Configure Row-Level Security policies
+Admin Logins:
 
-### Phase 3 – Core File Management
-- [ ] File upload, versioning, metadata entry, tagging
-- [ ] Notifications (email/SMS/webhooks)
+Psychology Admin: ADMIN_PSYC
+English Admin: ADMIN_ENG
+Sociology Admin: ADMIN_SOC
+Linguistics Admin: ADMIN_LING
+Super Admin: SUPER_ADMIN
+Student Logins:
 
-### Phase 4 – Admin & Reporting
-- [ ] Audit trail UI, reporting dashboards, role management
-
-### Phase 5 – QA & Accessibility
-- [ ] WCAG 2.1 AA compliance, performance tuning, cross-browser testing
-
-### Phase 6 – Deployment & Handover
-- [ ] Docker static host configs, CI/CD scripts, training docs
-
-## Getting Started
-
-1. Replace the placeholder logo images in `src/assets/images/` with the actual University of Ibadan logo files:
-   - `ui-logo.png` - The logo for the sidebar (142px × 152px)
-   - `ui-logo-watermark.png` - The logo for the background watermark (568px × 608px)
-
-2. Open `index.html` in a web browser to view the login page.
-
-## Notes for Future Development
-
-- The login page is currently static with client-side validation only.
-- Backend integration with Supabase will be implemented in Phase 2.
-- Role-based access control will be implemented once the dashboard pages are created.
+Computer Science: U123001, U123002
+Psychology: U123003, U123004
+English: U123005, U123006
+Sociology: U123007, U123008
+Linguistics: U123009, U123010

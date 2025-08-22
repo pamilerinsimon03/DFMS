@@ -1,4 +1,59 @@
-/* KPI cards */
+.header-search-filter {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-grow: 1;
+}
+
+.search-container {
+    flex-grow: 1;
+    max-width: 400px;
+}
+
+.search-box {
+    width: 100%;
+}
+
+.date-filter form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.date-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    background: #FFFFFF;
+    border: 1px solid #E0E0E0;
+    border-radius: 8px;
+}
+
+.date-input input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 14px;
+    color: #333;
+    width: 80px;
+}
+
+.date-input img {
+    opacity: 0.6;
+}
+
+.filter-button {
+    padding: 10px 20px;
+    background-color: #01017A;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
 .kpi-cards {
   display:flex; 
   gap:40px; 
@@ -51,14 +106,12 @@
   height: 40px;
 }
 
-/* Override number and icon colors for green and yellow KPI cards */
 .bg-green .kpi-number { color: #009A49; }
 .bg-yellow .kpi-number { color: #FAA62C; }
 
 .bg-green .kpi-icon { border-color: #009A49; }
 .bg-yellow .kpi-icon { border-color: #FAA62C; }
 
-/* Charts */
 .charts-row {
   display: flex;
   flex-wrap: nowrap;
@@ -93,7 +146,6 @@
   font-weight:600;
 }
 
-/* Table section */
 .table-section {
   margin: 32px;
 }
@@ -152,37 +204,54 @@
   border-radius: 12px;
   margin-bottom: 8px;
   display: table-row;
-  /* so border-radius applies */
 }
 
-/* Ensure action cells are positioned relative for dropdown */
-.td-action {
-  position: relative;
+.docs-table th a {
+  color: var(--black, #001224);
+  text-decoration: none;
 }
 
-/* Date Filter Styles */
-.date-filter {
+.docs-table .td-status .status-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.docs-table .td-status .status-text {
+    font-size: 14px;
+}
+
+.docs-table .td-status.approved .status-dot,
+.docs-table .td-status.verified .status-dot {
+    background-color: #34C759;
+}
+
+.docs-table .td-status.approved .status-text,
+.docs-table .td-status.verified .status-text {
+    color: #34C759;
+}
+
+.docs-table .td-status.pending-approval .status-dot {
+    background-color: #FAA62C;
+}
+
+.docs-table .td-status.pending-approval .status-text {
+    color: #FAA62C;
+}
+
+.docs-table .td-status.rejected .status-dot {
+    background-color: #F21B3F;
+}
+
+.docs-table .td-status.rejected .status-text {
+    color: #F21B3F;
+}
+
+.action-item {
   display: flex;
-  align-items: center;
   gap: 8px;
-}
-
-.date-filter form span {
-  display: inline-flex;
-  font-size: 14px;
-  color: #999999;
-}
-
-.date-filter form {
-  display: flex;
-  flex-direction: row;
   align-items: center;
-  gap: 10px;
-}
-
-.date-input input {
-  border: none;
-  color: #999999;
+  vertical-align: middle;
 }
 
 .date-input input[type="date"]::-webkit-inner-spin-button,
@@ -194,52 +263,6 @@
 .date-input input[type="date"] {
     position: relative;
     z-index: 1;
-}
-
-.date-input {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
-  background: #FFFFFF;
-  border-radius: 10px;
-  border: 0.5px solid rgba(128,128,128,0.4);
-  color: #999999;
-  font-size: 14px;
-  cursor: pointer;
-  width: 154px;
-}
-
-.date-input img {
-  width: 20px;
-  height: 20px;
-  opacity: 0.4;
-  position: relative;
-  right: 10px;
-}
-
-.search-box {
-  width: 398px;
-  height: 40px;
-  padding: 10px 16px;
-  background-color: #F5F5F5;
-  border-radius: 100px;
-  border: 0.5px solid #E0E0E0;
-  box-shadow: 0px 0px 2px rgba(176, 189, 208, 0.12);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.search-box img {
-  width: 24px;
-  height: 24px;
-}
-
-.search-container {
-  display: flex;
-  align-items: center;
-  gap: 60px;
 }
 
 .notification-icon {
@@ -266,13 +289,15 @@
     font-weight: 500;
 }
 
-/* Responsive adjustments */
 @media(max-width:768px) {
   .kpi-cards { 
     flex-direction:column; 
   }
   .charts-row { 
     flex-direction:column; 
+  }
+  .header-search-filter {
+    display: none;
   }
 }
 
@@ -285,7 +310,12 @@
   }
 }
 
-/* Action dropdown styling */
+.action-menu-content form {
+  margin: 0;
+  padding: 0;
+  display: block;
+}
+
 .action-dropdown {
   position: absolute;
   background: #FFFFFF;
@@ -305,9 +335,10 @@
 .action-dropdown .action-item:hover {
   background: #F5F5F5;
 }
-.action-dropdown .action-item img {
+.action-menu-content .action-item img {
   width: 16px;
   height: 16px;
+  flex-shrink: 0;
 }
 .admin-message {
   margin: 10px 0;
@@ -324,26 +355,63 @@
 }
 
 .action-menu {
-  position: relative;
+  position: relative; 
   display: inline-block;
-  cursor: pointer;
+}
+.action-menu-content {
+  display: none; 
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 5px;
+  background-color: #ffffff;
+  min-width: 150px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 10;
+  overflow: hidden;
 }
 
 .action-menu-content {
   display: none;
   position: absolute;
-  background: #fff;
+  right: 0;
+  left: auto;
+  background-color: #ffffff;
+  min-width: 140px;
+  border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  z-index: 1;
-  min-width: 100px;
+  z-index: 10;
+  overflow: hidden;
+  align-items: start;
+  vertical-align: top;
 }
 
+.action-menu-content.active {
+  display: block;
+}
 
+.action-menu-content .action-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 15px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    color: #333;
+    text-decoration: none;
+    text-align: left;
+    transition: background-color 0.2s ease;
+}
 
 .action-menu-content a,
 .action-menu-content button {
     display: flex;
-    align-items: center;
+    align-items: start;
     width: 100%;
     padding: 8px;
     border: none;
@@ -354,27 +422,10 @@
     color: #000;
 }
 
-.action-menu-content .action-item {
-    display: flex;
-    align-items: center;
-    padding: 8px 12px;
-    width: 100%;
-    text-decoration: none;
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-family: Poppins, sans-serif;
-    font-size: 14px;
-    color: #000;
-}
-
-/* spacing for the icons */
 .action-menu-content .action-item img {
     width: 16px;
-    margin-right: 8px;
 }
 
-/* specific colors */
 .action-menu-content .action-item.verify {
     color: #009A49;
 }
@@ -383,7 +434,6 @@
     color: #FF3B30;
 }
 
-/* hover state */
 .action-menu-content .action-item:hover {
     background: #f0f0f0;
 }
@@ -392,7 +442,6 @@
 
 .action-menu-content img {
     width: 16px;
-    margin-right: 5px;
 }
 
 .status-pending {
@@ -407,20 +456,55 @@
     background: #f8d7da;
 }
 
-.filter-button {
-    padding: 10px 16px;
-    background: none;
-    color: #01017A;
-    border: none;
-    cursor: pointer;
-    border-radius: 10px;
-    border: 2px solid #01017A;
-    font-weight: 700;
+.uploads-content .filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    margin: 20px 0;
 }
 
-.filter-button:hover {
-    background: #01017A;
-    color: white;
+.uploads-content .filters .date-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.uploads-content .filters select {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: #FFFFFF;
+    border-radius: 10px;
+    border: 0.5px solid rgba(128, 128, 128, 0.4);
+    color: #555;
+    font-size: 14px;
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23555' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    padding-right: 40px;
+}
+
+.uploads-content .filters .filter-button {
+    padding: 10px 24px;
+    background-color: #01017A;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.uploads-content .filters .filter-button:hover {
+    background-color: #00005a;
 }
 
 .doc-link {

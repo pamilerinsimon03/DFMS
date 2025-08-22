@@ -1,31 +1,7 @@
-
-
-# php -- BEGIN cPanel-generated handler, do not edit
-# Set the “ea-php82” package as the default “PHP” programming language.
-<IfModule mime_module>
-  AddHandler application/x-httpd-ea-php82___lsphp .php .php8 .phtml
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^$ public/ [L]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>
-```
-# Enable URL rewriting
-RewriteEngine On
-RewriteBase /
-
-# Prevent directory listing
-Options -Indexes
-
-# Redirect external .php requests to extensionless URL (e.g., /index.php -> /index)
-RewriteCond %{THE_REQUEST} \s/(.+)\.php[\s?] [NC]
-RewriteRule ^ /%1 [R=301,L]
-
-# Internally rewrite extensionless URLs to .php files if they exist
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_FILENAME}.php -f
-RewriteRule ^(.*)$ $1.php [QSA,L]
-
-# Route non-existent files/directories to index (fallback, keep for compatibility)
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index [QSA,L]
-```
-# php -- END cPanel-generated handler, do not edit

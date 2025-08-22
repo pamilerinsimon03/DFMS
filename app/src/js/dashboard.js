@@ -35,24 +35,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Other pages not yet implemented
             //alert(`The ${menuText} page will be implemented in a future phase.`);
         });
-        });
-    
-    // Logout functionality
-    const logoutBtn = document.querySelector('.menu-item.logout');
-    
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', function() {
-            if (confirm('Are you sure you want to log out?')) {
-                // Redirect to login page
-                window.location.href = '/app/controllers/logout.php';
-            }
-        });
-    }
+    });
 
     // File Upload Functionality
     const uploadForm = document.getElementById('upload-form');
     const fileUpload = document.getElementById('file-upload');
-    const fileNameDisplay = document.getElementById('file-name');
+    const fileNameDisplay = document.getElementById('file-name-display');
     const uploadButton = document.getElementById('upload-button');
     const uploadContainer = document.getElementById('upload-container');
 
@@ -244,10 +232,35 @@ Detailed view will be implemented in Phase 4.`);
         }
     }
 
+    const fileUploadInput = document.getElementById('file-upload');
+
+    fileUploadInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            fileNameDisplay.textContent = this.files[0].name;
+        } else {
+            fileNameDisplay.textContent = '';
+        }
+    });
+
 
     // Run on load, then again on every resize:
     reorderForMobile();
     window.addEventListener('resize', reorderForMobile);
+
+    const searchContainer = document.getElementById('search-container');
+    const searchIconBtn = document.getElementById('search-icon-btn');
+    const searchInput = document.querySelector('.search-input');
+
+    searchIconBtn.addEventListener('click', (e) => {
+        if (window.innerWidth <= 768) {
+            e.preventDefault();
+            searchContainer.classList.toggle('active');
+            if (searchContainer.classList.contains('active')) {
+                searchInput.focus();
+            }
+        }
+    });
+
 });
 
 document.addEventListener('DOMContentLoaded', () => {

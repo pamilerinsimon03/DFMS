@@ -17,28 +17,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
     exit();
 }
 
+// --- Parameters for Filtering and Sorting ---
 $tab = $_GET['tab'] ?? 'all';
-$start_date = $_GET['start_date'] ?? '1970-01-01';
-$end_date = $_GET['end_date'] ?? date('Y-m-d');
+$start_date = !empty($_GET['start_date']) ? $_GET['start_date'] : '2025-01-01';
+$end_date = !empty($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-d');
 $search = $_GET['search'] ?? '';
 $page = (int)($_GET['page'] ?? 1);
 $per_page = 50;
+$level = $_GET['level'] ?? null;
+$department_id = $user['department_id'] ?? ($_GET['department'] ?? null); // Use user's dept or query param
+$mode = $_GET['mode'] ?? null;
+$program_type = $_GET['program_type'] ?? null;
+$sort_by = $_GET['sort_by'] ?? 'upload_date';
+$sort_order = $_GET['sort_order'] ?? 'desc';
 
-$documents = Document::getAllDocuments($tab, $start_date, $end_date, $search, $page, $per_page);
-$total = Document::countAllDocuments($tab, $start_date, $end_date, $search);
-if ($tab === 'rejected') {
-    // temporary debugging: log or dump
-    error_log("TAB=REJECTED → fetched ". count($documents) ." rows");
-    // or, to see it in the HTML:
-    echo "<pre>DEBUG REJECTED: ". htmlentities(print_r($documents, true)) ."</pre>";
+// --- Status Mapping ---
+// Maps the 'tab' parameter from the URL to the actual status string in the database.
+$status_map = [
+    'all' => null, // No status filter
+    'pending' => 'Pending Approval',
+    'approved' => 'Approved',
+    'rejected' => 'Rejected'
+];
+$status_filter = $status_map[$tab] ?? null;
+
+// --- Prepare Sorting Links and Indicators for the View ---
+$sort_links = [];
+$sort_indicators = [];
+$columns_to_sort = ['full_name', 'department', 'level', 'upload_date'];
+
+foreach ($columns_to_sort as $column) {
+    $current_order = ($sort_by === $column && $sort_order === 'asc') ? 'desc' : 'asc';
+    $query_params = array_merge($_GET, ['sort_by' => $column, 'sort_order' => $current_order]);
+    $sort_links[$column] = '?' . http_build_query($query_params);
+    
+    if ($sort_by === $column) {
+        $sort_indicators[$column] = ($sort_order === 'asc') ? ' ▲' : ' ▼';
+    } else {
+        $sort_indicators[$column] = '';
+    }
 }
+
+// --- Fetch Data from Model ---
+$documents = Document::getAllDocuments($status_filter, $start_date, $end_date, $search, $page, $per_page, $department_id, $level, $mode, $program_type, $sort_by, $sort_order);
+$total = Document::countAllDocuments($status_filter, $start_date, $end_date, $search, $department_id, $level, $mode, $program_type);
+
+// --- Pagination ---
 $total_pages = ceil($total / $per_page);
 
+// --- Page Setup ---
 $page_title = 'Admin Verifications';
 $active_page = 'verifications';
 $css_files = ['admin.css', 'uploads.css'];
 $js_files = ['admin_verifications.js', 'admin.js'];
 
+// --- Render View ---
 require_once __DIR__ . '/../views/partials/header.php';
 require_once __DIR__ . '/../views/partials/admin_sidebar.php';
 require_once __DIR__ . '/../views/verifications.php';

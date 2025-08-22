@@ -6,15 +6,20 @@
         <h1>Welcome <?php echo htmlspecialchars(explode(' ', $user['full_name'])[0]); ?></h1>
     </div>
     <div class="header-right">
-        <div class="search-container">
-            <div class="search-box">
-                <div class="search-icon"><img src="/app/src/assets/images/search-normal.svg" alt="Search Icon"></div>
-                <input type="text" placeholder="Search here" class="search-input">
-            </div>
-            <div class="notification-icon">
-                <img src="/app/src/assets/images/notification-bing.svg" alt="Notification Icon">
-                <div class="notification-dot"></div>
-            </div>
+        <div class="search-container" id="search-container">
+            <form action="/app/controllers/dashboard.php" method="GET" class="search-form">
+                <div class="search-box">
+                    <button type="button" class="search-icon-btn" id="search-icon-btn" aria-label="Open Search">
+                        <img src="/app/src/assets/images/search-normal.svg" alt="Search Icon" class="search-icon-img">
+                    </button>
+                    <input type="text" name="search" placeholder="Search here" class="search-input"
+                        value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
+                </div>
+            </form>
+        </div>
+        <div class="notification-icon">
+            <img src="/app/src/assets/images/notification-bing.svg" alt="Notification Icon">
+            <div class="notification-dot"></div>
         </div>
         <div class="user-profile">
             <img src="/app/src/assets/images/Small Avatar.svg" alt="User Profile" class="avatar">
@@ -89,8 +94,8 @@
             <div class="upload-container" id="upload-container">
                 <?php if (isset($_SESSION['upload_message'])): ?>
                 <div
-                    class="upload-message <?php echo strpos($_SESSION['upload_message'], 'successfully') !== false ? 'success' : 'error'; ?>">
-                    <?php echo htmlspecialchars($_SESSION['upload_message']); unset($_SESSION['upload_message']); ?>
+                    class="upload-message <?php echo (isset($_SESSION['upload_status']) && $_SESSION['upload_status'] === 'success') ? 'success' : 'error'; ?>">
+                    <?php echo htmlspecialchars($_SESSION['upload_message']); unset($_SESSION['upload_message']); unset($_SESSION['upload_status']); ?>
                 </div>
                 <?php endif; ?>
                 <form action="/app/controllers/upload_file.php" method="POST" enctype="multipart/form-data"
@@ -99,12 +104,21 @@
                     </div>
                     <div class="upload-text">Upload files</div>
                     <div class="upload-note">File size not more than 5mb, file format pdf/jpeg/png</div>
-                    <input type="text" name="document_name" placeholder="Document Name" required class="upload-input">
+                    <div class="custom-select-wrapper">
+                        <select name="document_name" required>
+                            <option value="" disabled selected>Select Document Type</option>
+                            <?php foreach ($document_types as $key => $value): ?>
+                            <option value="<?php echo htmlspecialchars($key); ?>">
+                                <?php echo htmlspecialchars($value); ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                     <input type="file" name="file" id="file-upload" accept=".pdf,.jpg,.jpeg,.png" required
-                        class="upload-file-input">
+                        class="upload-file-input" style="display: none;">
                     <label for="file-upload" class="custom-file-upload">Choose File</label>
-                    <span class="file-name" id="file-name"></span>
-                    <button type="button" class="upload-btn" id="upload-button">Upload files</button>
+                    <span id="file-name-display" class="file-name-display"></span>
+                    <button type="submit" class="upload-btn">Upload files</button>
                 </form>
             </div>
         </div>
@@ -125,5 +139,7 @@
             </div>
         </div>
     </div>
+
 </div>
+
 <script src="../src/js/dashboard.js"></script>

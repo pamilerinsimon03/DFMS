@@ -1,0 +1,112 @@
+.students-container {
+    padding: 20px;
+}
+
+.students-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.student-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    text-align: center;
+}
+
+.student-card img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin-bottom: 15px;
+}
+
+.student-card h3 {
+    margin: 0 0 10px;
+    font-size: 1.1em;
+}
+
+.student-card p {
+    margin: 0;
+    color: #666;
+}
+
+.students-container .filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    margin: 20px 0;
+}
+
+.students-container .filters .date-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.students-container .filters .date-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    background: #FFFFFF;
+    border: 1px solid #E0E0E0;
+    border-radius: 8px;
+}
+
+.students-container .filters .date-input input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 14px;
+    color: #333;
+    width: 100px;
+}
+
+.students-container .filters .date-input img {
+    opacity: 0.6;
+}
+
+.students-container .filters select {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: #FFFFFF;
+    border-radius: 10px;
+    border: 0.5px solid rgba(128, 128, 128, 0.4);
+    color: #555;
+    font-size: 14px;
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23555' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    padding-right: 40px;
+}
+
+.students-container .filters .filter-button {
+    padding: 10px 24px;
+    background-color: #01017A;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.students-container .filters .filter-button:hover {
+    background-color: #00005a;
+}
+.student-card h3 {
+    color: black;
+    font-weight: 600;
+}

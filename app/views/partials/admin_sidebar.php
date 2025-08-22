@@ -22,8 +22,18 @@
                     <div class="menu-text <?php echo $active_page === 'verifications' ? 'active-text' : ''; ?>">
                         Verifications</div>
                 </a>
+                <a href="/app/controllers/students.php"
+                    class="menu-item <?php echo $active_page === 'students' ? 'active' : ''; ?>">
+                    <div class="menu-icon">
+                        <img src="/app/src/assets/images/User-Circle<?php echo $active_page === 'students' ? '-Purple' : ''; ?>.svg"
+                            alt="Students Icon">
+                    </div>
+                    <div class="menu-text <?php echo $active_page === 'students' ? 'active-text' : ''; ?>">
+                        Students</div>
+                </a>
                 <a href="#" class="menu-item">
-                    <div class="menu-icon"><img src="/app/src/assets/images/analytics.svg" alt="Analytics Icon"></div>
+                    <div class="menu-icon"><img src="/app/src/assets/images/actual-analytics.svg" alt="Analytics Icon">
+                    </div>
                     <div class="menu-text">Analytics</div>
                 </a>
                 <a href="/app/controllers/settings.php"
