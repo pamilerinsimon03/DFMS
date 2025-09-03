@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../models/User.php';
+require_once __DIR__ . '/../models/Notification.php';
 require_once __DIR__ . '/../services/AcademicCalendarService.php';
 
 class Document
@@ -104,8 +105,13 @@ class Document
         $sql = "SELECT DATE_FORMAT(d.created_at, '%Y-%m') as month, COUNT(d.id) as count
                 FROM documents d
                 JOIN users u ON d.user_id = u.id
-                WHERE DATE(d.created_at) BETWEEN ? AND ?";
-        $params = [$start_date, $end_date];
+                WHERE d.created_at BETWEEN ? AND ?";
+        
+        // Create variables for datetime strings
+        $start_datetime = $start_date . ' 00:00:00';
+        $end_datetime = $end_date . ' 23:59:59';
+        
+        $params = [$start_datetime, $end_datetime];
         $types = "ss";
 
         if ($department_id) {
@@ -133,8 +139,13 @@ class Document
         $sql = "SELECT d.status, COUNT(d.id) as count
                   FROM documents d
                   JOIN users u ON d.user_id = u.id
-                  WHERE DATE(d.created_at) BETWEEN ? AND ?";
-        $params = [$start_date, $end_date];
+                  WHERE d.created_at BETWEEN ? AND ?";
+        
+        // Create variables for datetime strings
+        $start_datetime = $start_date . ' 00:00:00';
+        $end_datetime = $end_date . ' 23:59:59';
+        
+        $params = [$start_datetime, $end_datetime];
         $types = "ss";
 
         if ($department_id) {
@@ -161,7 +172,7 @@ class Document
         $sql = "SELECT d.id, d.document_name, d.file_path, d.created_at as upload_date, u.full_name, u.programme as department, u.level, u.session
              FROM documents d
              JOIN users u ON d.user_id = u.id
-             WHERE d.status = 'Pending Approval' AND DATE(d.created_at) BETWEEN ? AND ?";
+             WHERE d.status = 'Pending Approval' AND d.created_at BETWEEN ? AND ?";
 
         if ($department_id) {
             $sql .= " AND u.department_id = ?";
@@ -170,10 +181,14 @@ class Document
         $sql .= " ORDER BY d.created_at DESC LIMIT ?";
         $stmt = $conn->prepare($sql);
 
+        // Create variables for datetime strings
+        $start_datetime = $start_date . ' 00:00:00';
+        $end_datetime = $end_date . ' 23:59:59';
+
         if ($department_id) {
-            $stmt->bind_param("ssii", $start_date, $end_date, $department_id, $limit);
+            $stmt->bind_param("ssii", $start_datetime, $end_datetime, $department_id, $limit);
         } else {
-            $stmt->bind_param("ssi", $start_date, $end_date, $limit);
+            $stmt->bind_param("ssi", $start_datetime, $end_datetime, $limit);
         }
 
         $stmt->execute();
@@ -186,7 +201,124 @@ class Document
         $sql = "UPDATE documents SET status = ? WHERE id = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("si", $status, $doc_id);
-        return $stmt->execute();
+        $ok = $stmt->execute();
+
+        if ($ok) {
+            // Fetch doc to know owner and name
+            $doc = self::getById($doc_id);
+            if ($doc && isset($doc['user_id'])) {
+                $title = $status === 'Approved' ? 'Document approved' : 'Document rejected';
+                $message = $status === 'Approved'
+                    ? "Your document '" . $doc['document_name'] . "' has been approved."
+                    : "Your document '" . $doc['document_name'] . "' was rejected. Please review and reupload.";
+                Notification::create((int)$doc['user_id'], $title, $message);
+            }
+        }
+
+        return $ok;
+    }
+
+    /**
+     * Generate smart search terms for fuzzy matching
+     */
+    private static function generateSearchTerms($search) {
+        $search = trim($search);
+        if (empty($search)) {
+            return [];
+        }
+        
+        $terms = [];
+        
+        // Original search term
+        $terms[] = '%' . $search . '%';
+        
+        // Case variations
+        $terms[] = '%' . strtolower($search) . '%';
+        $terms[] = '%' . strtoupper($search) . '%';
+        $terms[] = '%' . ucfirst(strtolower($search)) . '%';
+        
+        // Handle common typos and variations
+        $variations = [
+            'approv' => 'approved',
+            'pend' => 'pending',
+            'reject' => 'rejected',
+            'doc' => 'document',
+            'cert' => 'certificate',
+            'trans' => 'transcript',
+            'result' => 'results',
+            'id' => 'identity',
+            'pass' => 'passport',
+            'birth' => 'birth',
+            'marriage' => 'marital',
+            'state' => 'state',
+            'phone' => 'phone',
+            'email' => 'email',
+            'addr' => 'address'
+        ];
+        
+        foreach ($variations as $short => $full) {
+            if (stripos($search, $short) !== false) {
+                $terms[] = '%' . $full . '%';
+            }
+        }
+        
+        // Handle matric number patterns (common variations)
+        if (preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $search)) {
+            // Format: 20/21/1234
+            $terms[] = '%' . $search . '%';
+        } elseif (preg_match('/^\d{10}$/', $search)) {
+            // Format: 2021123456
+            $terms[] = '%' . $search . '%';
+        }
+        
+        // Remove duplicates and return
+        return array_unique($terms);
+    }
+
+    /**
+     * Get search suggestions based on existing data
+     */
+    public static function getSearchSuggestions($query, $limit = 10) {
+        global $conn;
+        
+        if (empty($query) || strlen($query) < 2) {
+            return [];
+        }
+        
+        $search_term = '%' . $query . '%';
+        
+        $sql = "SELECT DISTINCT 
+                    u.full_name as suggestion,
+                    'name' as type
+                FROM users u
+                JOIN documents d ON u.id = d.user_id
+                WHERE u.full_name LIKE ?
+                UNION
+                SELECT DISTINCT 
+                    u.matric_number as suggestion,
+                    'matric' as type
+                FROM users u
+                JOIN documents d ON u.id = d.user_id
+                WHERE u.matric_number LIKE ?
+                UNION
+                SELECT DISTINCT 
+                    d.document_name as suggestion,
+                    'document' as type
+                FROM documents d
+                WHERE d.document_name LIKE ?
+                UNION
+                SELECT DISTINCT 
+                    d.status as suggestion,
+                    'status' as type
+                FROM documents d
+                WHERE d.status LIKE ?
+                LIMIT ?";
+        
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("ssssi", $search_term, $search_term, $search_term, $search_term, $limit);
+        $stmt->execute();
+        
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
 
     public static function getAllDocuments($status_filter, $start_date, $end_date, $search, $page, $per_page, $department_id, $level, $mode, $program_type, $sort_by, $sort_order)
@@ -211,11 +343,31 @@ class Document
         }
 
         if ($search) {
-            $search_term = '%' . $search . '%';
-            $sql .= " AND (u.full_name LIKE ? OR u.programme LIKE ? OR d.document_name LIKE ? OR u.matric_number LIKE ?)";
-            for ($i = 0; $i < 4; $i++) {
-                $params[] = $search_term;
-                $types .= 's';
+            // Enhanced smart search with multiple patterns
+            $search_terms = self::generateSearchTerms($search);
+            $search_conditions = [];
+            
+            foreach ($search_terms as $term) {
+                $search_conditions[] = "(
+                    u.full_name LIKE ? OR 
+                    u.matric_number LIKE ? OR 
+                    d.document_name LIKE ? OR 
+                    u.programme LIKE ? OR
+                    d.status LIKE ? OR
+                    u.level LIKE ? OR
+                    u.session LIKE ? OR
+                    u.mode LIKE ? OR
+                    u.program_type LIKE ?
+                )";
+                // Add parameters for each search term
+                for ($i = 0; $i < 9; $i++) {
+                    $params[] = $term;
+                    $types .= 's';
+                }
+            }
+            
+            if (!empty($search_conditions)) {
+                $sql .= " AND (" . implode(" OR ", $search_conditions) . ")";
             }
         }
 
@@ -262,12 +414,16 @@ class Document
         $params = [];
         $types = '';
 
+        // Create variables for datetime strings
+        $start_datetime = $start_date . ' 00:00:00';
+        $end_datetime = $end_date . ' 23:59:59';
+
         $sql = "SELECT COUNT(d.id) as total
                 FROM documents d
                 JOIN users u ON d.user_id = u.id
-                WHERE DATE(d.created_at) BETWEEN ? AND ?";
-        $params[] = $start_date;
-        $params[] = $end_date;
+                WHERE d.created_at BETWEEN ? AND ?";
+        $params[] = $start_datetime;
+        $params[] = $end_datetime;
         $types .= 'ss';
 
         if ($status_filter) {
@@ -277,11 +433,31 @@ class Document
         }
 
         if ($search) {
-            $search_term = '%' . $search . '%';
-            $sql .= " AND (u.full_name LIKE ? OR u.programme LIKE ? OR d.document_name LIKE ? OR u.matric_number LIKE ?)";
-            for ($i = 0; $i < 4; $i++) {
-                $params[] = $search_term;
-                $types .= 's';
+            // Enhanced smart search with multiple patterns
+            $search_terms = self::generateSearchTerms($search);
+            $search_conditions = [];
+            
+            foreach ($search_terms as $term) {
+                $search_conditions[] = "(
+                    u.full_name LIKE ? OR 
+                    u.matric_number LIKE ? OR 
+                    d.document_name LIKE ? OR 
+                    u.programme LIKE ? OR
+                    d.status LIKE ? OR
+                    u.level LIKE ? OR
+                    u.session LIKE ? OR
+                    u.mode LIKE ? OR
+                    u.program_type LIKE ?
+                )";
+                // Add parameters for each search term
+                for ($i = 0; $i < 9; $i++) {
+                    $params[] = $term;
+                    $types .= 's';
+                }
+            }
+            
+            if (!empty($search_conditions)) {
+                $sql .= " AND (" . implode(" OR ", $search_conditions) . ")";
             }
         }
 
@@ -374,6 +550,13 @@ class Document
         );
 
         if ($stmt->execute()) {
+            // Create notification for user
+            $docTitle = $document_name;
+            Notification::create(
+                $user_id,
+                'Upload successful',
+                "Your document '" . $docTitle . "' was uploaded and is awaiting verification."
+            );
             return ['success' => true, 'message' => 'File uploaded successfully.'];
         } else {
             unlink($destination);
@@ -418,6 +601,13 @@ class Document
         $stmt->bind_param('si', $new_file_path, $doc_id);
 
         if ($stmt->execute()) {
+            // Notify user of reupload awaiting verification
+            $doc = self::getById($doc_id);
+            Notification::create(
+                (int)$doc['user_id'],
+                'Reupload received',
+                "Your document '" . $doc['document_name'] . "' was reuploaded and is awaiting verification."
+            );
             return ['success' => true, 'message' => 'File re-uploaded successfully.'];
         } else {
             unlink($destination); // Clean up uploaded file

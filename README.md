@@ -111,6 +111,29 @@ DFMS/
 
 Default Password for all users: test101
 
+**Note:** The system now supports automatic password generation based on student surnames. New students will have passwords in the format: `surname12345` (e.g., "John Doe" → password: "doe12345").
+
+## Admin Features
+
+### Student Management
+- **Add Individual Students**: Navigate to "Add Student" in the admin panel to add students one by one
+- **Bulk Import Students**: Use "Bulk Import" to upload a CSV file with multiple students
+- **Update Passwords**: Use "Update Passwords" to change all existing student passwords to the new format
+
+### CSV Import Format
+The bulk import feature accepts CSV files with the following columns:
+- `matric_number` (required)
+- `full_name` (required) 
+- `level` (required)
+- `session` (required)
+- `programme` (required)
+- `department_id` (required)
+- `program_type` (optional, default: Undergraduate)
+- `mode` (optional, default: Regular)
+- `email` (optional)
+
+Download the CSV template from the bulk import page for the correct format.
+
 Admin Logins:
 
 Psychology Admin: ADMIN_PSYC

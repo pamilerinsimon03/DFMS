@@ -4,6 +4,14 @@
 .uploads-content {
     width: 100%;
     padding: 20px 24px;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+/* Prevent horizontal overflow */
+.uploads-content, .uploads-table-wrapper, .uploads-table, .uploads-tabs, .tabs-left {
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 /* Tabs navigation */
@@ -73,6 +81,18 @@
     margin: auto;
     border-collapse: separate;
     border-spacing: 0 24px;
+}
+.uploads-table-wrapper { width: 100%; overflow-x: auto; }
+
+/* Truncation helpers */
+.cell-value { display: inline-block; max-width: 100%; }
+.truncate {
+    display: inline-block;
+    max-width: 360px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
 }
 .uploads-table th,
 .uploads-table td {
@@ -219,47 +239,104 @@
     }
 }
 @media (max-width: 768px) {
-  /* “Force show” those header parts on uploads page */
-    .header .header-right {
-        display: flex !important;
-        flex: 1;
-        justify-content: flex-end;
-    }
-    .header-right {
-        display: flex !important;
-    }
-    .header-right {
-        z-index: 9999;
-    }
-    .search-box {
-        background-color: red;
-    }
-    .header .welcome {
-        display: none;
-    }
-    .header .user-profile {
-        display: none;
-    }
-    .header .search-container {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-    }
-    .uploads-table {
+    /* Header simplification on mobile */
+    .header .welcome { display: none; }
+    .header .user-profile { display: none; }
+    .header .header-right { display: flex; gap: 12px; }
+    .header .search-container { display: flex; align-items: center; gap: 12px; }
+
+    /* Tabs: allow horizontal scroll if too many */
+    .uploads-tabs { overflow-x: auto; }
+    .tabs-left { gap: 16px; white-space: nowrap; }
+    .tab-item { padding: 8px 4px; font-size: 14px; }
+
+    /* Transform table into cards */
+    .uploads-content { padding: 8px; }
+    .uploads-table-wrapper { overflow-x: hidden; width: 100%; }
+    .uploads-table { border-spacing: 0; width: 100%; max-width: 100%; table-layout: fixed; }
+    .uploads-table thead { display: none; }
+    .uploads-table tbody { display: block; width: 100%; max-width: 100%; }
+    .uploads-table tbody tr { 
+        display: block; 
+        background: #FFFFFF; 
+        border: 1px solid #EAEAEA; 
+        border-radius: 12px; 
+        padding: 8px 12px; 
+        margin: 0 0 12px 10px; 
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         width: 100%;
+        box-sizing: border-box;
+        max-width: 100%;
+        overflow: hidden;
+        max-width: 92vw; /* keep card comfortably inside viewport */
     }
-    .td-action button {
-        width: 50%;
-        margin-right: auto;
+    .uploads-table tbody td { 
+        display: flex;
+        justify-content: flex-start;
+        align-items: center; 
+        gap: 6px;
+        padding: 8px 6px; 
+        border-bottom: 1px solid #F3F3F3;
+        font-size: 14px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        overflow: hidden;
     }
-    .table-row > div {
-        font-size: 20px;
+    .uploads-table tbody td .cell-value { flex: 1; min-width: 0; text-align: left; overflow: hidden; }
+    .uploads-table tbody td .truncate { max-width: calc(70vw - 120px); }
+    .uploads-table tbody td:last-child { border-bottom: none; }
+
+    /* Labels for each cell */
+    .uploads-table tbody td:before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #555;
+        margin-right: 8px;
+        flex: 0 0 90px;
     }
-    .td-action button {
-        font-size: 18px;
+
+    /* Fallback labels using column order if data-label not present */
+    .uploads-table tbody tr td:nth-child(1):before { content: 'SN'; }
+    .uploads-table tbody tr td:nth-child(2):before { content: 'Name'; }
+    .uploads-table tbody tr td:nth-child(3):before { content: 'Document'; }
+    .uploads-table tbody tr td:nth-child(4):before { content: 'Date'; }
+    .uploads-table tbody tr td:nth-child(5):before { content: 'Status'; }
+    .uploads-table tbody tr td:nth-child(6):before { content: 'Action'; }
+
+    /* Status layout */
+    .td-status .status-wrapper { justify-content: flex-start; max-width: calc(100vw - 130px); overflow: hidden; }
+
+    /* Buttons full width on mobile cards */
+    .td-action button, .btn-danger {
+        width: 60%;
+        max-width: 240px;
+        height: 32px;
+        padding: 6px 10px;
+        font-size: 13px;
+        margin: 6px 0 0 0;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        box-sizing: border-box;
     }
-    .td-status {
-        display: none;
+
+    /* Reupload label needs different sizing to avoid squeeze */
+    .td-action .btn-danger {
+        width: auto;
+        max-width: 100%;
+        height: auto;
+        padding: 8px 12px;
+        font-size: 13px;
+        white-space: nowrap;
+        border-radius: 6px;
+    }
+
+    /* Ensure no element can extend beyond viewport */
+    .uploads-content *, .uploads-table *, .uploads-table-wrapper * {
+        max-width: 100%;
+        box-sizing: border-box;
+        word-break: break-word;
     }
 }
 

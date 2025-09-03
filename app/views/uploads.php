@@ -7,7 +7,7 @@
     </div>
     <div class="header-right">
         <div class="search-container" id="search-container">
-            <form action="/app/controllers/dashboard.php" method="GET" class="search-form">
+            <form action="/app/controllers/uploads.php" method="GET" class="search-form">
                 <div class="search-box">
                     <button type="button" class="search-icon-btn" id="search-icon-btn" aria-label="Open Search">
                         <img src="/app/src/assets/images/search-normal.svg" alt="Search Icon" class="search-icon-img">
@@ -17,9 +17,30 @@
                 </div>
             </form>
         </div>
-        <div class="notification-icon">
+        <div class="notification-icon" id="notif-bell">
             <img src="/app/src/assets/images/notification-bing.svg" alt="Notification Icon">
+            <?php if (($unread_count ?? 0) > 0): ?>
             <div class="notification-dot"></div>
+            <?php endif; ?>
+            <div class="notifications-dropdown" id="notif-dropdown" style="display:none;">
+                <div class="notif-header">
+                    <span>Notifications</span>
+                    <button id="mark-all-read" class="mark-read-btn">Mark all as read</button>
+                </div>
+                <?php if (empty($notifications)): ?>
+                <div class="notif-empty">No notifications yet.</div>
+                <?php else: ?>
+                <ul class="notif-list">
+                    <?php foreach ($notifications as $n): ?>
+                    <li class="notif-item <?php echo $n['is_read'] ? '' : 'unread'; ?>">
+                        <div class="notif-title"><?php echo htmlspecialchars($n['title']); ?></div>
+                        <div class="notif-message"><?php echo htmlspecialchars($n['message']); ?></div>
+                        <div class="notif-time"><?php echo date('M d, Y H:i', strtotime($n['created_at'])); ?></div>
+                    </li>
+                    <?php endforeach; ?>
+                </ul>
+                <?php endif; ?>
+            </div>
         </div>
         <div class="user-profile">
             <img src="/app/src/assets/images/Small Avatar.svg" alt="User Profile" class="avatar">
@@ -45,6 +66,7 @@
                 class="tab-item <?php echo $tab === 'rejected' ? 'active' : ''; ?>">Rejected</a>
         </div>
     </div>
+    <div class="uploads-table-wrapper">
     <table class="uploads-table">
         <thead>
             <tr>
@@ -74,11 +96,11 @@
             <?php else: ?>
             <?php foreach ($documents as $index => $doc): ?>
             <tr class="table-row">
-                <td class="td-sn"><?php echo $index + 1; ?>.</td>
-                <td class="td-name"><?php echo htmlspecialchars($doc['document_name']); ?></td>
-                <td class="td-document"><?php echo htmlspecialchars(basename($doc['file_path'])); ?></td>
-                <td class="td-date"><?php echo date('d/m/Y', strtotime($doc['created_at'])); ?></td>
-                <td class="td-status <?php echo strtolower(str_replace(' ', '-', $doc['status'])); ?>">
+                <td class="td-sn" data-label="SN"><span class="cell-value"><?php echo $index + 1; ?>.</span></td>
+                <td class="td-name" data-label="Name"><span class="cell-value"><?php echo htmlspecialchars($doc['document_name']); ?></span></td>
+                <td class="td-document" data-label="Document"><span class="cell-value truncate"><?php echo htmlspecialchars(basename($doc['file_path'])); ?></span></td>
+                <td class="td-date" data-label="Date"><span class="cell-value"><?php echo date('d/m/Y', strtotime($doc['created_at'])); ?></span></td>
+                <td class="td-status <?php echo strtolower(str_replace(' ', '-', $doc['status'])); ?>" data-label="Status">
                     <span class="status-wrapper">
                         <span class="status-dot"></span>
                         <span class="status-text">
@@ -86,7 +108,7 @@
                         </span>
                     </span>
                 </td>
-                <td class="td-action">
+                <td class="td-action" data-label="Action">
                     <?php if ($doc['status'] === 'Rejected'): ?>
                     <form action="/app/controllers/uploads.php?tab=<?php echo htmlspecialchars($tab); ?>" method="POST"
                         enctype="multipart/form-data" style="display: inline;">
@@ -110,6 +132,7 @@
             <?php endif; ?>
         </tbody>
     </table>
+    </div>
     <?php if (isset($_SESSION['upload_message'])): ?>
     <div class="upload-message">
         <?php echo htmlspecialchars($_SESSION['upload_message']); unset($_SESSION['upload_message']); ?>

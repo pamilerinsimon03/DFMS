@@ -23,6 +23,31 @@
 </div>
 <div class="header-divider"></div>
 <div class="students-container">
+    <div class="students-header">
+        <h2>Students</h2>
+        <a href="/app/controllers/add_student.php" class="btn btn-primary add-student-btn">
+            <span class="btn-icon">+</span>
+            Add New Student
+        </a>
+    </div>
+    
+    <!-- Department Filter Indicator -->
+    <?php if ($user['matric_number'] === 'SUPER_ADMIN' && $filter_department_id === null): ?>
+        <div class="filter-indicator">
+            <span class="filter-badge">Showing all students from all departments</span>
+            <a href="?<?php echo http_build_query(array_merge($_GET, ['show_all' => '0'])); ?>" class="view-all-link">View My Department Only</a>
+        </div>
+    <?php elseif ($user['matric_number'] === 'SUPER_ADMIN' && $filter_department_id !== null): ?>
+        <div class="filter-indicator">
+            <span class="filter-badge">Showing students from your department only</span>
+            <a href="?<?php echo http_build_query(array_merge($_GET, ['show_all' => '1'])); ?>" class="view-all-link">View All Students</a>
+        </div>
+    <?php elseif ($user['department_id']): ?>
+        <div class="filter-indicator">
+            <span class="filter-badge">Showing students from your department only</span>
+        </div>
+    <?php endif; ?>
+    
     <form id="filter-sort-form" action="" method="GET">
         <input type="hidden" name="search" id="form-search" value="<?php echo htmlspecialchars($search); ?>">
 
@@ -68,14 +93,31 @@
             <button type="submit" class="filter-button">Apply Filters</button>
         </div>
     </form>
-    <div class="students-grid">
-        <?php foreach ($students as $student): ?>
-        <a href="/app/controllers/student_profile.php?id=<?php echo $student['id']; ?>" class="student-card">
-            <img src="/app/src/assets/images/admin-avatar.png" alt="Student Avatar">
-            <h3><?php echo htmlspecialchars($student['full_name']); ?></h3>
-            <p>Matric No: <?php echo htmlspecialchars($student['matric_number']); ?></p>
-            <p><?php echo htmlspecialchars($student['level']); ?> Level</p>
-        </a>
-        <?php endforeach; ?>
-    </div>
+    
+    <?php if (empty($students)): ?>
+        <div class="no-students">
+            <p>No students found matching your criteria.</p>
+            <?php if ($user['department_id'] && $user['matric_number'] !== 'SUPER_ADMIN'): ?>
+                <p>You are currently viewing students from your department only.</p>
+            <?php elseif ($user['matric_number'] === 'SUPER_ADMIN' && $filter_department_id !== null): ?>
+                <p>You are currently viewing students from your department only. 
+                   <a href="?<?php echo http_build_query(array_merge($_GET, ['show_all' => '1'])); ?>">View all students</a>
+                </p>
+            <?php endif; ?>
+        </div>
+    <?php else: ?>
+        <div class="students-grid">
+            <?php foreach ($students as $student): ?>
+            <a href="/app/controllers/student_profile.php?id=<?php echo $student['id']; ?>" class="student-card">
+                <img src="/app/src/assets/images/admin-avatar.png" alt="Student Avatar">
+                <h3><?php echo htmlspecialchars($student['full_name']); ?></h3>
+                <p>Matric No: <?php echo htmlspecialchars($student['matric_number']); ?></p>
+                <p><?php echo htmlspecialchars($student['level']); ?> Level</p>
+                <?php if ($student['department_name']): ?>
+                    <p class="department-name"><?php echo htmlspecialchars($student['department_name']); ?></p>
+                <?php endif; ?>
+            </a>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
 </div>

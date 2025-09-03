@@ -90,13 +90,38 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Notification icon functionality
-    const notificationIcon = document.querySelector('.notification-icon');
-    
-    if (notificationIcon) {
-        notificationIcon.addEventListener('click', function() {
-            alert('You have new notifications about your uploaded documents.');
+    // Notifications dropdown
+    // Support multiple pages and markup variations
+    const notifIcons = document.querySelectorAll('.notification-icon');
+    notifIcons.forEach(icon => {
+        const dropdown = icon.querySelector('.notifications-dropdown');
+        if (!dropdown) return;
+
+        icon.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.style.display = dropdown.style.display === 'none' || dropdown.style.display === '' ? 'block' : 'none';
         });
-    }
+    });
+
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.notifications-dropdown').forEach(d => d.style.display = 'none');
+    });
+
+    document.querySelectorAll('.mark-read-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                const res = await fetch('/app/controllers/notifications_mark_read.php', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    document.querySelectorAll('.notif-item').forEach(n => n.classList.remove('unread'));
+                    document.querySelectorAll('.notification-icon .notification-dot').forEach(dot => dot.remove());
+                }
+            } catch (err) {
+                console.error('Failed to mark notifications as read');
+            }
+        });
+    });
     
     // File card click functionality
     const fileCards = document.querySelectorAll('.file-card');

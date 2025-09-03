@@ -33,39 +33,39 @@
             <div class="info-grid">
                 <div class="info-item">
                     <span>Department</span>
-                    <p><?php echo htmlspecialchars($student['department_name']); ?></p>
+                    <p><?php echo htmlspecialchars($student['department_name'] ?? 'N/A'); ?></p>
                 </div>
                 <div class="info-item">
                     <span>Gender</span>
-                    <p><?php echo htmlspecialchars($student['gender']); ?></p>
+                    <p><?php echo htmlspecialchars($student['gender'] ?? 'N/A'); ?></p>
                 </div>
                 <div class="info-item">
                     <span>State of Origin</span>
-                    <p><?php echo htmlspecialchars($student['state_of_origin']); ?></p>
+                    <p><?php echo htmlspecialchars($student['state_of_origin'] ?? 'N/A'); ?></p>
                 </div>
                 <div class="info-item">
                     <span>Session of entry</span>
-                    <p><?php echo htmlspecialchars($student['session_of_entry']); ?></p>
+                    <p><?php echo htmlspecialchars($student['session'] ?? 'N/A'); ?></p>
                 </div>
                 <div class="info-item">
                     <span>Phone Number</span>
-                    <p><?php echo htmlspecialchars($student['phone_number']); ?></p>
+                    <p><?php echo htmlspecialchars($student['phone_number'] ?? 'N/A'); ?></p>
                 </div>
                 <div class="info-item">
                     <span>Marital Status</span>
-                    <p><?php echo htmlspecialchars($student['marital_status']); ?></p>
+                    <p><?php echo htmlspecialchars($student['marital_status'] ?? 'N/A'); ?></p>
                 </div>
                 <div class="info-item">
                     <span>Date of birth</span>
-                    <p><?php echo htmlspecialchars($student['date_of_birth']); ?></p>
+                    <p><?php echo htmlspecialchars($student['date_of_birth'] ?? 'N/A'); ?></p>
                 </div>
                 <div class="info-item">
                     <span>E-mail</span>
-                    <p><?php echo htmlspecialchars($student['email']); ?></p>
+                    <p><?php echo htmlspecialchars($student['email'] ?? 'N/A'); ?></p>
                 </div>
                 <div class="info-item address">
                     <span>Address</span>
-                    <p><?php echo htmlspecialchars($student['address']); ?></p>
+                    <p><?php echo htmlspecialchars($student['address'] ?? 'N/A'); ?></p>
                 </div>
             </div>
         </div>

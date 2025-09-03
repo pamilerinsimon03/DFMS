@@ -22,14 +22,14 @@
                     <div class="menu-text <?php echo $active_page === 'uploads' ? 'active-text' : ''; ?>">My Uploads
                     </div>
                 </a>
-                <a href="/app/controllers/profile.php"
+                <a href="<?php echo User::isAdmin($_SESSION['user_id'] ?? 0) ? '/app/controllers/student_profile.php' : '/app/controllers/profile.php'; ?>"
                     class="menu-item <?php echo $active_page === 'profile' ? 'active' : ''; ?>">
                     <div class="menu-icon">
                         <img src="/app/src/assets/images/User-Circle.svg" alt="Profile Icon">
                     </div>
                     <div class="menu-text <?php echo $active_page === 'profile' ? 'active-text' : ''; ?>">Profile</div>
                 </a>
-                <a href="/app/controllers/settings.php"
+                <a href="<?php echo User::isAdmin($_SESSION['user_id'] ?? 0) ? '/app/controllers/settings.php' : '/app/controllers/student_settings.php'; ?>"
                     class="menu-item <?php echo $active_page === 'settings' ? 'active' : ''; ?>">
                     <div class="menu-icon">
                         <img src="/app/src/assets/images/settings.svg" alt="Settings Icon">

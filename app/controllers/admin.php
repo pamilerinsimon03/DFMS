@@ -11,14 +11,64 @@ if (!isset($_SESSION['user_id']) || !User::isAdmin($_SESSION['user_id'])) {
 $user = User::getById($_SESSION['user_id']);
 $department_id = $user['department_id'] ?? null;
 
-$start_date = $_GET['start_date'] ?? date('Y-m-d', strtotime('-30 days'));
+// Use a wider date range by default (last 6 months instead of 30 days)
+$start_date = $_GET['start_date'] ?? date('Y-m-d', strtotime('-6 months'));
 $end_date = $_GET['end_date'] ?? date('Y-m-d');
 
 // Fetch KPI stats
+// For SUPER_ADMIN (department_id = NULL), show all documents from all departments
 $total_docs = Document::countAllDocuments(null, $start_date, $end_date, null, $department_id, null, null, null);
 $approved_docs = Document::countAllDocuments('Approved', $start_date, $end_date, null, $department_id, null, null, null);
 $pending_docs = Document::countAllDocuments('Pending Approval', $start_date, $end_date, null, $department_id, null, null, null);
 $rejected_docs = Document::countAllDocuments('Rejected', $start_date, $end_date, null, $department_id, null, null, null);
+
+// If no documents found in the date range, try without date filter to see if there are any documents at all
+if ($total_docs == 0) {
+    // Get all documents without date filter to check if there are any documents in the system
+    $all_docs_sql = "SELECT COUNT(d.id) as total FROM documents d JOIN users u ON d.user_id = u.id";
+    $params = [];
+    $types = '';
+    
+    if ($department_id) {
+        $all_docs_sql .= " WHERE u.department_id = ?";
+        $params[] = $department_id;
+        $types = 'i';
+    }
+    
+    global $conn;
+    $stmt = $conn->prepare($all_docs_sql);
+    if ($types) {
+        $stmt->bind_param($types, ...$params);
+    }
+    $stmt->execute();
+    $all_docs_count = $stmt->get_result()->fetch_assoc()['total'];
+    
+    // If there are documents but none in the date range, adjust the date range to include all documents
+    if ($all_docs_count > 0) {
+        // Get the earliest and latest document dates
+        $date_range_sql = "SELECT MIN(d.created_at) as earliest, MAX(d.created_at) as latest FROM documents d JOIN users u ON d.user_id = u.id";
+        if ($department_id) {
+            $date_range_sql .= " WHERE u.department_id = ?";
+        }
+        
+        $stmt = $conn->prepare($date_range_sql);
+        if ($department_id) {
+            $stmt->bind_param("i", $department_id);
+        }
+        $stmt->execute();
+        $date_range = $stmt->get_result()->fetch_assoc();
+        
+        // Use the actual date range of documents
+        $start_date = date('Y-m-d', strtotime($date_range['earliest']));
+        $end_date = date('Y-m-d', strtotime($date_range['latest']));
+        
+        // Re-fetch stats with the adjusted date range
+        $total_docs = Document::countAllDocuments(null, $start_date, $end_date, null, $department_id, null, null, null);
+        $approved_docs = Document::countAllDocuments('Approved', $start_date, $end_date, null, $department_id, null, null, null);
+        $pending_docs = Document::countAllDocuments('Pending Approval', $start_date, $end_date, null, $department_id, null, null, null);
+        $rejected_docs = Document::countAllDocuments('Rejected', $start_date, $end_date, null, $department_id, null, null, null);
+    }
+}
 
 // Fetch data for charts
 $uploads_by_month = Document::getUploadsByMonth($start_date, $end_date, $department_id);

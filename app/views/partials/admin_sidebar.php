@@ -31,16 +31,26 @@
                     <div class="menu-text <?php echo $active_page === 'students' ? 'active-text' : ''; ?>">
                         Students</div>
                 </a>
-                <a href="#" class="menu-item">
-                    <div class="menu-icon"><img src="/app/src/assets/images/actual-analytics.svg" alt="Analytics Icon">
+                <a href="/app/controllers/add_student.php"
+                    class="menu-item <?php echo $active_page === 'add_student' ? 'active' : ''; ?>">
+                    <div class="menu-icon">
+                        <img src="/app/src/assets/images/User-Circle<?php echo $active_page === 'add_student' ? '-Purple' : ''; ?>.svg"
+                            alt="Add Student Icon">
                     </div>
-                    <div class="menu-text">Analytics</div>
+                    <div class="menu-text <?php echo $active_page === 'add_student' ? 'active-text' : ''; ?>">
+                        Add Students</div>
+                </a>
+                <a href="/app/controllers/analytics.php" class="menu-item <?php echo $active_page === 'analytics' ? 'active' : ''; ?>">
+                    <div class="menu-icon"><img src="/app/src/assets/images/actual-analytics<?php echo $active_page === 'analytics' ? '' : ''; ?>.svg" alt="Analytics Icon">
+                    </div>
+                    <div class="menu-text <?php echo $active_page === 'analytics' ? 'active-text' : ''; ?>">Analytics</div>
                 </a>
                 <a href="/app/controllers/settings.php"
                     class="menu-item <?php echo $active_page === 'settings' ? 'active' : ''; ?>">
                     <div class="menu-icon"><img src="/app/src/assets/images/settings.svg" alt="Settings Icon"></div>
                     <div class="menu-text">Settings</div>
                 </a>
+
             </div>
             <a href="/app/controllers/logout.php" class="menu-item logout">
                 <div class="menu-icon"><img src="/app/src/assets/images/log-out.svg" alt="Logout Icon"></div>

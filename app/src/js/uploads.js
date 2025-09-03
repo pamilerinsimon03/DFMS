@@ -64,6 +64,40 @@ document.addEventListener('DOMContentLoaded', function () {
     overlay.addEventListener('click', function() {
         closeSidebar();
     });
+
+    // Search UX parity with dashboard
+    const searchContainer = document.getElementById('search-container');
+    const searchIconBtn = document.getElementById('search-icon-btn');
+    const searchInput = document.querySelector('.search-input');
+
+    if (searchIconBtn && searchContainer && searchInput) {
+        searchIconBtn.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768) {
+                e.preventDefault();
+                searchContainer.classList.toggle('active');
+                if (searchContainer.classList.contains('active')) {
+                    searchInput.focus();
+                }
+            }
+        });
+
+        // Submit on Enter
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchInput.form.submit();
+            }
+        });
+
+        // Debounced submit while typing
+        let t;
+        searchInput.addEventListener('input', () => {
+            clearTimeout(t);
+            t = setTimeout(() => {
+                searchInput.form.submit();
+            }, 500);
+        });
+    }
     
     // Tab switching functionality
     const tabItems = document.querySelectorAll('.tab-item');
@@ -155,4 +189,33 @@ document.addEventListener('DOMContentLoaded', function () {
     if (firstTab) {
         filterTableByTab(firstTab.textContent.trim());
     }
+
+    // Notifications dropdown support (page-local)
+    const notifIcons = document.querySelectorAll('.notification-icon');
+    notifIcons.forEach(icon => {
+        const dropdown = icon.querySelector('.notifications-dropdown');
+        if (!dropdown) return;
+        icon.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.style.display = dropdown.style.display === 'none' || dropdown.style.display === '' ? 'block' : 'none';
+        });
+    });
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.notifications-dropdown').forEach(d => d.style.display = 'none');
+    });
+    document.querySelectorAll('.mark-read-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                const res = await fetch('/app/controllers/notifications_mark_read.php', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    document.querySelectorAll('.notif-item').forEach(n => n.classList.remove('unread'));
+                    document.querySelectorAll('.notification-icon .notification-dot').forEach(dot => dot.remove());
+                }
+            } catch (err) {
+                console.error('Failed to mark notifications as read');
+            }
+        });
+    });
 });

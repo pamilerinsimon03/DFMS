@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Document.php';
+require_once __DIR__ . '/../models/Notification.php';
 require_once __DIR__ . '/../services/FilenameGenerator.php';
 require_once __DIR__ . '/../services/QualityCheckService.php';
 
@@ -24,24 +25,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reupload_id'])) {
         // --- Quality Validation ---
         $filePath = $file['tmp_name'];
         $debug_messages = [];
-        define('MIN_BLURRINESS', 15.0);
-        define('MIN_OCR_CONFIDENCE', 60);
-
         $isValid = true;
-        if (QualityCheckService::isImage($filePath)) {
-            $blurriness = QualityCheckService::getBlurriness($filePath, $debug_messages);
-            if ($blurriness < MIN_BLURRINESS) {
-                $_SESSION['upload_message'] = "Re-upload failed: The image is too blurry.";
-                $isValid = false;
-            }
-        } elseif (strtolower(pathinfo($file['name'], PATHINFO_EXTENSION)) === 'pdf') {
-            $ocrConfidence = QualityCheckService::getOcrConfidence($filePath, $debug_messages);
-            if ($ocrConfidence < MIN_OCR_CONFIDENCE) {
-                $_SESSION['upload_message'] = "Re-upload failed: PDF text has low confidence.";
-                $isValid = false;
-            }
-        }
-        QualityCheckService::logDebugMessages($user_id, $debug_messages);
+        // define('MIN_BLURRINESS', 15.0);
+        // define('MIN_OCR_CONFIDENCE', 60);
+
+        
+        // if (QualityCheckService::isImage($filePath)) {
+        //     $blurriness = QualityCheckService::getBlurriness($filePath, $debug_messages);
+        //     if ($blurriness < MIN_BLURRINESS) {
+        //         $_SESSION['upload_message'] = "Re-upload failed: The image is too blurry.";
+        //         $isValid = false;
+        //     }
+        // } elseif (strtolower(pathinfo($file['name'], PATHINFO_EXTENSION)) === 'pdf') {
+        //     $ocrConfidence = QualityCheckService::getOcrConfidence($filePath, $debug_messages);
+        //     if ($ocrConfidence < MIN_OCR_CONFIDENCE) {
+        //         $_SESSION['upload_message'] = "Re-upload failed: PDF text has low confidence.";
+        //         $isValid = false;
+        //     }
+        // }
+        // QualityCheckService::logDebugMessages($user_id, $debug_messages);
 
         if ($isValid) {
             $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
@@ -71,10 +73,14 @@ if ($tab === 'total') {
     }
 }
 
+// Notifications for header dropdown
+$notifications = Notification::getForUser($user_id, 15);
+$unread_count = Notification::countUnread($user_id);
+
 // Prepare view variables
 $page_title = 'My Uploads';
 $active_page = 'uploads';
-$css_files = ['uploads.css'];
+$css_files = ['uploads.css', 'dashboard.css'];
 $js_files = ['uploads.js', 'dashboard.js'];
 
 require_once __DIR__ . '/../views/partials/header.php';

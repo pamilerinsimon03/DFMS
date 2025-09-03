@@ -5,8 +5,16 @@
     <div class="search-container">
         <form action="" method="GET" class="search-box">
             <div class="search-icon"><img src="/app/src/assets/images/search-normal.svg" alt="Search Icon"></div>
-            <input type="text" placeholder="Search here" class="search-input" name="search" id="search-input"
-                value="<?php echo htmlspecialchars($search); ?>">
+            <input type="text" placeholder="Search by name, matric number, document, status..." class="search-input" name="search" id="search-input"
+                value="<?php echo htmlspecialchars($search); ?>" autocomplete="off">
+            <div class="search-suggestions" id="search-suggestions" style="display: none;">
+                <div class="suggestion-header">Search Tips:</div>
+                <div class="suggestion-item">• Type "john" to find "John Doe"</div>
+                <div class="suggestion-item">• Type "2021" to find matric numbers starting with 2021</div>
+                <div class="suggestion-item">• Type "pend" to find pending documents</div>
+                <div class="suggestion-item">• Type "cert" to find certificates</div>
+                <div class="suggestion-item">• Type "300" to find 300 level students</div>
+            </div>
         </form>
     </div>
     <div class="header-right">
@@ -30,6 +38,13 @@
             <a href="?tab=approved" class="tab-item <?php echo $tab === 'approved' ? 'active' : ''; ?>">Approved</a>
             <a href="?tab=rejected" class="tab-item <?php echo $tab === 'rejected' ? 'active' : ''; ?>">Rejected</a>
         </div>
+        <?php if (!empty($search)): ?>
+        <div class="search-results-info">
+            <span class="results-count"><?php echo number_format($total); ?> result<?php echo $total !== 1 ? 's' : ''; ?> found</span>
+            <span class="search-term">for "<?php echo htmlspecialchars($search); ?>"</span>
+            <a href="?<?php echo http_build_query(array_merge($_GET, ['search' => ''])); ?>" class="clear-search">Clear search</a>
+        </div>
+        <?php endif; ?>
     </div>
     <form id="filter-sort-form" action="" method="GET">
         <input type="hidden" name="tab" value="<?php echo htmlspecialchars($tab); ?>">

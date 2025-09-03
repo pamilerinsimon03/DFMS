@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Document.php';
+require_once __DIR__ . '/../models/Notification.php';
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: /public/index.php");
@@ -37,6 +38,8 @@ if (User::isAdmin($user_id)) {
     // Student view
     $search = $_GET['search'] ?? null;
     $documents = Document::getByUserId($user_id, $search);
+    $notifications = Notification::getForUser($user_id, 15);
+    $unread_count = Notification::countUnread($user_id);
     
     $total_docs = count(Document::getByUserId($user_id));
     $document_types = require __DIR__ . '/../config/document_types.php';

@@ -46,6 +46,16 @@ CREATE TABLE `users` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `is_admin` tinyint(1) DEFAULT 0,
   `email` varchar(255) DEFAULT NULL,
+  `phone_number` varchar(20) DEFAULT NULL,
+  `date_of_birth` date DEFAULT NULL,
+  `gender` enum('Male','Female','Other') DEFAULT NULL,
+  `state_of_origin` varchar(50) DEFAULT NULL,
+  `marital_status` enum('Single','Married','Divorced','Widowed') DEFAULT NULL,
+  `address` text DEFAULT NULL,
+  `emergency_contact_name` varchar(100) DEFAULT NULL,
+  `emergency_contact_phone` varchar(20) DEFAULT NULL,
+  `emergency_contact_relationship` varchar(50) DEFAULT NULL,
+  `profile_updated_at` timestamp NULL DEFAULT NULL,
   `role` varchar(20) NOT NULL DEFAULT 'student',
   PRIMARY KEY (`id`),
   UNIQUE KEY `matric_number` (`matric_number`),
@@ -232,7 +242,37 @@ SET d.`department_id` = u.`department_id`
 WHERE d.`department_id` IS NULL;
 
 -- ====================================================
--- 5. Optional: Consolidated Migrations
+-- 5. Migration: Student Profile Fields
+-- ====================================================
+
+-- Update existing users with default values for required profile fields
+UPDATE `users` SET 
+    `phone_number` = '08123456789',
+    `date_of_birth` = '1997-04-01',
+    `gender` = 'Male',
+    `state_of_origin` = 'Osun State',
+    `marital_status` = 'Single',
+    `address` = 'No 123, Unit 1, Road H, Kogberegbe Street, Ologuneu, Ibadan',
+    `profile_updated_at` = `created_at`
+WHERE `is_admin` = 0 AND `phone_number` IS NULL;
+
+-- ====================================================
+-- 6. Migration: Notifications Table
+-- ====================================================
+
+-- Create notifications table
+CREATE TABLE IF NOT EXISTS notifications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  title VARCHAR(150) NOT NULL,
+  message TEXT NOT NULL,
+  is_read TINYINT(1) NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL,
+  INDEX (user_id, is_read, created_at)
+);
+
+-- ====================================================
+-- 7. Optional: Consolidated Migrations
 --    (Already covered above; skip to avoid duplication)
 -- ====================================================
 

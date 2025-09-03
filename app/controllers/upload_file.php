@@ -20,49 +20,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $filePath = $file['tmp_name'];
     $debug_messages = [];
 
-    define('MIN_BLURRINESS', 15.0);
-    define('MIN_OCR_CONFIDENCE', 60);
+    // define('MIN_BLURRINESS', 15.0);
+    // define('MIN_OCR_CONFIDENCE', 60);
 
     // Run only for images (not PDFs)
-    if (QualityCheckService::isImage($filePath)) {
-        // 1) Blur check only
-        $blurriness = QualityCheckService::getBlurriness($filePath, $debug_messages);
-        if ($blurriness <= 0) {
-            $_SESSION['upload_message']   = "Upload failed: Could not analyze image sharpness.";
-            $_SESSION['upload_status']    = 'error';
-            QualityCheckService::logDebugMessages($user_id, $debug_messages);
-            header("Location: /app/controllers/dashboard.php");
-            exit();
-        }
-        if ($blurriness < MIN_BLURRINESS) {
-            $_SESSION['upload_message']   = "Upload failed: The image is too blurry. (Score: " . round($blurriness, 2) . ")";
-            $_SESSION['upload_status']    = 'error';
-            QualityCheckService::logDebugMessages($user_id, $debug_messages);
-            header("Location: /app/controllers/dashboard.php");
-            exit();
-        }
+    // if (QualityCheckService::isImage($filePath)) {
+    //     // 1) Blur check only
+    //     $blurriness = QualityCheckService::getBlurriness($filePath, $debug_messages);
+    //     if ($blurriness <= 0) {
+    //         $_SESSION['upload_message']   = "Upload failed: Could not analyze image sharpness.";
+    //         $_SESSION['upload_status']    = 'error';
+    //         QualityCheckService::logDebugMessages($user_id, $debug_messages);
+    //         header("Location: /app/controllers/dashboard.php");
+    //         exit();
+    //     }
+    //     if ($blurriness < MIN_BLURRINESS) {
+    //         $_SESSION['upload_message']   = "Upload failed: The image is too blurry. (Score: " . round($blurriness, 2) . ")";
+    //         $_SESSION['upload_status']    = 'error';
+    //         QualityCheckService::logDebugMessages($user_id, $debug_messages);
+    //         header("Location: /app/controllers/dashboard.php");
+    //         exit();
+    //     }
 
-        // 2) **Skip OCR for images**—assume if it’s not too blurry, it’s acceptable.
-        $debug_messages[] = '[Info: Skipping OCR legibility check for image.]';
+    //     // 2) **Skip OCR for images**—assume if it’s not too blurry, it’s acceptable.
+    //     $debug_messages[] = '[Info: Skipping OCR legibility check for image.]';
 
-    } elseif (strtolower(pathinfo($file['name'], PATHINFO_EXTENSION)) === 'pdf') {
-        // If you still want to OCR‐check PDF uploads, do it here:
-        $ocrConfidence = QualityCheckService::getOcrConfidence($filePath, $debug_messages);
-        if ($ocrConfidence <= 0) {
-            $_SESSION['upload_message']   = "Upload failed: PDF text not readable.";
-            $_SESSION['upload_status']    = 'error';
-            QualityCheckService::logDebugMessages($user_id, $debug_messages);
-            header("Location: /app/controllers/dashboard.php");
-            exit();
-        }
-        if ($ocrConfidence < MIN_OCR_CONFIDENCE) {
-            $_SESSION['upload_message']   = "Upload failed: PDF text too low‐confidence. (OCR: " . round($ocrConfidence) . "%)";
-            $_SESSION['upload_status']    = 'error';
-            QualityCheckService::logDebugMessages($user_id, $debug_messages);
-            header("Location: /app/controllers/dashboard.php");
-            exit();
-        }
-    }
+    // } elseif (strtolower(pathinfo($file['name'], PATHINFO_EXTENSION)) === 'pdf') {
+    //     // If you still want to OCR‐check PDF uploads, do it here:
+    //     $ocrConfidence = QualityCheckService::getOcrConfidence($filePath, $debug_messages);
+    //     if ($ocrConfidence <= 0) {
+    //         $_SESSION['upload_message']   = "Upload failed: PDF text not readable.";
+    //         $_SESSION['upload_status']    = 'error';
+    //         QualityCheckService::logDebugMessages($user_id, $debug_messages);
+    //         header("Location: /app/controllers/dashboard.php");
+    //         exit();
+    //     }
+    //     if ($ocrConfidence < MIN_OCR_CONFIDENCE) {
+    //         $_SESSION['upload_message']   = "Upload failed: PDF text too low‐confidence. (OCR: " . round($ocrConfidence) . "%)";
+    //         $_SESSION['upload_status']    = 'error';
+    //         QualityCheckService::logDebugMessages($user_id, $debug_messages);
+    //         header("Location: /app/controllers/dashboard.php");
+    //         exit();
+    //     }
+    // }
 
     $userId = $_SESSION['user_id'];
     $documentName = $_POST['document_name'];
