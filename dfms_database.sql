@@ -131,8 +131,6 @@ CREATE TABLE `tag_errors` (
 -- 2. Migration: Add Super Admin
 -- ====================================================
 
--- Ensure department_id allows NULL
-ALTER TABLE `users` MODIFY `department_id` int(11) DEFAULT NULL;
 
 -- Insert or update Super Admin user
 INSERT INTO `users` (`matric_number`, `password`, `full_name`, `email`, `role`, `department_id`)
@@ -144,23 +142,11 @@ ON DUPLICATE KEY UPDATE `full_name` = VALUES(`full_name`);
 -- 3. Migration Phase 2: Populate Dept Codes & User Fields
 -- ====================================================
 
--- Add 'code' to departments if not exists
-ALTER TABLE `departments` ADD COLUMN IF NOT EXISTS `code` VARCHAR(10) AFTER `name`;
-
 -- Set codes for existing departments
 UPDATE `departments` SET `code` = 'CS'   WHERE `name` = 'Computer Science';
 UPDATE `departments` SET `code` = 'PSYC' WHERE `name` = 'Psychology';
 UPDATE `departments` SET `code` = 'MATH' WHERE `name` = 'Mathematics';
 
--- Add program_type, mode to users
-ALTER TABLE `users`
-  ADD COLUMN IF NOT EXISTS `program_type` VARCHAR(50) NOT NULL DEFAULT 'Undergraduate' AFTER `programme`,
-  ADD COLUMN IF NOT EXISTS `mode` VARCHAR(50) NOT NULL DEFAULT 'Regular' AFTER `program_type`;
-
--- Ensure department_id column exists and FK set
-ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `department_id` INT(11) AFTER `mode`;
-ALTER TABLE `users` ADD CONSTRAINT IF NOT EXISTS `fk_users_department`
-    FOREIGN KEY (`department_id`) REFERENCES `departments`(`id`);
 
 -- One-time populate department_id based on programme
 UPDATE `users` u
@@ -171,39 +157,6 @@ SET u.`department_id` = d.`id`;
 -- 4. Migration Phase 3: Idempotent Updates & Inserts
 -- ====================================================
 
-DELIMITER $$
-CREATE PROCEDURE AddColumnsToUsers()
-BEGIN
-    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS
-                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'email') THEN
-        ALTER TABLE `users` ADD COLUMN `email` VARCHAR(255) NULL;
-    END IF;
-    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS
-                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'role') THEN
-        ALTER TABLE `users` ADD COLUMN `role` VARCHAR(20) NOT NULL DEFAULT 'student';
-    END IF;
-END$$
-
-CREATE PROCEDURE AddColumnsToDocuments()
-BEGIN
-    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS
-                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'documents' AND COLUMN_NAME = 'department_id') THEN
-        ALTER TABLE `documents` ADD COLUMN `department_id` INT(11) NULL;
-    END IF;
-    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.STATISTICS
-                   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'documents' AND INDEX_NAME = 'idx_department_id') THEN
-        ALTER TABLE `documents` ADD INDEX `idx_department_id` (`department_id`);
-    END IF;
-END$$
-DELIMITER ;
-
--- Execute procedures
-CALL AddColumnsToUsers();
-CALL AddColumnsToDocuments();
-
--- Drop procedures
-DROP PROCEDURE IF EXISTS AddColumnsToUsers;
-DROP PROCEDURE IF EXISTS AddColumnsToDocuments;
 
 -- Add new departments and admin users for each
 INSERT INTO `departments` (`id`, `name`, `code`) VALUES
@@ -506,6 +459,34 @@ SELECT
 FROM audit_logs 
 WHERE event_type = 'failed_login' 
 AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY);
+
+-- ====================================================
+-- 8. Migration: File Requirements (Admin-configurable Upload List)
+-- ====================================================
+
+-- Create table for managing files students must upload per department
+CREATE TABLE IF NOT EXISTS `file_requirements` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `department_id` int(11) NOT NULL,
+  `document_name` varchar(100) NOT NULL,
+  `description` text,
+  `due_date` date NOT NULL,
+  `is_active` tinyint(1) DEFAULT 1,
+  `created_by` int(11) NOT NULL,
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `fk_file_requirements_department` (`department_id`),
+  KEY `fk_file_requirements_created_by` (`created_by`),
+  CONSTRAINT `fk_file_requirements_department` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_file_requirements_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Optional sample data (idempotent insert)
+INSERT INTO `file_requirements` (`department_id`, `document_name`, `description`, `due_date`, `created_by`)
+SELECT 2, 'Psychology Research Proposal', 'Research proposal for final year project', DATE_ADD(CURDATE(), INTERVAL 45 DAY), 1
+WHERE NOT EXISTS (SELECT 1 FROM file_requirements WHERE department_id=2 AND document_name='Psychology Research Proposal');
+
 
 -- Final security recommendations
 -- 1. Run this script during maintenance window
