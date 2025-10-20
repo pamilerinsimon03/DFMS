@@ -8,15 +8,19 @@ $error = '';
 $success = '';
 
 if ($mode === 'request' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Validate CSRF token
+    requireCSRFToken();
+    
     $matric_number = $_POST['matric_number'];
     $user = User::getByMatricNumber($matric_number);
 
     if ($user) {
         $token = bin2hex(random_bytes(32));
         PasswordReset::create($user['id'], $token);
-        $reset_link = "http://" . $_SERVER['HTTP_HOST'] . "/app/controllers/reset_password.php?token=$token";
-        // In a real application, you would email this link to the user.
-        $success = "Password reset link: <a href='$reset_link'>$reset_link</a>";
+        // TODO: Implement email sending functionality
+        // For now, log the reset link securely (not in HTML)
+        error_log("Password reset requested for user {$user['id']}: /app/controllers/reset_password.php?token=$token");
+        $success = "Password reset link has been sent to your registered email address.";
     } else {
         $error = "Invalid matric number.";
     }

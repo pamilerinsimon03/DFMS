@@ -26,6 +26,7 @@
 
     <div class="action-container">
         <form method="POST" class="update-form" onsubmit="return confirm('Are you sure you want to update all student passwords? This action cannot be undone.');">
+            <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
             <input type="hidden" name="action" value="update_passwords">
             <button type="submit" class="btn btn-warning">
                 <span class="btn-icon">🔄</span>

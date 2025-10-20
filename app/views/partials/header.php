@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="/app/src/css/global.css">
     <link rel="stylesheet" href="/app/src/css/dashboard.css">
+    <link rel="stylesheet" href="/app/src/css/toast.css">
     <?php if (isset($css_files) && is_array($css_files)): ?>
     <?php foreach ($css_files as $css): ?>
     <link rel="stylesheet" href="/app/src/css/<?php echo $css; ?>">

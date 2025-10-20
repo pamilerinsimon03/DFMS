@@ -1,0 +1,87 @@
+name: NDPR Compliance Check
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run compliance check weekly
+    - cron: '0 3 * * 1'
+
+jobs:
+  ndpr-compliance:
+    name: NDPR Compliance Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.0'
+    
+    - name: Check for privacy policy
+      run: |
+        if [ ! -f "privacy-policy.html" ] && [ ! -f "privacy-policy.php" ]; then
+          echo "❌ Privacy policy not found!"
+          exit 1
+        else
+          echo "✅ Privacy policy found"
+        fi
+    
+    - name: Check for consent mechanisms
+      run: |
+        if ! grep -r "consent\|agree\|accept" app/views/ --include="*.php"; then
+          echo "❌ No consent mechanisms found!"
+          exit 1
+        else
+          echo "✅ Consent mechanisms found"
+        fi
+    
+    - name: Check for data retention policies
+      run: |
+        if ! grep -r "retention\|delete\|expire" app/ --include="*.php"; then
+          echo "❌ No data retention policies found!"
+          exit 1
+        else
+          echo "✅ Data retention policies found"
+        fi
+    
+    - name: Check for data encryption
+      run: |
+        if ! grep -r "encrypt\|hash\|password_hash" app/ --include="*.php"; then
+          echo "❌ No data encryption found!"
+          exit 1
+        else
+          echo "✅ Data encryption found"
+        fi
+    
+    - name: Check for audit logging
+      run: |
+        if ! grep -r "log\|audit\|track" app/ --include="*.php"; then
+          echo "❌ No audit logging found!"
+          exit 1
+        else
+          echo "✅ Audit logging found"
+        fi
+    
+    - name: Generate compliance report
+      run: |
+        echo "# NDPR Compliance Report" > ndpr-compliance.md
+        echo "Generated: $(date)" >> ndpr-compliance.md
+        echo "" >> ndpr-compliance.md
+        echo "## Compliance Checks" >> ndpr-compliance.md
+        echo "- Privacy Policy: ${{ job.status }}" >> ndpr-compliance.md
+        echo "- Consent Mechanisms: ${{ job.status }}" >> ndpr-compliance.md
+        echo "- Data Retention: ${{ job.status }}" >> ndpr-compliance.md
+        echo "- Data Encryption: ${{ job.status }}" >> ndpr-compliance.md
+        echo "- Audit Logging: ${{ job.status }}" >> ndpr-compliance.md
+    
+    - name: Upload compliance report
+      uses: actions/upload-artifact@v3
+      with:
+        name: ndpr-compliance-report
+        path: ndpr-compliance.md

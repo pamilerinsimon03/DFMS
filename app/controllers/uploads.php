@@ -17,6 +17,9 @@ $tab = isset($_GET['tab']) ? strtolower($_GET['tab']) : 'total';
 
 // Handle re-upload logic
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reupload_id'])) {
+    // Validate CSRF token
+    requireCSRFToken();
+    
     $doc_id = $_POST['reupload_id'];
     $file = $_FILES['file'];
     $original_doc = Document::getById($doc_id);

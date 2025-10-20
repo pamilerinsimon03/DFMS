@@ -22,6 +22,9 @@ $account_age_hours = (time() - strtotime($user['created_at'])) / 3600;
 $mandatory_update_required = $account_age_hours > 48 && !$profile_complete;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Validate CSRF token
+    requireCSRFToken();
+    
     $action = $_POST['action'] ?? 'update_profile';
     
     if ($action === 'update_profile') {
@@ -40,19 +43,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($missing_fields)) {
             $error = "Please fill in all required fields: " . implode(', ', $missing_fields);
         } else {
-            // Prepare profile data
+            // Include security utilities
+            require_once __DIR__ . '/../utils/SecurityUtils.php';
+            
+            // Prepare profile data with validation
             $profile_data = [
-                'full_name' => $_POST['full_name'],
-                'email' => $_POST['email'],
-                'phone_number' => $_POST['phone_number'],
-                'date_of_birth' => $_POST['date_of_birth'],
-                'gender' => $_POST['gender'],
-                'state_of_origin' => $_POST['state_of_origin'],
-                'marital_status' => $_POST['marital_status'] ?? 'Single',
-                'address' => $_POST['address'],
-                'emergency_contact_name' => $_POST['emergency_contact_name'],
-                'emergency_contact_phone' => $_POST['emergency_contact_phone'],
-                'emergency_contact_relationship' => $_POST['emergency_contact_relationship'],
+                'full_name' => SecurityUtils::validateInput($_POST['full_name'] ?? '', 'string', 100),
+                'email' => SecurityUtils::validateInput($_POST['email'] ?? '', 'email', 255),
+                'phone_number' => SecurityUtils::validateInput($_POST['phone_number'] ?? '', 'string', 20),
+                'date_of_birth' => SecurityUtils::validateInput($_POST['date_of_birth'] ?? '', 'string', 10),
+                'gender' => SecurityUtils::validateInput($_POST['gender'] ?? '', 'string', 10),
+                'state_of_origin' => SecurityUtils::validateInput($_POST['state_of_origin'] ?? '', 'string', 50),
+                'marital_status' => SecurityUtils::validateInput($_POST['marital_status'] ?? 'Single', 'string', 20),
+                'address' => SecurityUtils::validateInput($_POST['address'] ?? '', 'string', 500),
+                'emergency_contact_name' => SecurityUtils::validateInput($_POST['emergency_contact_name'] ?? '', 'string', 100),
+                'emergency_contact_phone' => SecurityUtils::validateInput($_POST['emergency_contact_phone'] ?? '', 'string', 20),
+                'emergency_contact_relationship' => SecurityUtils::validateInput($_POST['emergency_contact_relationship'] ?? '', 'string', 50),
                 'profile_updated_at' => date('Y-m-d H:i:s')
             ];
             

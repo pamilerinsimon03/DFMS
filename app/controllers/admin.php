@@ -84,7 +84,24 @@ $breakdown_counts = array_values($verification_breakdown);
 $recent_pending = Document::getPendingDocuments($start_date, $end_date, 5, $department_id);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_POST['doc_id'])) {
-    Document::updateStatus($_POST['doc_id'], $_POST['action']);
+    // Validate CSRF token
+    requireCSRFToken();
+    
+    // Include security utilities for logging
+    require_once __DIR__ . '/../utils/SecurityUtils.php';
+    
+    $doc_id = $_POST['doc_id'];
+    $action = $_POST['action'];
+    
+    // Log the document status change
+    SecurityUtils::logSecurityEvent('document_status_change', [
+        'user_id' => $_SESSION['user_id'],
+        'doc_id' => $doc_id,
+        'action' => $action,
+        'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown'
+    ]);
+    
+    Document::updateStatus($doc_id, $action);
     header("Location: " . $_SERVER['REQUEST_URI']);
     exit();
 }

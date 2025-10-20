@@ -1,7 +1,90 @@
+# Security Headers
+<IfModule mod_headers.c>
+    # Prevent clickjacking
+    Header always set X-Frame-Options "SAMEORIGIN"
+    
+    # Prevent MIME type sniffing
+    Header always set X-Content-Type-Options "nosniff"
+    
+    # Enable XSS protection
+    Header always set X-XSS-Protection "1; mode=block"
+    
+    # Content Security Policy
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self';"
+    
+    # Referrer Policy
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    
+    # Permissions Policy
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    
+    # Remove server information
+    Header always unset Server
+    Header always unset X-Powered-By
+</IfModule>
+
+# HTTPS Enforcement (uncomment for production)
+# <IfModule mod_rewrite.c>
+#     RewriteEngine On
+#     RewriteCond %{HTTPS} off
+#     RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# </IfModule>
+
+# Prevent access to sensitive files
+<FilesMatch "\.(env|log|sql|bak|backup)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Prevent access to configuration files
+<FilesMatch "^(config|database|secrets)\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Prevent access to uploads directory (if moved outside webroot)
+<Directory "secure_uploads">
+    Order allow,deny
+    Deny from all
+</Directory>
+
+# Prevent access to logs directory
+<Directory "app/logs">
+    Order allow,deny
+    Deny from all
+</Directory>
+
+# Prevent access to .git directory
+<Directory ".git">
+    Order allow,deny
+    Deny from all
+</Directory>
+
+# File upload restrictions
+<FilesMatch "\.(php|php3|php4|php5|phtml|pl|py|jsp|asp|sh|cgi)$">
+    <If "%{REQUEST_URI} =~ m#^/secure_uploads/#">
+        Order allow,deny
+        Deny from all
+    </If>
+</FilesMatch>
+
+# Disable server signature
+ServerSignature Off
+
+# Hide PHP version
+<IfModule mod_headers.c>
+    Header unset X-Powered-By
+</IfModule>
+
+# Default index and pretty URLs
+<IfModule mod_dir.c>
+    DirectoryIndex index.php index.html
+</IfModule>
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteRule ^$ public/ [L]
+    # Route all requests to public/index.php or app routers if needed
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)$ public/$1 [L]
+    RewriteRule ^ index.php [L]
 </IfModule>

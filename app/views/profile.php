@@ -95,6 +95,7 @@
             </div>
             <div class="card-body">
                 <form action="" method="POST" class="profile-form">
+                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                     <input type="hidden" name="action" value="update_profile">
                     
                     <div class="form-section">

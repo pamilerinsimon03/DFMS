@@ -14,6 +14,7 @@
         <div class="upload-container">
             <h3>Upload CSV File</h3>
             <form method="POST" enctype="multipart/form-data" class="upload-form">
+                <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                 <input type="hidden" name="action" value="import_csv">
                 <div class="file-input-wrapper">
                     <input type="file" name="csv_file" id="csv_file" accept=".csv" required>

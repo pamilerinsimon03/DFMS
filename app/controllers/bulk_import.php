@@ -15,6 +15,9 @@ $import_results = [];
 
 // Handle CSV upload and import
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'import_csv') {
+    // Validate CSRF token
+    requireCSRFToken();
+    
     if (isset($_FILES['csv_file']) && $_FILES['csv_file']['error'] === UPLOAD_ERR_OK) {
         $file = $_FILES['csv_file'];
         

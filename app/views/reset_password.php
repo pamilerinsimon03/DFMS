@@ -11,6 +11,7 @@
         <?php endif; ?>
         <?php if ($mode === 'request'): ?>
         <form action="/app/controllers/reset_password.php" method="POST">
+            <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
             <div class="mb-3">
                 <label for="matric_number" class="form-label">Matric Number *</label>
                 <input type="text" class="form-control" id="matric_number" name="matric_number" required>
@@ -23,6 +24,7 @@
         <?php else: ?>
         <form action="/app/controllers/reset_password.php?token=<?php echo htmlspecialchars($_GET['token']); ?>"
             method="POST">
+            <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
             <div class="mb-3">
                 <label for="new_password" class="form-label">New Password *</label>
                 <input type="password" class="form-control" id="new_password" name="new_password" required>

@@ -15,6 +15,9 @@ $import_results = [];
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Validate CSRF token
+    requireCSRFToken();
+    
     $action = $_POST['action'] ?? '';
     
     if ($action === 'import_csv') {

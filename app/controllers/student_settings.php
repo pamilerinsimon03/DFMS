@@ -14,9 +14,20 @@ $success = '';
 
 // Handle password change
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'change_password') {
+    // Validate CSRF token
+    requireCSRFToken();
+    
+    // Include security utilities
+    require_once __DIR__ . '/../utils/SecurityUtils.php';
+    
     $current_password = $_POST['current_password'] ?? '';
     $new_password = $_POST['new_password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
+    
+    // Validate password strength
+    if (strlen($new_password) < 8) {
+        $error = "New password must be at least 8 characters long.";
+    }
     
     if (empty($current_password) || empty($new_password) || empty($confirm_password)) {
         $error = "All fields are required.";
@@ -29,6 +40,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     } else {
         $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
         if (User::updatePassword($user_id, $hashed_password)) {
+            // Log password change
+            SecurityUtils::logSecurityEvent('password_changed', [
+                'user_id' => $user_id,
+                'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown'
+            ]);
             $success = "Password changed successfully.";
             // Refresh user data
             $user = User::getById($user_id);

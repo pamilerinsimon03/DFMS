@@ -1,0 +1,179 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run security scan daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  static-analysis:
+    name: Static Code Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for better analysis
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.0'
+        extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, mysqli
+    
+    - name: Install PHPStan
+      run: composer global require phpstan/phpstan
+    
+    - name: Run PHPStan
+      run: phpstan analyse app/ --level=5 --no-progress
+    
+    - name: Install Psalm
+      run: composer global require vimeo/psalm
+    
+    - name: Run Psalm
+      run: psalm --init && psalm --show-info=false
+
+  secret-scan:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Run TruffleHog
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+        extra_args: --debug --only-verified
+    
+    - name: Run Gitleaks
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  dependency-scan:
+    name: Dependency Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.0'
+    
+    - name: Install Composer dependencies
+      run: composer install --no-dev --optimize-autoloader
+    
+    - name: Run Composer Audit
+      run: composer audit --format=json > audit-results.json || true
+    
+    - name: Upload audit results
+      uses: actions/upload-artifact@v3
+      with:
+        name: composer-audit-results
+        path: audit-results.json
+
+  custom-security-checks:
+    name: Custom Security Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.0'
+    
+    - name: Check for hardcoded credentials
+      run: |
+        if grep -r "password.*=" app/config/ --include="*.php"; then
+          echo "❌ Hardcoded credentials found!"
+          exit 1
+        else
+          echo "✅ No hardcoded credentials found"
+        fi
+    
+    - name: Check for SQL injection patterns
+      run: |
+        if grep -r "SELECT.*\$" app/models/ --include="*.php" | grep -v "prepare\|bind_param"; then
+          echo "❌ Potential SQL injection found!"
+          exit 1
+        else
+          echo "✅ No obvious SQL injection patterns found"
+        fi
+    
+    - name: Check for XSS patterns
+      run: |
+        if grep -r "echo.*\$" app/views/ --include="*.php" | grep -v "htmlspecialchars\|htmlentities"; then
+          echo "❌ Potential XSS vulnerability found!"
+          exit 1
+        else
+          echo "✅ Output encoding appears to be in place"
+        fi
+    
+    - name: Check for CSRF protection
+      run: |
+        if ! grep -r "csrf_token\|CSRF" app/; then
+          echo "❌ No CSRF protection found!"
+          exit 1
+        else
+          echo "✅ CSRF protection appears to be implemented"
+        fi
+    
+    - name: Check file upload security
+      run: |
+        if grep -r "move_uploaded_file" app/ --include="*.php" | grep -v "pathinfo\|basename"; then
+          echo "❌ File upload may be insecure!"
+          exit 1
+        else
+          echo "✅ File upload appears to have some validation"
+        fi
+
+  security-report:
+    name: Generate Security Report
+    runs-on: ubuntu-latest
+    needs: [static-analysis, secret-scan, dependency-scan, custom-security-checks]
+    if: always()
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Generate security summary
+      run: |
+        echo "# Security Scan Results" > security-summary.md
+        echo "## Static Analysis" >> security-summary.md
+        echo "- PHPStan: ${{ needs.static-analysis.result }}" >> security-summary.md
+        echo "- Psalm: ${{ needs.static-analysis.result }}" >> security-summary.md
+        echo "" >> security-summary.md
+        echo "## Secret Scanning" >> security-summary.md
+        echo "- TruffleHog: ${{ needs.secret-scan.result }}" >> security-summary.md
+        echo "- Gitleaks: ${{ needs.secret-scan.result }}" >> security-summary.md
+        echo "" >> security-summary.md
+        echo "## Dependency Scan" >> security-summary.md
+        echo "- Composer Audit: ${{ needs.dependency-scan.result }}" >> security-summary.md
+        echo "" >> security-summary.md
+        echo "## Custom Security Checks" >> security-summary.md
+        echo "- Custom Checks: ${{ needs.custom-security-checks.result }}" >> security-summary.md
+    
+    - name: Upload security report
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-scan-report
+        path: security-summary.md

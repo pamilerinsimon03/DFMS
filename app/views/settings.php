@@ -63,6 +63,7 @@
                 <?php if ($user['matric_number'] === 'SUPER_ADMIN'): ?>
                     <!-- Super Admin can change any admin password -->
                     <form method="POST" class="password-form">
+                        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                         <div class="form-group">
                             <label for="admin_matric">Select Admin</label>
                             <select name="admin_matric" id="admin_matric" required>
@@ -91,6 +92,7 @@
                         <p><strong>Student Password Update</strong></p>
                         <p>Update all existing student passwords to the new format: <strong>surname12345</strong></p>
                         <form method="POST" onsubmit="return confirm('Are you sure you want to update all student passwords? This action cannot be undone.');">
+                            <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                             <button type="submit" name="action" value="update_passwords" class="btn btn-warning">
                                 <span class="btn-icon">🔄</span>
                                 Update All Student Passwords
@@ -167,12 +169,13 @@
             </div>
             <div class="card-content">
                 <form method="POST" class="preferences-form">
+                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                     <div class="form-group">
                         <label for="session_year">Current Academic Session</label>
                         <input type="text" name="session_year" id="session_year" 
                                value="<?php echo htmlspecialchars($session_year ?? '2023/2024'); ?>" 
                                placeholder="e.g., 2023/2024">
-            </div>
+                    </div>
                     <div class="form-group">
                         <label for="max_file_size">Maximum File Size (MB)</label>
                         <input type="number" name="max_file_size" id="max_file_size" 

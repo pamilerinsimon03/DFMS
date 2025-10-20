@@ -45,6 +45,17 @@
                     </div>
                     <div class="menu-text <?php echo $active_page === 'analytics' ? 'active-text' : ''; ?>">Analytics</div>
                 </a>
+                <?php if ($user['matric_number'] !== 'SUPER_ADMIN'): ?>
+                <a href="/app/controllers/file_management.php"
+                    class="menu-item <?php echo $active_page === 'file_management' ? 'active' : ''; ?>">
+                    <div class="menu-icon">
+                        <img src="/app/src/assets/images/folder-outline<?php echo $active_page === 'file_management' ? '' : ' white'; ?>.svg"
+                            alt="File Management Icon">
+                    </div>
+                    <div class="menu-text <?php echo $active_page === 'file_management' ? 'active-text' : ''; ?>">
+                        File Management</div>
+                </a>
+                <?php endif; ?>
                 <a href="/app/controllers/settings.php"
                     class="menu-item <?php echo $active_page === 'settings' ? 'active' : ''; ?>">
                     <div class="menu-icon"><img src="/app/src/assets/images/settings.svg" alt="Settings Icon"></div>

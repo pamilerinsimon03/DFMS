@@ -272,8 +272,246 @@ CREATE TABLE IF NOT EXISTS notifications (
 );
 
 -- ====================================================
--- 7. Optional: Consolidated Migrations
---    (Already covered above; skip to avoid duplication)
+-- 7. Security Updates and NDPR Compliance
 -- ====================================================
+
+-- Create data deletion schedule table for NDPR compliance
+CREATE TABLE IF NOT EXISTS data_deletion_schedule (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    reason VARCHAR(255) NOT NULL,
+    scheduled_date DATE NOT NULL,
+    status ENUM('scheduled', 'completed', 'cancelled') DEFAULT 'scheduled',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Create audit log table for security events
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NULL,
+    event_type VARCHAR(100) NOT NULL,
+    event_description TEXT,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_event_type (event_type),
+    INDEX idx_created_at (created_at),
+    INDEX idx_user_id (user_id)
+);
+
+-- Create consent tracking table for NDPR compliance
+CREATE TABLE IF NOT EXISTS consent_records (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    consent_type VARCHAR(100) NOT NULL,
+    consent_given BOOLEAN NOT NULL,
+    consent_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    consent_withdrawn_at TIMESTAMP NULL,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_consent (user_id, consent_type),
+    INDEX idx_consent_date (consent_date)
+);
+
+-- Add security-related columns to users table
+ALTER TABLE users 
+ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP NULL,
+ADD COLUMN IF NOT EXISTS failed_login_attempts INT DEFAULT 0,
+ADD COLUMN IF NOT EXISTS account_locked_until TIMESTAMP NULL,
+ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN IF NOT EXISTS data_retention_consent BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS marketing_consent BOOLEAN DEFAULT FALSE;
+
+-- Add security-related columns to documents table
+ALTER TABLE documents
+ADD COLUMN IF NOT EXISTS file_hash VARCHAR(64),
+ADD COLUMN IF NOT EXISTS upload_ip VARCHAR(45),
+ADD COLUMN IF NOT EXISTS file_scan_status ENUM('pending', 'clean', 'infected', 'error') DEFAULT 'pending',
+ADD COLUMN IF NOT EXISTS file_scan_date TIMESTAMP NULL;
+
+-- Create indexes for better performance and security
+CREATE INDEX IF NOT EXISTS idx_users_last_login ON users(last_login_at);
+CREATE INDEX IF NOT EXISTS idx_users_failed_logins ON users(failed_login_attempts);
+CREATE INDEX IF NOT EXISTS idx_documents_file_hash ON documents(file_hash);
+CREATE INDEX IF NOT EXISTS idx_documents_scan_status ON documents(file_scan_status);
+
+-- Create view for security monitoring
+CREATE OR REPLACE VIEW security_summary AS
+SELECT 
+    DATE(created_at) as date,
+    COUNT(*) as total_events,
+    SUM(CASE WHEN event_type = 'failed_login' THEN 1 ELSE 0 END) as failed_logins,
+    SUM(CASE WHEN event_type = 'rate_limit_exceeded' THEN 1 ELSE 0 END) as rate_limit_hits,
+    SUM(CASE WHEN event_type = 'file_upload_validation_failed' THEN 1 ELSE 0 END) as upload_failures
+FROM audit_logs 
+WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+GROUP BY DATE(created_at)
+ORDER BY date DESC;
+
+-- Create stored procedure for cleaning up old audit logs
+DELIMITER //
+CREATE PROCEDURE IF NOT EXISTS CleanupOldAuditLogs()
+BEGIN
+    -- Delete audit logs older than 1 year
+    DELETE FROM audit_logs WHERE created_at < DATE_SUB(NOW(), INTERVAL 1 YEAR);
+    
+    -- Delete completed data deletion records older than 6 months
+    DELETE FROM data_deletion_schedule 
+    WHERE status = 'completed' AND completed_at < DATE_SUB(NOW(), INTERVAL 6 MONTH);
+    
+    -- Log the cleanup
+    INSERT INTO audit_logs (event_type, event_description, created_at)
+    VALUES ('maintenance', 'Old audit logs and deletion records cleaned up', NOW());
+END //
+DELIMITER ;
+
+-- Create stored procedure for user data export (NDPR compliance)
+DELIMITER //
+CREATE PROCEDURE IF NOT EXISTS ExportUserData(IN user_id INT)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+    
+    START TRANSACTION;
+    
+    -- Log the data export request
+    INSERT INTO audit_logs (user_id, event_type, event_description, created_at)
+    VALUES (user_id, 'data_export', 'User data export requested', NOW());
+    
+    -- Return user data
+    SELECT 
+        u.id,
+        u.matric_number,
+        u.full_name,
+        u.email,
+        u.phone_number,
+        u.date_of_birth,
+        u.gender,
+        u.state_of_origin,
+        u.marital_status,
+        u.address,
+        u.emergency_contact_name,
+        u.emergency_contact_phone,
+        u.level,
+        u.programme,
+        u.session,
+        u.created_at,
+        u.last_login_at
+    FROM users u 
+    WHERE u.id = user_id;
+    
+    -- Return user documents
+    SELECT 
+        d.id,
+        d.document_name,
+        d.file_path,
+        d.file_size,
+        d.file_type,
+        d.status,
+        d.created_at
+    FROM documents d 
+    WHERE d.user_id = user_id;
+    
+    -- Return consent records
+    SELECT 
+        c.consent_type,
+        c.consent_given,
+        c.consent_date,
+        c.consent_withdrawn_at
+    FROM consent_records c 
+    WHERE c.user_id = user_id;
+    
+    COMMIT;
+END //
+DELIMITER ;
+
+-- Insert default consent types
+INSERT IGNORE INTO consent_records (user_id, consent_type, consent_given, consent_date)
+SELECT 
+    id,
+    'data_processing',
+    TRUE,
+    created_at
+FROM users 
+WHERE data_retention_consent = TRUE;
+
+-- Update existing users with default consent
+UPDATE users 
+SET data_retention_consent = TRUE 
+WHERE data_retention_consent = FALSE;
+
+-- Create trigger to log user data changes
+DELIMITER //
+CREATE TRIGGER IF NOT EXISTS log_user_changes
+AFTER UPDATE ON users
+FOR EACH ROW
+BEGIN
+    IF OLD.full_name != NEW.full_name THEN
+        INSERT INTO audit_logs (user_id, event_type, event_description, created_at)
+        VALUES (NEW.id, 'profile_update', CONCAT('Full name changed from "', OLD.full_name, '" to "', NEW.full_name, '"'), NOW());
+    END IF;
+    
+    IF OLD.email != NEW.email THEN
+        INSERT INTO audit_logs (user_id, event_type, event_description, created_at)
+        VALUES (NEW.id, 'profile_update', CONCAT('Email changed from "', OLD.email, '" to "', NEW.email, '"'), NOW());
+    END IF;
+    
+    IF OLD.phone_number != NEW.phone_number THEN
+        INSERT INTO audit_logs (user_id, event_type, event_description, created_at)
+        VALUES (NEW.id, 'profile_update', CONCAT('Phone number changed from "', OLD.phone_number, '" to "', NEW.phone_number, '"'), NOW());
+    END IF;
+END //
+DELIMITER ;
+
+-- Create a view for NDPR compliance reporting
+CREATE OR REPLACE VIEW ndpr_compliance_summary AS
+SELECT 
+    'Total Users' as metric,
+    COUNT(*) as count,
+    'Active users in system' as description
+FROM users
+UNION ALL
+SELECT 
+    'Users with Data Consent',
+    COUNT(*),
+    'Users who have given data processing consent'
+FROM users 
+WHERE data_retention_consent = TRUE
+UNION ALL
+SELECT 
+    'Pending Data Deletions',
+    COUNT(*),
+    'Users scheduled for data deletion'
+FROM data_deletion_schedule 
+WHERE status = 'scheduled'
+UNION ALL
+SELECT 
+    'Security Events (30 days)',
+    COUNT(*),
+    'Total security events in last 30 days'
+FROM audit_logs 
+WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+UNION ALL
+SELECT 
+    'Failed Logins (30 days)',
+    COUNT(*),
+    'Failed login attempts in last 30 days'
+FROM audit_logs 
+WHERE event_type = 'failed_login' 
+AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY);
+
+-- Final security recommendations
+-- 1. Run this script during maintenance window
+-- 2. Test all procedures and triggers
+-- 3. Set up regular cleanup job: CALL CleanupOldAuditLogs();
+-- 4. Monitor security_summary view regularly
+-- 5. Review ndpr_compliance_summary monthly
 
 COMMIT;

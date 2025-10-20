@@ -3,6 +3,7 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Document.php';
 require_once __DIR__ . '/../models/Notification.php';
+require_once __DIR__ . '/../models/FileRequirement.php';
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: /public/index.php");
@@ -43,14 +44,13 @@ if (User::isAdmin($user_id)) {
     
     $total_docs = count(Document::getByUserId($user_id));
     $document_types = require __DIR__ . '/../config/document_types.php';
-    $required_docs = [
-        'Admission Letter' => '2025-06-10',
-        'Course Registration Form' => '2025-06-10',
-        'NACOSS Receipt' => '2025-06-10',
-        'Faculty Registration Receipt' => '2025-06-10',
-        'Medical Laboratory Receipt' => '2025-06-10',
-        'Hostel Accommodation' => '2025-06-10'
-    ];
+    
+    // Get file requirements from database for this student's department
+    $file_requirements = FileRequirement::getActiveForDepartment($user['department_id']);
+    $required_docs = [];
+    foreach ($file_requirements as $req) {
+        $required_docs[$req['document_name']] = $req['due_date'];
+    }
     $uploaded_docs = array_map(fn($doc) => $doc['document_name'], Document::getByUserId($user_id));
 
     if ($search) {

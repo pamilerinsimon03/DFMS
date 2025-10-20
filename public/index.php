@@ -12,7 +12,8 @@ if (isset($_SESSION['user_id'])) {
 }
 
 $page_title = 'Login';
-$css_files = ['style.css', 'styleguide.css'];
+$css_files = ['style.css', 'styleguide.css', 'toast.css'];
+$js_files = ['toast.js'];
 
 require_once __DIR__ . '/../app/views/partials/header.php';
 ?>
@@ -34,6 +35,7 @@ require_once __DIR__ . '/../app/views/partials/header.php';
                     <div class="frame">
                         <h3 class="text-wrapper">Login</h3>
                         <form class="frame" action="/app/controllers/login.php" method="POST">
+                            <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                             <div class="frame-2">
                                 <div class="frame-3">
                                     <div class="frame-4">
@@ -86,6 +88,18 @@ require_once __DIR__ . '/../app/views/partials/header.php';
         </div>
     </div>
 </div>
+
+<!-- Toast notification data -->
+<?php if (isset($_SESSION['error'])): ?>
+<div data-error="<?php echo htmlspecialchars($_SESSION['error']); ?>" style="display: none;"></div>
+<?php unset($_SESSION['error']); ?>
+<?php endif; ?>
+
+<?php if (isset($_SESSION['success'])): ?>
+<div data-success="<?php echo htmlspecialchars($_SESSION['success']); ?>" style="display: none;"></div>
+<?php unset($_SESSION['success']); ?>
+<?php endif; ?>
+
 <script>
 document.getElementById('togglePassword').addEventListener('click', function() {
     const passwordInput = document.getElementById('password');

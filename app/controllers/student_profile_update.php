@@ -20,6 +20,9 @@ $requires_mandatory_update = $hours_since_creation <= 48;
 
 // Handle profile update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_profile') {
+    // Validate CSRF token
+    requireCSRFToken();
+    
     $full_name = trim($_POST['full_name'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $phone_number = trim($_POST['phone_number'] ?? '');

@@ -11,6 +11,9 @@ if (!isset($_SESSION['user_id']) || !User::isAdmin($_SESSION['user_id'])) {
 $user = User::getById($_SESSION['user_id']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_POST['doc_id'])) {
+    // Validate CSRF token
+    requireCSRFToken();
+    
     Document::updateStatus($_POST['doc_id'], $_POST['action']);
     $url = "/app/controllers/verifications.php?" . http_build_query($_GET);
     header("Location: $url");

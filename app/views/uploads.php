@@ -112,6 +112,7 @@
                     <?php if ($doc['status'] === 'Rejected'): ?>
                     <form action="/app/controllers/uploads.php?tab=<?php echo htmlspecialchars($tab); ?>" method="POST"
                         enctype="multipart/form-data" style="display: inline;">
+                        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                         <input type="hidden" name="reupload_id" value="<?php echo $doc['id']; ?>">
                         <input type="file" id="reupload-<?php echo $doc['id']; ?>" name="file"
                             accept=".pdf,.jpg,.jpeg,.png" required style="display: none;" onchange="this.form.submit()">

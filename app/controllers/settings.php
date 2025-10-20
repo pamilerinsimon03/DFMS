@@ -17,6 +17,9 @@ $total_departments = count(User::getAllDepartments());
 
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Validate CSRF token
+    requireCSRFToken();
+    
     $action = $_POST['action'] ?? '';
     
     switch ($action) {
@@ -45,6 +48,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
                     if (User::updatePassword($admin_user['id'], $hashed_password)) {
+                        // Log admin password change
+                        require_once __DIR__ . '/../utils/SecurityUtils.php';
+                        SecurityUtils::logSecurityEvent('admin_password_changed', [
+                            'changed_by' => $_SESSION['user_id'],
+                            'target_admin' => $admin_user['id'],
+                            'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown'
+                        ]);
                         $success = "Password updated successfully for " . $admin_user['full_name'];
                     } else {
                         $error = "Failed to update password.";

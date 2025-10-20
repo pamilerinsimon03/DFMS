@@ -490,32 +490,48 @@ class Document
     public static function upload($user_id, $document_name, $generated_filename, $file, $classification_data)
     {
         global $conn;
+        
+        // Include security utilities
+        require_once __DIR__ . '/../utils/SecurityUtils.php';
 
-        if ($file['error'] !== UPLOAD_ERR_OK) {
-            return ['success' => false, 'message' => 'An error occurred during file upload.'];
+        // Validate file upload using security utilities
+        $validationErrors = SecurityUtils::validateFileUpload($file);
+        if (!empty($validationErrors)) {
+            SecurityUtils::logSecurityEvent('file_upload_validation_failed', [
+                'user_id' => $user_id,
+                'errors' => $validationErrors,
+                'filename' => $file['name']
+            ]);
+            return ['success' => false, 'message' => 'File validation failed: ' . implode(', ', $validationErrors)];
         }
 
-        $allowed_types = ['application/pdf', 'image/jpeg', 'image/png'];
-        $allowed_exts  = ['pdf', 'jpeg', 'jpg', 'png'];
-        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-
-        if ($file['size'] > 5 * 1024 * 1024) {
-            return ['success' => false, 'message' => 'File size exceeds 5 MB limit.'];
-        }
-        if (!in_array($file['type'], $allowed_types) || !in_array($ext, $allowed_exts)) {
-            return ['success' => false, 'message' => 'Invalid file type. Only PDF, JPEG, and PNG allowed.'];
-        }
-
-        $upload_dir  = __DIR__ . '/../../public/uploads/';
+        // Create secure upload directory outside webroot
+        $upload_dir = __DIR__ . '/../../secure_uploads/';
         if (!is_dir($upload_dir)) {
             mkdir($upload_dir, 0755, true);
         }
-        $file_path   = 'uploads/' . $generated_filename;
-        $destination = $upload_dir . $generated_filename;
+        
+        // Generate secure filename
+        $secure_filename = SecurityUtils::generateSecureFilename($file['name'], $user_id);
+        $file_path = 'secure_uploads/' . $secure_filename;
+        $destination = $upload_dir . $secure_filename;
 
         if (!move_uploaded_file($file['tmp_name'], $destination)) {
+            SecurityUtils::logSecurityEvent('file_upload_failed', [
+                'user_id' => $user_id,
+                'filename' => $file['name'],
+                'error' => 'Failed to move uploaded file'
+            ]);
             return ['success' => false, 'message' => 'Failed to move uploaded file.'];
         }
+        
+        // Log successful file upload
+        SecurityUtils::logSecurityEvent('file_upload_success', [
+            'user_id' => $user_id,
+            'original_filename' => $file['name'],
+            'secure_filename' => $secure_filename,
+            'file_size' => $file['size']
+        ]);
 
         $sql = "
             INSERT INTO documents
@@ -567,26 +583,39 @@ class Document
     public static function reupload($doc_id, $new_file, $generated_filename)
     {
         global $conn;
+        
+        // Include security utilities
+        require_once __DIR__ . '/../utils/SecurityUtils.php';
 
-        // 1. Validate the file
-        if ($new_file['error'] !== UPLOAD_ERR_OK) {
-            return ['success' => false, 'message' => 'An error occurred during file upload.'];
-        }
-        $allowed_types = ['application/pdf', 'image/jpeg', 'image/png'];
-        $allowed_exts  = ['pdf', 'jpeg', 'jpg', 'png'];
-        $ext = strtolower(pathinfo($new_file['name'], PATHINFO_EXTENSION));
-
-        if ($new_file['size'] > 5 * 1024 * 1024) {
-            return ['success' => false, 'message' => 'File size exceeds 5 MB limit.'];
-        }
-        if (!in_array($new_file['type'], $allowed_types) || !in_array($ext, $allowed_exts)) {
-            return ['success' => false, 'message' => 'Invalid file type. Only PDF, JPEG, and PNG allowed.'];
+        // 1. Get document details first
+        $doc = self::getById($doc_id);
+        if (!$doc) {
+            return ['success' => false, 'message' => 'Document not found.'];
         }
 
-        // 2. Move the new file
-        $upload_dir  = __DIR__ . '/../../public/uploads/';
-        $new_file_path = 'uploads/' . $generated_filename;
-        $destination = $upload_dir . $generated_filename;
+        // 2. Validate file upload using security utilities
+        $validationErrors = SecurityUtils::validateFileUpload($new_file);
+        if (!empty($validationErrors)) {
+            SecurityUtils::logSecurityEvent('file_reupload_validation_failed', [
+                'user_id' => $doc['user_id'],
+                'doc_id' => $doc_id,
+                'errors' => $validationErrors,
+                'filename' => $new_file['name']
+            ]);
+            return ['success' => false, 'message' => 'File validation failed: ' . implode(', ', $validationErrors)];
+        }
+
+        // 2. Move the new file to secure location
+        $upload_dir = __DIR__ . '/../../secure_uploads/';
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
+        
+        // Generate secure filename for reupload
+        $secure_filename = SecurityUtils::generateSecureFilename($new_file['name'], $doc['user_id']);
+        $new_file_path = 'secure_uploads/' . $secure_filename;
+        $destination = $upload_dir . $secure_filename;
+        
         if (!move_uploaded_file($new_file['tmp_name'], $destination)) {
             return ['success' => false, 'message' => 'Failed to move uploaded file.'];
         }
@@ -601,6 +630,15 @@ class Document
         $stmt->bind_param('si', $new_file_path, $doc_id);
 
         if ($stmt->execute()) {
+            // Log successful file reupload
+            SecurityUtils::logSecurityEvent('file_reupload_success', [
+                'user_id' => $doc['user_id'],
+                'doc_id' => $doc_id,
+                'original_filename' => $new_file['name'],
+                'secure_filename' => $secure_filename,
+                'file_size' => $new_file['size']
+            ]);
+            
             // Notify user of reupload awaiting verification
             $doc = self::getById($doc_id);
             Notification::create(

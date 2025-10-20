@@ -14,9 +14,21 @@ if (!isset($_SESSION['user_id'])) {
 
 // --- Handle Upload ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $document_name = $_POST['document_name'];
+    // Validate CSRF token
+    requireCSRFToken();
+    
+    // Include security utilities
+    require_once __DIR__ . '/../utils/SecurityUtils.php';
+    
+    $document_name = SecurityUtils::validateInput($_POST['document_name'] ?? '', 'string', 100);
     $user_id = $_SESSION['user_id'];
     $file = $_FILES['file'];
+    
+    if (!$document_name) {
+        $_SESSION['upload_message'] = 'Invalid document name.';
+        header("Location: /app/controllers/dashboard.php");
+        exit();
+    }
     $filePath = $file['tmp_name'];
     $debug_messages = [];
 

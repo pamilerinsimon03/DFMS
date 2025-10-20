@@ -93,6 +93,7 @@
             </div>
             <div class="card-body">
                 <form action="" method="POST" class="settings-form">
+                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                     <input type="hidden" name="action" value="change_password">
                     
                     <div class="form-group">

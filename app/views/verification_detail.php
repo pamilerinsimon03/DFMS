@@ -47,7 +47,7 @@
         <div class="doc-preview-container">
             <div class="doc-preview">
                 <iframe class="doc-embed"
-                    src="/public/uploads/<?php echo htmlspecialchars(basename($doc['file_path'])); ?>"></iframe>
+                    src="/app/controllers/secure_file_viewer.php?id=<?php echo htmlspecialchars($doc['id']); ?>"></iframe>
                 <div class="zoom-icon"><img src="/app/src/assets/images/Zoom - In.svg" alt="Zoom"></div>
             </div>
         </div>
@@ -102,12 +102,14 @@
     <div class="action-row">
         <form action="/app/controllers/verification_detail.php?doc_id=<?php echo $doc_id; ?>" method="POST"
             style="display: inline;">
+            <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
             <input type="hidden" name="action" value="approve">
             <button type="submit" class="approve-btn"><img src="/app/src/assets/images/Check.svg" class="btn-icon"
                     alt="">Approve</button>
         </form>
         <form action="/app/controllers/verification_detail.php?doc_id=<?php echo $doc_id; ?>" method="POST"
             style="display: inline;">
+            <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
             <input type="hidden" name="action" value="reject">
             <button type="submit" class="reject-btn"><img src="/app/src/assets/images/Close.svg" class="btn-icon"
                     alt="">Reject</button>

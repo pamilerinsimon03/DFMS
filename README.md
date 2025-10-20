@@ -1,6 +1,6 @@
 # University of Ibadan Digital File Management System (DFMS)
 
-A web portal for students, administrators, and lecturers to manage academic documents.
+A secure web portal for students, administrators, and lecturers to manage academic documents with comprehensive security features and NDPR compliance.
 
 ## Tech Stack
 
@@ -81,8 +81,8 @@ These features automate rejection of blurry or unreadable uploads. Install and c
    ```
 2. **Database Setup:**
 
-   * Import the `dfms.sql` file into MySQL database.
-   * Configure the database connection in `app/config/config.php`.
+   * Import the `dfms_database.sql` file into MySQL database.
+   * The system now uses environment variables for secure credential management.
 3. **Install Dependencies:**
 
    * Follow the steps under **Image Quality & OCR Validation** if you need automated checks.
@@ -99,17 +99,31 @@ DFMS/
 │   ├── controllers/ # Handles user requests and business logic
 │   ├── models/      # Database interaction and data models
 │   ├── views/       # PHP templates for the UI
-│   └── src/         # CSS, JS, and image assets
+│   ├── src/         # CSS, JS, and image assets
+│   ├── utils/       # Security utilities and helper functions
+│   └── logs/        # Security and audit logs
+├── docs/            # Documentation (see docs/README.md)
+├── secure_uploads/  # Secure file storage (outside webroot)
 ├── public/
-│   ├── index.php    # Front controller
-│   └── uploads/     # Directory for user-uploaded files
-├── dfms.sql         # Database schema
+│   └── index.php    # Front controller
+├── dfms_database.sql # Complete database schema with security updates
+├── .htaccess        # Security headers and access controls
+├── env.example      # Environment variables template
 └── README.md        # This file
 ```
 
 ## Login Credentials
 
-Default Password for all users: test101
+### Admin Users
+- **Main Admin**: Matric `E0500627`, Password `test101`
+- **Psychology Admin**: Matric `ADMIN_PSYC`, Password `admin12345`
+- **English Admin**: Matric `ADMIN_ENG`, Password `admin12345`
+- **Sociology Admin**: Matric `ADMIN_SOC`, Password `admin12345`
+- **Linguistics Admin**: Matric `ADMIN_LING`, Password `admin12345`
+- **Super Admin**: Matric `SUPER_ADMIN`, Password `admin12345`
+
+### Student Users
+Default Password format: `surname12345` (e.g., for "John Doe" → `doe12345`)
 
 **Note:** The system now supports automatic password generation based on student surnames. New students will have passwords in the format: `surname12345` (e.g., "John Doe" → password: "doe12345").
 
@@ -134,17 +148,55 @@ The bulk import feature accepts CSV files with the following columns:
 
 Download the CSV template from the bulk import page for the correct format.
 
-Admin Logins:
+### Quick Login Reference
 
-Psychology Admin: ADMIN_PSYC
-English Admin: ADMIN_ENG
-Sociology Admin: ADMIN_SOC
-Linguistics Admin: ADMIN_LING
-Super Admin: SUPER_ADMIN
-Student Logins:
+**Admin Users:**
+- Main Admin: `E0500627` / `test101`
+- Psychology Admin: `ADMIN_PSYC` / `admin12345`
+- English Admin: `ADMIN_ENG` / `admin12345`
+- Sociology Admin: `ADMIN_SOC` / `admin12345`
+- Linguistics Admin: `ADMIN_LING` / `admin12345`
+- Super Admin: `SUPER_ADMIN` / `admin12345`
 
-Computer Science: U123001, U123002
-Psychology: U123003, U123004
-English: U123005, U123006
-Sociology: U123007, U123008
+**Student Users:**
+- Computer Science: `U123001`, `U123002` (password: `surname12345`)
+- Psychology: `U123003`, `U123004` (password: `surname12345`)
+- English: `U123005`, `U123006` (password: `surname12345`)
+- Sociology: `U123007`, `U123008` (password: `surname12345`)
 Linguistics: U123009, U123010
+
+## 📚 Documentation
+
+All documentation is available in the [`docs/`](docs/) directory:
+
+- **[System Documentation](docs/DOCUMENTATION.md)** - Complete setup and usage guide
+- **[Test Cases](docs/Security_Test_Cases.md)** - Security testing procedures
+
+## 🚀 Quick Security Setup
+
+1. **Environment Setup:**
+   ```bash
+   cp env.example .env
+   # Edit .env with your database credentials
+   ```
+
+2. **Database Setup:**
+   ```bash
+   mysql -u your_user -p your_database < dfms_database.sql
+   ```
+
+3. **Security Validation:**
+   ```bash
+   # Run the deployment script (optional - fixes already applied)
+   ./deploy_security_fixes.sh
+   ```
+
+## 🔐 Security Features
+
+- **CSRF Protection** - All forms protected against cross-site request forgery
+- **Input Validation** - Comprehensive validation and sanitization
+- **Rate Limiting** - Protection against brute force attacks
+- **Secure File Uploads** - Files stored outside webroot with validation
+- **Audit Logging** - Complete security event tracking
+- **NDPR Compliance** - Full data protection regulation compliance
+- **Session Security** - Secure session management with proper flags

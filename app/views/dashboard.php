@@ -121,6 +121,7 @@
                 <?php endif; ?>
                 <form action="/app/controllers/upload_file.php" method="POST" enctype="multipart/form-data"
                     id="upload-form">
+                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                     <div class="upload-icon"><img src="/app/src/assets/images/humbleicons_upload.svg" alt="Upload Icon">
                     </div>
                     <div class="upload-text">Upload files</div>
