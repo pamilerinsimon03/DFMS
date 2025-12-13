@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
     // Validate CSRF token
     requireCSRFToken();
     
-    Document::updateStatus($_POST['doc_id'], $_POST['action']);
+    Document::updateStatus($_POST['doc_id'], $_POST['action'], $_POST['rejection_reason'] ?? null);
     $url = "/app/controllers/verifications.php?" . http_build_query($_GET);
     header("Location: $url");
     exit();
@@ -74,7 +74,63 @@ $active_page = 'verifications';
 $css_files = ['admin.css', 'uploads.css'];
 $js_files = ['admin_verifications.js', 'admin.js'];
 
-// --- Render View ---
+// --- Render View or JSON Response ---
+if (isset($_GET['ajax']) || (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')) {
+    ob_start();
+    if (empty($documents)): ?>
+        <tr><td colspan="7">No documents found.</td></tr>
+    <?php else:
+        foreach ($documents as $index => $doc): 
+            $sn = ($page - 1) * $per_page + $index + 1;
+            $status_slug = strtolower(str_replace(' ', '-', $doc['status']));
+        ?>
+        <tr>
+            <td><?php echo $sn; ?>.</td>
+            <td><?php echo htmlspecialchars($doc['full_name']); ?></td>
+            <td><?php echo htmlspecialchars($doc['department'] ?? 'N/A'); ?></td>
+            <td><?php echo htmlspecialchars($doc['level']); ?></td>
+            <td><a href="/app/controllers/verification_detail.php?doc_id=<?php echo $doc['id']; ?>" class="doc-link"><?php echo htmlspecialchars($doc['document_name']); ?></a></td>
+            <td><?php echo date('M d, Y', strtotime($doc['upload_date'])); ?></td>
+            <td class="td-status <?php echo $status_slug; ?>">
+                <div class="status-wrapper">
+                    <span class="status-dot"></span>
+                    <span class="status-text"><?php echo htmlspecialchars($doc['status']); ?></span>
+                </div>
+            </td>
+            <td class="td-action">
+                <div class="action-menu">
+                    <img src="/app/src/assets/images/more.svg" alt="More" class="action-btn">
+                    <div class="action-menu-content">
+                        <a href="/app/controllers/verification_detail.php?doc_id=<?php echo $doc['id']; ?>" class="action-item">
+                            <img src="/app/src/assets/images/Bold Eye.svg" alt="View"> View
+                        </a>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    <?php endforeach;
+    endif;
+    $html = ob_get_clean();
+
+    // Generate Search Info HTML
+    ob_start();
+    if (!empty($search)): ?>
+        <div class="search-results-info">
+            <span class="results-count"><?php echo number_format($total); ?> result<?php echo $total !== 1 ? 's' : ''; ?> found</span>
+            <span class="search-term">for "<?php echo htmlspecialchars($search); ?>"</span>
+            <a href="?<?php echo http_build_query(array_merge($_GET, ['search' => ''])); ?>" class="clear-search">Clear search</a>
+        </div>
+    <?php endif;
+    $info_html = ob_get_clean();
+
+    header('Content-Type: application/json');
+    echo json_encode([
+        'html' => $html,
+        'info_html' => $info_html
+    ]);
+    exit();
+}
+
 require_once __DIR__ . '/../views/partials/header.php';
 require_once __DIR__ . '/../views/partials/admin_sidebar.php';
 require_once __DIR__ . '/../views/verifications.php';

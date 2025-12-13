@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     // Validate CSRF token
     requireCSRFToken();
     
-    Document::updateStatus($doc_id, $_POST['action']);
+    Document::updateStatus($doc_id, $_POST['action'], $_POST['rejection_reason'] ?? null);
     header("Location: /app/controllers/verifications.php");
     exit();
 }

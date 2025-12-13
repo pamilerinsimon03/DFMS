@@ -59,7 +59,7 @@
                 <a href="/app/controllers/settings.php"
                     class="menu-item <?php echo $active_page === 'settings' ? 'active' : ''; ?>">
                     <div class="menu-icon"><img src="/app/src/assets/images/settings.svg" alt="Settings Icon"></div>
-                    <div class="menu-text">Settings</div>
+                    <div class="menu-text <?php echo $active_page === 'settings' ? 'active-text' : ''; ?>">Settings</div>
                 </a>
 
             </div>

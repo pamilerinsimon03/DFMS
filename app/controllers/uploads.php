@@ -86,6 +86,66 @@ $active_page = 'uploads';
 $css_files = ['uploads.css', 'dashboard.css'];
 $js_files = ['uploads.js', 'dashboard.js'];
 
+// --- AJAX Response Handling ---
+if (isset($_GET['ajax']) || (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')) {
+    ob_start();
+    if (empty($documents)): ?>
+        <tr class="table-row"><td colspan="6" class="td-sn">No documents found.</td></tr>
+    <?php else: 
+        foreach ($documents as $index => $doc): ?>
+            <tr class="table-row">
+                <td class="td-sn" data-label="SN"><span class="cell-value"><?php echo $index + 1; ?>.</span></td>
+                <td class="td-name" data-label="Name"><span class="cell-value"><?php echo htmlspecialchars($doc['document_name']); ?></span></td>
+                <td class="td-document" data-label="Document"><span class="cell-value truncate"><?php echo htmlspecialchars(basename($doc['file_path'])); ?></span></td>
+                <td class="td-date" data-label="Date"><span class="cell-value"><?php echo date('d/m/Y', strtotime($doc['created_at'])); ?></span></td>
+                <td class="td-status <?php echo strtolower(str_replace(' ', '-', $doc['status'])); ?>" data-label="Status">
+                    <span class="status-wrapper">
+                        <span class="status-dot"></span>
+                        <span class="status-text"><?php echo htmlspecialchars($doc['status']); ?></span>
+                    </span>
+                </td>
+                <td class="td-action" data-label="Action">
+                    <?php if ($doc['status'] === 'Rejected'): ?>
+                    <form action="/app/controllers/uploads.php?tab=<?php echo htmlspecialchars($tab); ?>" method="POST"
+                        enctype="multipart/form-data" style="display: inline;">
+                        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                        <input type="hidden" name="reupload_id" value="<?php echo $doc['id']; ?>">
+                        <input type="file" id="reupload-<?php echo $doc['id']; ?>" name="file"
+                            accept=".pdf,.jpg,.jpeg,.png" required style="display: none;" onchange="this.form.submit()">
+                        <label for="reupload-<?php echo $doc['id']; ?>" class="btn-danger">
+                            Reupload Document
+                        </label>
+                    </form>
+                    <?php elseif ($doc['status'] === 'Approved'): ?>
+                    <button class="btn-success" disabled>Successful</button>
+                    <?php else: ?>
+                    <button class="btn-warning" disabled>
+                        Awaiting Verification
+                    </button>
+                    <?php endif; ?>
+                </td>
+            </tr>
+       <?php endforeach;
+    endif;
+    $html = ob_get_clean();
+
+    // Generate Info HTML
+    ob_start(); // Placeholder for info if needed, or return empty?
+    // Verifications has search info, let's add it if search is active.
+    if (!empty($search)): ?>
+         <div class="search-results-info">
+            <span class="results-count"><?php echo count($documents); ?> result<?php echo count($documents) !== 1 ? 's' : ''; ?> found</span>
+            <span class="search-term">for "<?php echo htmlspecialchars($search); ?>"</span>
+            <a href="?tab=<?php echo urlencode($tab); ?>" class="clear-search">Clear search</a>
+        </div>
+    <?php endif;
+    $info_html = ob_get_clean();
+
+    header('Content-Type: application/json');
+    echo json_encode(['html' => $html, 'info_html' => $info_html]);
+    exit();
+}
+
 require_once __DIR__ . '/../views/partials/header.php';
 require_once __DIR__ . '/../views/partials/sidebar.php';
 require_once __DIR__ . '/../views/uploads.php';

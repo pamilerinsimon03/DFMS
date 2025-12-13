@@ -2,30 +2,8 @@
     <button id="mobile-menu-toggle" class="mobile-menu-btn" aria-label="Open Menu">
         <span class="mobile-menu-icon"><img src="/app/src/assets/images/Menu.svg" alt="Menu Icon"></span>
     </button>
-    <div class="header-search-filter">
-        <div class="search-container">
-            <form action="/app/controllers/verifications.php" method="GET" class="search-box">
-                <div class="search-icon"><img src="/app/src/assets/images/search-normal.svg" alt="Search Icon"></div>
-                <input type="text" placeholder="Search here" class="search-input" id="search-input" name="search"
-                    value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>">
-            </form>
-        </div>
-        <div class="date-filter">
-            <form action="" method="GET" id="date-filter-form">
-                <div class="date-input">
-                    <input type="text" name="start_date" id="start_date" placeholder="Start Date"
-                        value="<?php echo htmlspecialchars($start_date); ?>">
-                    <img src="/app/src/assets/images/calendar.svg" alt="Calendar">
-                </div>
-                <span>-</span>
-                <div class="date-input">
-                    <input type="text" name="end_date" id="end_date" placeholder="End Date"
-                        value="<?php echo htmlspecialchars($end_date); ?>">
-                    <img src="/app/src/assets/images/calendar.svg" alt="Calendar">
-                </div>
-                <button type="submit" class="filter-button">Filter</button>
-            </form>
-        </div>
+    <div class="welcome">
+        <h1>Dashboard</h1>
     </div>
     <div class="header-right">
         <div class="notification-icon"><img src="/app/src/assets/images/notification-bing.svg" alt="Notification Icon">

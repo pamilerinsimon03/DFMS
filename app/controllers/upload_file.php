@@ -26,64 +26,83 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if (!$document_name) {
         $_SESSION['upload_message'] = 'Invalid document name.';
+        $_SESSION['upload_status'] = 'error';
         header("Location: /app/controllers/dashboard.php");
         exit();
     }
+    
     $filePath = $file['tmp_name'];
     $debug_messages = [];
 
-    // define('MIN_BLURRINESS', 15.0);
-    // define('MIN_OCR_CONFIDENCE', 60);
+    // QUALITY CHECKS
+    define('MIN_BLURRINESS', 80.0); // Increased based on Laplacian variance testing
+    define('MIN_OCR_CONFIDENCE', 60);
 
-    // Run only for images (not PDFs)
-    // if (QualityCheckService::isImage($filePath)) {
-    //     // 1) Blur check only
-    //     $blurriness = QualityCheckService::getBlurriness($filePath, $debug_messages);
-    //     if ($blurriness <= 0) {
-    //         $_SESSION['upload_message']   = "Upload failed: Could not analyze image sharpness.";
-    //         $_SESSION['upload_status']    = 'error';
-    //         QualityCheckService::logDebugMessages($user_id, $debug_messages);
-    //         header("Location: /app/controllers/dashboard.php");
-    //         exit();
-    //     }
-    //     if ($blurriness < MIN_BLURRINESS) {
-    //         $_SESSION['upload_message']   = "Upload failed: The image is too blurry. (Score: " . round($blurriness, 2) . ")";
-    //         $_SESSION['upload_status']    = 'error';
-    //         QualityCheckService::logDebugMessages($user_id, $debug_messages);
-    //         header("Location: /app/controllers/dashboard.php");
-    //         exit();
-    //     }
+    // Helper for response
+    function sendUploadResponse($success, $message, $debug_msg = [], $userId = null, $data = []) {
+        $isAjax = false;
+        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+            $isAjax = true;
+        }
 
-    //     // 2) **Skip OCR for images**—assume if it’s not too blurry, it’s acceptable.
-    //     $debug_messages[] = '[Info: Skipping OCR legibility check for image.]';
+        if ($userId) {
+            QualityCheckService::logDebugMessages($userId, $debug_msg);
+        }
 
-    // } elseif (strtolower(pathinfo($file['name'], PATHINFO_EXTENSION)) === 'pdf') {
-    //     // If you still want to OCR‐check PDF uploads, do it here:
-    //     $ocrConfidence = QualityCheckService::getOcrConfidence($filePath, $debug_messages);
-    //     if ($ocrConfidence <= 0) {
-    //         $_SESSION['upload_message']   = "Upload failed: PDF text not readable.";
-    //         $_SESSION['upload_status']    = 'error';
-    //         QualityCheckService::logDebugMessages($user_id, $debug_messages);
-    //         header("Location: /app/controllers/dashboard.php");
-    //         exit();
-    //     }
-    //     if ($ocrConfidence < MIN_OCR_CONFIDENCE) {
-    //         $_SESSION['upload_message']   = "Upload failed: PDF text too low‐confidence. (OCR: " . round($ocrConfidence) . "%)";
-    //         $_SESSION['upload_status']    = 'error';
-    //         QualityCheckService::logDebugMessages($user_id, $debug_messages);
-    //         header("Location: /app/controllers/dashboard.php");
-    //         exit();
-    //     }
-    // }
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => $success,
+                'message' => $message,
+                'debug' => $debug_msg,
+                'data' => $data
+            ]);
+            exit();
+        } else {
+            $_SESSION['upload_message'] = $message;
+            $_SESSION['upload_status'] = $success ? 'success' : 'error';
+            header("Location: /app/controllers/dashboard.php");
+            exit();
+        }
+    }
 
-    $userId = $_SESSION['user_id'];
-    $documentName = $_POST['document_name'];
-    $file = $_FILES['file'];
+    // Run only for images or PDFs
+    if (QualityCheckService::isImage($filePath)) {
+        // 1) Blur check
+        $blurriness = QualityCheckService::getBlurriness($filePath, $debug_messages);
+        
+        // Negative return indicates error in processing (ignore or fail? we'll fail to be safe)
+        if ($blurriness < 0) {
+            sendUploadResponse(false, "Upload failed: Could not analyze image quality.", $debug_messages, $user_id);
+        }
+        
+        if ($blurriness < MIN_BLURRINESS) {
+            sendUploadResponse(false, "Upload failed: Image is too blurry (Score: " . round($blurriness, 2) . "/80). Please upload a clearer image.", $debug_messages, $user_id);
+        }
 
-    $user = User::getById($userId);
+        // 2) OCR Check for Images
+        $ocrConfidence = QualityCheckService::getOcrConfidence($filePath, $debug_messages);
+        
+        // Strictly enforce OCR. If 0 (no text) or < MIN (bad text), reject.
+        if ($ocrConfidence < MIN_OCR_CONFIDENCE) {
+             $msg = ($ocrConfidence <= 0) ? "Text not legible (No text detected)." : "Text not legible (Confidence: " . round($ocrConfidence) . "%).";
+             sendUploadResponse(false, "Upload failed: $msg Please ensure document text is clear.", $debug_messages, $user_id);
+        }
+
+    } elseif (strtolower(pathinfo($file['name'], PATHINFO_EXTENSION)) === 'pdf') {
+        // Check PDF legibility
+        $ocrConfidence = QualityCheckService::getOcrConfidence($filePath, $debug_messages);
+        
+        if ($ocrConfidence < MIN_OCR_CONFIDENCE) {
+            $msg = ($ocrConfidence <= 0) ? "PDF text not readable." : "PDF text not clear enough (Confidence: " . round($ocrConfidence) . "%).";
+             sendUploadResponse(false, "Upload failed: $msg", $debug_messages, $user_id);
+        }
+    }
+
+    // Continue with Upload
+    $user = User::getById($user_id);
     if (!$user) {
-        $message = "Upload failed: Your user data could not be found.";
-        $_SESSION['upload_status'] = 'error';
+        sendUploadResponse(false, "Upload failed: Your user data could not be found.", [], $user_id);
     } else {
         // Automatically determine the current semester
         $semester = AcademicCalendarService::getCurrentSemester();
@@ -91,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
         
         // Generate the standardized filename
-        $generatedFilename = FilenameGenerator::generate($userId, $documentName, $semester, $extension);
+        $generatedFilename = FilenameGenerator::generate($user_id, $document_name, $semester, $extension);
         
         if ($generatedFilename) {
             // Prepare the classification data that will be stored with the document
@@ -104,17 +123,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ];
 
             // Upload the document with an initial status of 'Pending Approval'
-            $result = Document::upload($userId, $documentName, $generatedFilename, $file, $classificationData);
-            $message = $result['message'];
-            $_SESSION['upload_status'] = $result['success'] ? 'success' : 'error';
+            $result = Document::upload($user_id, $document_name, $generatedFilename, $file, $classificationData);
+            
+            // Send final response using the result from upload
+            sendUploadResponse($result['success'], $result['message'], $debug_messages, $user_id, ['document_name' => $document_name]);
+            
         } else {
-            $message = "Upload failed: Could not generate a standard filename. Please ensure your profile is complete.";
-            $_SESSION['upload_status'] = 'error';
+            sendUploadResponse(false, "Upload failed: Could not generate a standard filename. Please ensure your profile is complete.", $debug_messages, $user_id);
         }
     }
-    
-    // Provide feedback to the user and redirect back to the dashboard
-    $_SESSION['upload_message'] = $message;
-    header("Location: /app/controllers/dashboard.php");
-    exit();
 }

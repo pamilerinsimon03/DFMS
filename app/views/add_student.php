@@ -118,7 +118,7 @@
                     <div class="file-input-wrapper">
                         <input type="file" name="csv_file" id="csv_file" accept=".csv" required>
                         <label for="csv_file" class="file-label">
-                            <span class="file-icon">📁</span>
+                            <span class="file-icon"><i data-lucide="file-spreadsheet"></i></span>
                             <span class="file-text">Choose CSV file or drag and drop</span>
                         </label>
                     </div>
@@ -151,11 +151,11 @@
                     $error_count = count(array_filter($import_results, function($result) { return $result['status'] === 'error'; }));
                     ?>
                     <div class="summary-item success">
-                        <span class="summary-icon">✅</span>
+                        <span class="summary-icon"><i data-lucide="check-circle" class="text-success"></i></span>
                         <span class="summary-text">Success: <?php echo $success_count; ?></span>
                     </div>
                     <div class="summary-item error">
-                        <span class="summary-icon">❌</span>
+                        <span class="summary-icon"><i data-lucide="x-circle" class="text-error"></i></span>
                         <span class="summary-text">Errors: <?php echo $error_count; ?></span>
                     </div>
                 </div>
@@ -164,7 +164,7 @@
                     <?php foreach ($import_results as $result): ?>
                         <div class="result-item result-<?php echo $result['status']; ?>">
                             <span class="result-icon">
-                                <?php echo $result['status'] === 'success' ? '✅' : '❌'; ?>
+                                <?php echo $result['status'] === 'success' ? '<i data-lucide="check" class="text-success"></i>' : '<i data-lucide="x" class="text-error"></i>'; ?>
                             </span>
                             <span class="result-row">Row <?php echo $result['row']; ?></span>
                             <span class="result-message"><?php echo htmlspecialchars($result['message']); ?></span>

@@ -9,12 +9,7 @@
     </div>
     <div class="header-right">
         <div class="search-container">
-            <div class="search-box">
-                <div class="search-icon">
-                    <img src="/app/src/assets/images/search-normal.svg" alt="Search Icon">
-                </div>
-                <input type="text" placeholder="Search here" class="search-input">
-            </div>
+
             <div class="notification-icon">
                 <img src="/app/src/assets/images/notification-bing.svg" alt="Notification Icon">
                 <div class="notification-dot"></div>
@@ -40,13 +35,13 @@
         <p>Manage system configuration and user settings</p>
     </div>
 
-        <?php if (isset($error)): ?>
+        <?php if (!empty($error)): ?>
         <div class="alert alert-error">
             <?php echo htmlspecialchars($error); ?>
         </div>
         <?php endif; ?>
     
-        <?php if (isset($success)): ?>
+        <?php if (!empty($success)): ?>
         <div class="alert alert-success">
             <?php echo htmlspecialchars($success); ?>
         </div>
@@ -57,7 +52,7 @@
         <div class="settings-card">
             <div class="card-header">
                 <h3>Password Management</h3>
-                <div class="card-icon">🔐</div>
+                <div class="card-icon"><i data-lucide="lock"></i></div>
             </div>
             <div class="card-content">
                 <?php if ($user['matric_number'] === 'SUPER_ADMIN'): ?>
@@ -94,7 +89,7 @@
                         <form method="POST" onsubmit="return confirm('Are you sure you want to update all student passwords? This action cannot be undone.');">
                             <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                             <button type="submit" name="action" value="update_passwords" class="btn btn-warning">
-                                <span class="btn-icon">🔄</span>
+                                <span class="btn-icon"><i data-lucide="refresh-cw"></i></span>
                                 Update All Student Passwords
                             </button>
                         </form>
@@ -107,7 +102,7 @@
         <div class="settings-card">
             <div class="card-header">
                 <h3>System Information</h3>
-                <div class="card-icon">ℹ️</div>
+                <div class="card-icon"><i data-lucide="info"></i></div>
             </div>
             <div class="card-content">
                 <div class="info-list">
@@ -135,16 +130,16 @@
         <div class="settings-card">
             <div class="card-header">
                 <h3>User Management</h3>
-                <div class="card-icon">👥</div>
+                <div class="card-icon"><i data-lucide="users"></i></div>
             </div>
             <div class="card-content">
                 <div class="action-buttons">
                     <a href="/app/controllers/add_student.php" class="btn btn-primary">
-                        <span class="btn-icon">➕</span>
+                        <span class="btn-icon"><i data-lucide="plus"></i></span>
                         Add Individual Student
                     </a>
                     <a href="/app/controllers/bulk_import.php" class="btn btn-secondary">
-                        <span class="btn-icon">📁</span>
+                        <span class="btn-icon"><i data-lucide="file-down"></i></span>
                         Bulk Import Students
                     </a>
                 </div>
@@ -165,7 +160,7 @@
         <div class="settings-card">
             <div class="card-header">
                 <h3>System Preferences</h3>
-                <div class="card-icon">⚙️</div>
+                <div class="card-icon"><i data-lucide="settings"></i></div>
             </div>
             <div class="card-content">
                 <form method="POST" class="preferences-form">
@@ -200,16 +195,16 @@
         <div class="settings-card">
             <div class="card-header">
                 <h3>Backup & Maintenance</h3>
-                <div class="card-icon">🛠️</div>
+                <div class="card-icon"><i data-lucide="wrench"></i></div>
             </div>
             <div class="card-content">
                 <div class="action-buttons">
                     <button type="button" class="btn btn-secondary" onclick="alert('Backup feature coming soon!')">
-                        <span class="btn-icon">💾</span>
+                        <span class="btn-icon"><i data-lucide="save"></i></span>
                         Create Backup
                     </button>
                     <button type="button" class="btn btn-secondary" onclick="alert('Maintenance mode coming soon!')">
-                        <span class="btn-icon">🔧</span>
+                        <span class="btn-icon"><i data-lucide="alert-triangle"></i></span>
                         Maintenance Mode
                     </button>
                 </div>
@@ -224,7 +219,7 @@
         <div class="settings-card">
             <div class="card-header">
                 <h3>Security Settings</h3>
-                <div class="card-icon">🔒</div>
+                <div class="card-icon"><i data-lucide="shield-check"></i></div>
             </div>
             <div class="card-content">
                 <div class="form-group">

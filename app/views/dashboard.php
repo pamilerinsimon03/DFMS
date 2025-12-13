@@ -7,7 +7,7 @@
     </div>
     <div class="header-right">
         <div class="search-container" id="search-container">
-            <form action="/app/controllers/dashboard.php" method="GET" class="search-form">
+            <form action="/app/controllers/dashboard.php" method="GET" class="search-form" onsubmit="return false;">
                 <div class="search-box">
                     <button type="button" class="search-icon-btn" id="search-icon-btn" aria-label="Open Search">
                         <img src="/app/src/assets/images/search-normal.svg" alt="Search Icon" class="search-icon-img">
@@ -89,11 +89,26 @@
                 <?php else: ?>
                 <?php foreach ($documents as $doc): ?>
                 <div class="file-card">
-                    <div class="file-image"><img src="/app/src/assets/images/PDF Icon Pic.png"
-                            alt="<?php echo htmlspecialchars($doc['document_name']); ?>"></div>
+                    <div class="file-image">
+                        <?php 
+                        $fileExt = strtolower(pathinfo($doc['file_path'], PATHINFO_EXTENSION));
+                        $isImage = in_array($fileExt, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+                        if ($isImage): 
+                        ?>
+                        <img src="/app/controllers/secure_file_viewer.php?id=<?php echo $doc['id']; ?>" 
+                             alt="<?php echo htmlspecialchars($doc['document_name']); ?>"
+                             style="object-fit: cover; width: 100%; height: 100%; border-radius: 4px;">
+                        <?php else: ?>
+                        <img src="/app/src/assets/images/PDF Icon Pic.png"
+                             alt="<?php echo htmlspecialchars($doc['document_name']); ?>">
+                        <?php endif; ?>
+                    </div>
                     <div class="file-details">
                         <div class="file-name"><?php echo htmlspecialchars($doc['document_name']); ?></div>
-                        <div class="file-status <?php echo strtolower($doc['status']); ?>">
+                        <div class="file-status <?php echo strtolower($doc['status']); ?>" 
+                             <?php if ($doc['status'] === 'Rejected' && !empty($doc['rejection_reason'])): ?>
+                             title="Reason: <?php echo htmlspecialchars($doc['rejection_reason']); ?>"
+                             <?php endif; ?>>
                             <div class="status-dot"></div>
                             <div class="status-text"><?php echo htmlspecialchars($doc['status']); ?></div>
                         </div>
@@ -140,7 +155,16 @@
                         class="upload-file-input" style="display: none;">
                     <label for="file-upload" class="custom-file-upload">Choose File</label>
                     <span id="file-name-display" class="file-name-display"></span>
-                    <button type="submit" class="upload-btn">Upload files</button>
+                    
+                    <!-- Progress Bar -->
+                    <div id="upload-progress-container" style="display: none; width: 100%; margin: 10px 0;">
+                        <div style="width: 100%; background-color: #f3f3f3; border-radius: 4px;">
+                            <div id="upload-progress-bar" style="width: 0%; height: 10px; background-color: #4caf50; border-radius: 4px; transition: width 0.3s;"></div>
+                        </div>
+                        <span id="upload-progress-text" style="font-size: 12px; color: #666;">0%</span>
+                    </div>
+
+                    <button type="button" id="upload-submit-btn" class="upload-btn">Upload files</button>
                 </form>
             </div>
         </div>
@@ -164,4 +188,3 @@
 
 </div>
 
-<script src="../src/js/dashboard.js"></script>

@@ -27,51 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Enhanced Search Functionality
-    const searchInput = document.getElementById('search-input');
-    const searchSuggestions = document.getElementById('search-suggestions');
-    
-    if (searchInput && searchSuggestions) {
-        // Show suggestions on focus
-        searchInput.addEventListener('focus', () => {
-            searchSuggestions.style.display = 'block';
-        });
 
-        // Hide suggestions when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!searchInput.contains(e.target) && !searchSuggestions.contains(e.target)) {
-                searchSuggestions.style.display = 'none';
-            }
-        });
-
-        // Auto-submit search after typing stops (debounced)
-        let searchTimeout;
-        searchInput.addEventListener('input', () => {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                if (searchInput.value.trim().length >= 2) {
-                    searchInput.form.submit();
-                }
-            }, 500); // 500ms delay
-        });
-
-        // Submit on Enter key
-        searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                searchInput.form.submit();
-            }
-        });
-
-        // Clear search functionality
-        searchInput.addEventListener('input', () => {
-            if (searchInput.value === '') {
-                // Auto-submit empty search to clear results
-                setTimeout(() => {
-                    searchInput.form.submit();
-                }, 100);
-            }
-        });
-    }
 
     // Enhanced filter form functionality
     const filterForm = document.getElementById('filter-sort-form');

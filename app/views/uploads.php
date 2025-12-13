@@ -7,7 +7,7 @@
     </div>
     <div class="header-right">
         <div class="search-container" id="search-container">
-            <form action="/app/controllers/uploads.php" method="GET" class="search-form">
+            <form action="/app/controllers/uploads.php" method="GET" class="search-form" onsubmit="return false;">
                 <div class="search-box">
                     <button type="button" class="search-icon-btn" id="search-icon-btn" aria-label="Open Search">
                         <img src="/app/src/assets/images/search-normal.svg" alt="Search Icon" class="search-icon-img">
@@ -107,6 +107,11 @@
                             <?php echo htmlspecialchars($doc['status']); ?>
                         </span>
                     </span>
+                    <?php if ($doc['status'] === 'Rejected' && !empty($doc['rejection_reason'])): ?>
+                        <div class="rejection-reason" style="font-size: 0.75em; color: #FF3B30; margin-top: 5px; line-height: 1.2;">
+                            <?php echo htmlspecialchars($doc['rejection_reason']); ?>
+                        </div>
+                    <?php endif; ?>
                 </td>
                 <td class="td-action" data-label="Action">
                     <?php if ($doc['status'] === 'Rejected'): ?>

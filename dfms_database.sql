@@ -78,7 +78,7 @@ CREATE TABLE `documents` (
   `file_path` varchar(255) NOT NULL,
   `upload_date` date NOT NULL,
   `status` enum('Pending Quality Check','Pending Approval','Approved','Rejected') NOT NULL DEFAULT 'Pending Quality Check',
-  `rejection_reason` varchar(255) DEFAULT NULL,
+  `rejection_reason` TEXT DEFAULT NULL,
   `due_date` date DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `department_id` int(11) DEFAULT NULL,
@@ -494,5 +494,31 @@ WHERE NOT EXISTS (SELECT 1 FROM file_requirements WHERE department_id=2 AND docu
 -- 3. Set up regular cleanup job: CALL CleanupOldAuditLogs();
 -- 4. Monitor security_summary view regularly
 -- 5. Review ndpr_compliance_summary monthly
+
+
+-- ====================================================
+-- 9. Migration: Add Rejection Reason to Documents
+-- ====================================================
+
+-- Ensure rejection_reason column exists and is of type TEXT
+-- Note: This uses a stored procedure approach for idempotency in MySQL/MariaDB
+DELIMITER //
+CREATE PROCEDURE IF NOT EXISTS UpgradeDocumentsTable()
+BEGIN
+    IF NOT EXISTS (
+        SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'documents'
+        AND COLUMN_NAME = 'rejection_reason'
+    ) THEN
+        ALTER TABLE documents ADD COLUMN rejection_reason TEXT NULL AFTER status;
+    ELSE
+        ALTER TABLE documents MODIFY COLUMN rejection_reason TEXT NULL;
+    END IF;
+END //
+DELIMITER ;
+
+CALL UpgradeDocumentsTable();
+DROP PROCEDURE UpgradeDocumentsTable();
 
 COMMIT;

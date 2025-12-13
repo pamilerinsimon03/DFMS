@@ -8,209 +8,272 @@ class QualityCheckService
     public static function isImage($filePath)
     {
         if (!file_exists($filePath) || !is_readable($filePath)) return false;
-        if (function_exists('finfo_open')) {
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $mime = finfo_file($finfo, $filePath);
-            finfo_close($finfo);
-            $imageMimes = ['image/jpeg', 'image/png', 'image/gif'];
-            return in_array($mime, $imageMimes);
-        } elseif (function_exists('getimagesize')) {
-            return @getimagesize($filePath) !== false;
-        }
-        return false;
+        
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mime = $finfo->file($filePath);
+        
+        $imageMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        return in_array($mime, $imageMimes);
     }
 
     /**
-     * GD-based variance-of-Laplacian blur estimator (memory-safe).
+     * Calculates blur score using the Laplacian Variance method.
+     * 
+     * @param string $filePath Path to the image file
+     * @param array &$debug_messages Array to store debug info
+     * @return float Score (higher is sharper). Returns negative on error.
      */
     public static function getBlurriness($filePath, array &$debug_messages)
+    {
+        // Strategy 1: Imagick (Preferred - Fast & Accurate)
+        if (extension_loaded('imagick')) {
+            try {
+                $image = new Imagick($filePath);
+                
+                // transform to grayscale to simplify analysis
+                $image->setImageType(Imagick::IMGTYPE_GRAYSCALE);
+                
+                // Laplacian Kernel
+                //  -1 -1 -1
+                //  -1  8 -1
+                //  -1 -1 -1
+                $matrix = [
+                    [-1, -1, -1],
+                    [-1,  8, -1],
+                    [-1, -1, -1]
+                ];
+                
+                $kernel = \ImagickKernel::fromMatrix($matrix);
+                $image->convolveImage($kernel);
+                
+                // Calculate standard deviation of the convolved image
+                $stats = $image->getImageChannelStatistics();
+                
+                // Different Imagick versions return different keys (0 vs user_defined)
+                // We use CHANNEL_DEFAULT which usually covers all active channels (Gray)
+                $stdDev = 0;
+                if (isset($stats[Imagick::CHANNEL_DEFAULT])) {
+                     $stdDev = $stats[Imagick::CHANNEL_DEFAULT]['standardDeviation'];
+                } elseif (isset($stats[0])) {
+                     $stdDev = $stats[0]['standardDeviation'];
+                }
+
+                $image->clear();
+                $image->destroy();
+                
+                $debug_messages[] = "[Debug: Imagick Laplacian StdDev: " . round($stdDev, 2) . "]";
+                return $stdDev;
+                
+            } catch (Exception $e) {
+                $debug_messages[] = "[Debug: Imagick failed: " . $e->getMessage() . ". Falling back to GD.]";
+            }
+        }
+        
+        // Strategy 2: GD (Fallback - Slower, requires memory management)
+        return self::getBlurrinessGD($filePath, $debug_messages);
+    }
+
+    /**
+     * Fallback GD implementation for blur detection
+     */
+    private static function getBlurrinessGD($filePath, array &$debug_messages)
     {
         if (!function_exists('imagecreatefromstring') || !function_exists('imageconvolution')) {
             $debug_messages[] = '[Debug: GD extension with convolution not available.]';
             return -1;
         }
 
-        // Load image
         $data = @file_get_contents($filePath);
-        $img  = @imagecreatefromstring($data);
+        if (!$data) return -2;
+        
+        $img = @imagecreatefromstring($data);
         if (!$img) {
             $debug_messages[] = '[Debug: GD failed to load image.]';
             return -2;
         }
 
-        // Downsample if too big
-        $maxDim = 500;
+        // Resize strict limit for performance (max 400px longest side)
+        // Smaller images are faster to loop through in PHP
+        $maxDim = 400;
         $w = imagesx($img);
         $h = imagesy($img);
+        
         if (max($w, $h) > $maxDim) {
             $scale = $maxDim / max($w, $h);
-            $newW  = (int)($w * $scale);
-            $newH  = (int)($h * $scale);
+            $newW = (int)($w * $scale);
+            $newH = (int)($h * $scale);
             $small = imagecreatetruecolor($newW, $newH);
             imagecopyresampled($small, $img, 0, 0, 0, 0, $newW, $newH, $w, $h);
             imagedestroy($img);
             $img = $small;
-            $w   = $newW;
-            $h   = $newH;
+            $w = $newW;
+            $h = $newH;
         }
 
-        // Laplacian kernel
-        $kernel = [
-            [-1, -1, -1],
-            [-1,  8, -1],
-            [-1, -1, -1],
-        ];
-        $divisor = 1;
-        $offset  = 0;
-
-        if (!imageconvolution($img, $kernel, $divisor, $offset)) {
+        $kernel = [[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]];
+        if (!imageconvolution($img, $kernel, 1, 0)) {
             imagedestroy($img);
-            $debug_messages[] = '[Debug: GD convolution failed.]';
             return -3;
         }
 
-        // Sample a ~100x100 grid
-        $responses = [];
-        $step = max(1, floor(min($w, $h) / 100));
+        // Calculate Variance
+        $sum = 0;
+        $sumSq = 0;
+        $pixelCount = 0;
+        
+        // Optimize loop: Skip step to sample pixels instead of all (faster approximation)
+        $step = 2; 
+
         for ($y = 0; $y < $h; $y += $step) {
             for ($x = 0; $x < $w; $x += $step) {
                 $rgb = imagecolorat($img, $x, $y);
-                $r   = ($rgb >> 16) & 0xFF;
-                $g   = ($rgb >> 8)  & 0xFF;
-                $b   = $rgb & 0xFF;
-                // gray
-                $responses[] = ($r + $g + $b) / 3;
+                $gray = (($rgb >> 16) & 0xFF) * 0.299 + 
+                        (($rgb >> 8) & 0xFF) * 0.587 + 
+                        ($rgb & 0xFF) * 0.114;
+                
+                $sum += $gray;
+                $sumSq += ($gray * $gray);
+                $pixelCount++;
             }
         }
         imagedestroy($img);
 
-        $count = count($responses);
-        if ($count === 0) {
-            $debug_messages[] = '[Debug: No samples for blur metric.]';
-            return -4;
-        }
+        if ($pixelCount === 0) return -4;
 
-        // compute std-dev
-        $mean  = array_sum($responses) / $count;
-        $sumSq = 0;
-        foreach ($responses as $v) {
-            $sumSq += ($v - $mean) ** 2;
-        }
-        $variance = $sumSq / $count;
-        $stdDev   = sqrt($variance);
+        $mean = $sum / $pixelCount;
+        $variance = ($sumSq / $pixelCount) - ($mean * $mean);
+        $stdDev = sqrt($variance);
 
-        $debug_messages[] = '[Debug: Laplacian-stdDev (blur score) ' . round($stdDev, 2) . ']';
+        $debug_messages[] = '[Debug: GD (Resized) Laplacian StdDev: ' . round($stdDev, 2) . ']';
         return $stdDev;
     }
 
     /**
      * Calculates OCR confidence using Tesseract.
-     * - Detects PDFs by MIME and rasterizes page 1 to PNG before OCR.
+     * Uses preprocessing for better accuracy.
      */
     public static function getOcrConfidence($filePath, array &$debug_messages)
     {
-        if (!function_exists('shell_exec')) {
-            $debug_messages[] = '[Debug: shell_exec is disabled.]';
+        // Locate Tesseract
+        $tessBin = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') ? 'tesseract.exe' : 'tesseract';
+        // Check PATH
+        $tessPath = null;
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+            $path = trim(shell_exec("where $tessBin 2>nul"));
+            if ($path) $tessPath = explode("\n", $path)[0];
+        } else {
+             $path = trim(shell_exec("which $tessBin"));
+             if ($path) $tessPath = $path;
+        }
+
+        if (!$tessPath) {
+            $debug_messages[] = '[Debug: Tesseract binary not found.]';
             return -1;
         }
 
-        // 1) Detect PDF by MIME
-        $mime = '';
-        if (function_exists('finfo_open')) {
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $mime  = finfo_file($finfo, $filePath) ?: '';
-            finfo_close($finfo);
-        }
-        $rasterPath = $filePath;
+        // Preparation
+        $workImage = $filePath;
+        $isTemp = false;
 
-        // 2) If it's a PDF, rasterize page 1
-        if (stripos($mime, 'pdf') !== false) {
-            if (!extension_loaded('imagick')) {
-                $debug_messages[] = '[Debug: Cannot rasterize PDF—Imagick not loaded.]';
-                return -1;
-            }
+        // Preprocessing with Imagick if available
+        if (extension_loaded('imagick')) {
             try {
-                $im = new \Imagick();
-                $im->setResolution(300, 300);
-                $im->readImage($filePath . '[0]');
-                $im->setImageFormat('png');
-                $rasterPath = tempnam(sys_get_temp_dir(), 'ocr_pdf_') . '.png';
-                $im->writeImage($rasterPath);
+                $im = new Imagick();
+                
+                // specific PDF handling
+                $mime = mime_content_type($filePath);
+                if (strpos($mime, 'pdf') !== false) {
+                    $im->setResolution(300, 300); // Good balance for OCR
+                    $im->readImage($filePath . '[0]'); // First page only
+                    $im->setImageFormat('png');
+                } else {
+                    $im->readImage($filePath);
+                }
+
+                // Enhancements for OCR
+                $im->setImageType(Imagick::IMGTYPE_GRAYSCALE);
+                $im->contrastImage(1); // Increase contrast
+                // $im->adaptiveThresholdImage(10, 10, 0); // Local binarization (can be aggressive, optional)
+                $im->despeckleImage(); // Remove noise
+
+                $tempPath = tempnam(sys_get_temp_dir(), 'ocr_prep_') . '.png';
+                $im->writeImage($tempPath);
                 $im->clear();
                 $im->destroy();
-                $debug_messages[] = "[Debug: PDF rasterized to $rasterPath]";
-            } catch (\Exception $e) {
-                $debug_messages[] = '[Debug: PDF rasterization failed: ' . $e->getMessage() . ']';
-                return -1;
+                
+                $workImage = $tempPath;
+                $isTemp = true;
+                $debug_messages[] = "[Debug: Preprocessed image created at $tempPath]";
+            } catch (Exception $e) {
+                $debug_messages[] = "[Debug: Preprocessing failed: " . $e->getMessage() . ". Using original.]";
             }
         }
 
-        // 3) Locate Tesseract
-        $tess = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
-            ? trim(shell_exec('where tesseract'))
-            : trim(shell_exec('which tesseract'));
-        if (empty($tess)) {
-            $debug_messages[] = '[Debug: Tesseract not found in PATH.]';
-            if ($rasterPath !== $filePath) {
-                @unlink($rasterPath);
-            }
-            return -1;
-        }
+        // Tesseract Command Construction
+        // --psm 3 (Auto page segmentation)
+        // --oem 1 (Neural Net LSTM - Faster/Better if data present)
+        // tsv output for confidence extraction
+        $outFileBase = tempnam(sys_get_temp_dir(), 'ocr_out_');
+        // Unlink because tesseract appends extension
+        @unlink($outFileBase);
 
-        // 4) Build & log command
-        $tmpBase = tempnam(sys_get_temp_dir(), 'ocr_');
-        unlink($tmpBase);
         $cmd = sprintf(
-            '%s %s %s tsv -l eng --psm 3 2>&1',
-            escapeshellarg($tess),
-            escapeshellarg($rasterPath),
-            escapeshellarg($tmpBase)
+            '"%s" "%s" "%s" tsv --psm 3 -l eng 2>&1',
+            $tessPath,
+            $workImage,
+            $outFileBase
         );
-        $debug_messages[] = "[Debug: Running OCR command: $cmd]";
-
-        // 5) Execute and parse TSV
+        $debug_messages[] = "[Debug: Executing $cmd]";
+        
         $output = shell_exec($cmd);
-        $tsvFile = $tmpBase . '.tsv';
-        if ($rasterPath !== $filePath) {
-            @unlink($rasterPath);
+        
+        // Cleanup temp input if we created one
+        if ($isTemp && file_exists($workImage)) {
+            @unlink($workImage);
         }
-        if (!file_exists($tsvFile) || filesize($tsvFile) === 0) {
-            @unlink($tsvFile);
-            $debug_messages[] = '[Debug: Tesseract produced no output.]';
+
+        $tsvFile = $outFileBase . '.tsv';
+        if (!file_exists($tsvFile)) {
+            $debug_messages[] = '[Debug: No TSV output generated. Tesseract error?]';
             return 0;
         }
-        $tsv = file_get_contents($tsvFile);
+
+        // Parse TSV
+        // Level	Page_num	Block_num	Par_num	Line_num	Word_num	Left	Top	Width	Height	Conf	Text
+        $handle = fopen($tsvFile, "r");
+        $confidences = [];
+        $header = fgetcsv($handle, 0, "\t"); // skip header
+        
+        while (($data = fgetcsv($handle, 0, "\t")) !== FALSE) {
+            // Index 10 is usually Conf (0-100), check header if paranoid, but standard is fixed.
+            // Check if word is not empty (sometimes structural rows have -1 conf)
+            $conf = isset($data[10]) ? (int)$data[10] : -1;
+            $text = isset($data[11]) ? trim($data[11]) : '';
+            
+            if ($conf >= 0 && !empty($text)) {
+                $confidences[] = $conf;
+            }
+        }
+        fclose($handle);
         @unlink($tsvFile);
 
-        $lines = preg_split('/\r\n|\r|\n/', $tsv);
-        $confs = [];
-        foreach ($lines as $line) {
-            $cols = str_getcsv($line, "\t");
-            if (isset($cols[10]) && is_numeric($cols[10]) && $cols[10] > 0) {
-                $confs[] = (int)$cols[10];
-            }
-        }
-        if (empty($confs)) {
-            $debug_messages[] = '[Debug: No confidence data extracted.]';
-            return 0;
+        if (count($confidences) === 0) {
+            $debug_messages[] = '[Debug: No text detected with confidence.]';
+            return 0; // Or treat as legible if strictly checking for blur? No, low confident text = bad scan.
         }
 
-        $avg = array_sum($confs) / count($confs);
-        $debug_messages[] = '[Debug: OCR Confidence ' . round($avg) . '%]';
-        return $avg;
+        $avgConf = array_sum($confidences) / count($confidences);
+        $debug_messages[] = '[Debug: Average OCR Confidence: ' . round($avgConf) . '%]';
+        
+        return $avgConf;
     }
 
-    /**
-     * Logs debug messages to a file
-     */
     public static function logDebugMessages($user_id, $messages)
     {
         $logPath = __DIR__ . '/../logs/upload_debug.log';
-        if (!file_exists(dirname($logPath))) {
-            mkdir(dirname($logPath), 0777, true);
-        }
-        $timestamp = date('Y-m-d H:i:s');
-        $logEntry = "[$timestamp] User $user_id: " . implode(' ', $messages) . PHP_EOL;
-        file_put_contents($logPath, $logEntry, FILE_APPEND);
+        if (!is_dir(dirname($logPath))) mkdir(dirname($logPath), 0755, true);
+        
+        $entry = date('[Y-m-d H:i:s] ') . "User $user_id: " . implode(' | ', $messages) . PHP_EOL;
+        file_put_contents($logPath, $entry, FILE_APPEND);
     }
 }

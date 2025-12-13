@@ -44,7 +44,51 @@ $active_page = 'students';
 $css_files = ['admin.css', 'students.css', 'datepicker.css'];
 $js_files = ['admin.js'];
 
-// --- Render View ---
+// --- Handle AJAX Request ---
+if (isset($_GET['ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')) {
+    $html = '';
+    
+    if (empty($students)) {
+        $html .= '<div class="no-students"><p>No students found matching your criteria.</p>';
+        if ($user['department_id'] && $user['matric_number'] !== 'SUPER_ADMIN') {
+            $html .= '<p>You are currently viewing students from your department only.</p>';
+        } elseif ($user['matric_number'] === 'SUPER_ADMIN' && $filter_department_id !== null) {
+            $html .= '<p>You are currently viewing students from your department only. <a href="?' . http_build_query(array_merge($_GET, ['show_all' => '1'])) . '">View all students</a></p>';
+        }
+        $html .= '</div>';
+    } else {
+        foreach ($students as $student) {
+            $department_html = $student['department_name'] ? '<p class="department-name">' . htmlspecialchars($student['department_name']) . '</p>' : '';
+            $html .= sprintf(
+                '<a href="/app/controllers/student_profile.php?id=%s" class="student-card">
+                    <img src="/app/src/assets/images/admin-avatar.png" alt="Student Avatar">
+                    <h3>%s</h3>
+                    <p>Matric No: %s</p>
+                    <p>%s Level</p>
+                    %s
+                </a>',
+                $student['id'],
+                htmlspecialchars($student['full_name']),
+                htmlspecialchars($student['matric_number']),
+                htmlspecialchars($student['level']),
+                $department_html
+            );
+        }
+    }
+
+    // Prepare search info HTML
+    $info_html = '';
+    if (!empty($search)) {
+        $info_html = '<div class="search-results-info">';
+        $info_html .= '<span>' . $total . ' results found for "' . htmlspecialchars($search) . '"</span>';
+        $info_html .= '<a href="students.php" class="clear-search">Clear search</a>';
+        $info_html .= '</div>';
+    }
+
+    header('Content-Type: application/json');
+    echo json_encode(['html' => $html, 'info_html' => $info_html]);
+    exit;
+}
 require_once __DIR__ . '/../views/partials/header.php';
 require_once __DIR__ . '/../views/partials/admin_sidebar.php';
 require_once __DIR__ . '/../views/students.php';

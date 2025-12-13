@@ -538,3 +538,58 @@
 .pagination a:hover {
     background: #f0f0f0;
 }
+
+
+/* Lucide Icons Styling */
+.lucide {
+    width: 24px;
+    height: 24px;
+    stroke-width: 2;
+}
+
+.btn .lucide {
+    width: 18px;
+    height: 18px;
+    margin-right: 6px;
+}
+
+/* Card Header Icons - High Contrast (White on Purple/Blue) */
+.card-header .lucide {
+    stroke: #FFFFFF;
+}
+
+/* Primary/Warning/Secondary Button Icons - High Contrast */
+.btn-primary .lucide,
+.btn-secondary .lucide,
+.btn-warning .lucide,
+.btn-danger .lucide {
+    stroke: #FFFFFF;
+}
+
+/* Form Icons */
+.file-icon .lucide {
+    width: 24px;
+    height: 24px;
+    stroke: #6366f1; /* Primary color */
+}
+
+/* Status Colors */
+.text-success {
+    stroke: #28a745;
+}
+
+.text-error {
+    stroke: #dc3545;
+}
+
+.summary-icon .lucide {
+    width: 20px;
+    height: 20px;
+}
+
+/* Adjust card icon container alignment */
+.card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

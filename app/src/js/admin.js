@@ -1,49 +1,12 @@
+// Consolidated DOMContentLoaded
 document.addEventListener('DOMContentLoaded', () => {
-    // Action dropdown for 'more' buttons
-    const moreIcons = document.querySelectorAll('.docs-table img[src$="more.svg"]');
-    moreIcons.forEach(icon => {
-        const cell = icon.closest('td');
-        if (!cell.classList.contains('td-action')) {
-            cell.classList.add('td-action');
-            icon.classList.add('action-btn');
-            // build dropdown
-            const dropdown = document.createElement('div');
-            dropdown.classList.add('action-dropdown');
-            dropdown.innerHTML = `
-                <div class="action-item" style="color: #01017A;"><img src="/app/src/assets/images/Bold Eye.svg" alt="Bold Eye">View</div>
-                <div class="action-item" style="color: #FF3B30;"><img src="/app/src/assets/images/Trash.svg" alt="Trash">Delete</div>
-            `;
-            cell.appendChild(dropdown);
-            // add View/Delete click handlers
-            const actionItems = dropdown.querySelectorAll('.action-item');
-            if (actionItems.length >= 2) {
-                const [viewItem, deleteItem] = actionItems;
-                viewItem.addEventListener('click', e => {
-                    e.stopPropagation();
-                    window.location.href = '/app/views/verification_detail.php';
-                });
-                deleteItem.addEventListener('click', e => {
-                    e.stopPropagation();
-                    alert('Delete clicked');
-                    dropdown.style.display = 'none';
-                });
-            }
-            // toggle on click
-            icon.addEventListener('click', e => {
-                e.stopPropagation();
-                dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-                const {
-                    top,
-                    left,
-                    height
-                } = icon.getBoundingClientRect();
-                dropdown.style.top = (icon.offsetTop + icon.offsetHeight) + 'px';
-                dropdown.style.left = icon.offsetLeft + 'px';
-            });
-        }
-    });
+    // Action dropdown logic is handled by event delegation at the bottom of this file
+
     // close dropdown on outside click
-    document.addEventListener('click', () => document.querySelectorAll('.action-dropdown').forEach(dd => dd.style.display = 'none'));
+    document.addEventListener('click', () => {
+        // This is also handled by the delegated listener at the bottom
+    });
+    
     const barChartCanvas = document.getElementById('uploads-by-month');
     const pieChartCanvas = document.getElementById('uploads-by-status');
 
@@ -92,31 +55,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    
-    //Make Menu Button Work
-    const actionMenus = document.querySelectorAll('.action-menu');
-
-    actionMenus.forEach(menu => {
-        const btn = menu.querySelector('.action-btn');
-        const menuContent = menu.querySelector('.action-menu-content');
-
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            // Close other menus
-            actionMenus.forEach(otherMenu => {
-                if (otherMenu !== menu) {
-                    otherMenu.querySelector('.action-menu-content').style.display = 'none';
-                }
-            });
-            menuContent.style.display = menuContent.style.display === 'block' ? 'none' : 'block';
-        });
-    });
-
-    document.addEventListener('click', () => {
-        actionMenus.forEach(menu => {
-            menu.querySelector('.action-menu-content').style.display = 'none';
-        });
-    });
 });
 document.addEventListener('DOMContentLoaded', function () {
     // --- Mobile Sidebar Toggle ---
@@ -138,20 +76,225 @@ document.addEventListener('DOMContentLoaded', function () {
     const filterForm = document.getElementById('filter-sort-form');
     const formSearchInput = document.getElementById('form-search');
     // Handle search input submission
-    if (searchForm) {
+    // --- Debounced AJAX Search for Admin ---
+    if (searchForm && searchInput) {
+        
+        const debounce = (func, wait) => {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        };
+
+        const performSearch = (paramsOverride = {}) => {
+             const searchTerm = searchInput.value.trim();
+             
+             if (window.location.pathname.includes('admin.php') || window.location.pathname.includes('verifications.php') || window.location.pathname.includes('students.php')) {
+                 const currentUrl = new URL(window.location.href);
+
+                 if (window.location.pathname.includes('admin.php')) {
+                     return; 
+                 }
+
+                 // Update Search Param
+                 currentUrl.searchParams.set('search', searchTerm);
+                 
+                 // Apply Overrides (filter inputs)
+                 Object.keys(paramsOverride).forEach(key => {
+                     currentUrl.searchParams.set(key, paramsOverride[key]);
+                 });
+
+                 currentUrl.searchParams.set('ajax', '1');
+                 
+                 const studentsGrid = document.querySelector('.students-grid') || document.querySelector('.no-students');
+                 const tbody = document.querySelector('.docs-table tbody');
+                 
+                 const targetContainer = studentsGrid ? (document.querySelector('.students-grid') ? document.querySelector('.students-grid').parentNode : document.querySelector('.no-students').parentNode) : tbody; // parent needed for replacement if grid missing? Actually innerHTML is safer.
+
+                 // Show loading
+                 if (tbody) tbody.style.opacity = '0.5';
+                 if (studentsGrid) studentsGrid.style.opacity = '0.5';
+
+                 fetch(currentUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (tbody) {
+                            tbody.innerHTML = data.html;
+                            tbody.style.opacity = '1';
+                        }
+                        if (studentsGrid) {
+                             // Robust replacement for students grid
+                             const container = document.querySelector('.students-grid');
+                             const noStudents = document.querySelector('.no-students');
+                             
+                             if (container) {
+                                 container.outerHTML = '<div class="students-grid">' + data.html + '</div>'; // data.html contains cards or no-students? 
+                                 // Wait, my controller returns cards directly OR a div.no-students. 
+                                 // If data.html starts with <div class="no-students">, I should replace container.
+                                 // The controller returns:
+                                 // - <div class="no-students">...</div> if empty.
+                                 // - <a ...>...</a><a ...>...</a> strings if not empty.
+                                 
+                                 // So if data.html contains 'student-card', it's a grid.
+                                 // If it contains 'no-students', it's a div.
+                                 
+                                 // Better approach:
+                                 // If current is grid, replace innerHTML if data is cards.
+                                 // But data might be no-students div.
+                                 
+                                 // Let's rely on parent container selector in views/students.php: .students-container
+                                 const wrapper = document.querySelector('.students-container');
+                                 // Remove existing grid or no-students
+                                 const existingGrid = wrapper.querySelector('.students-grid');
+                                 const existingNo = wrapper.querySelector('.no-students');
+                                 if(existingGrid) existingGrid.remove();
+                                 if(existingNo) existingNo.remove();
+                                 
+                                 // Create new element based on data content hint or just insert HTML
+                                 // Data.html is string of elements.
+                                 if (data.html.includes('student-card')) {
+                                     const newGrid = document.createElement('div');
+                                     newGrid.className = 'students-grid';
+                                     newGrid.innerHTML = data.html;
+                                     wrapper.appendChild(newGrid);
+                                 } else {
+                                     // Assuming data.html is the <div class="no-students">...
+                                     wrapper.insertAdjacentHTML('beforeend', data.html);
+                                 }
+                             } else if (noStudents) {
+                                 // Same logic if starting from empty state
+                                 const wrapper = document.querySelector('.students-container');
+                                  if(noStudents) noStudents.remove();
+                                  
+                                  if (data.html.includes('student-card')) {
+                                     const newGrid = document.createElement('div');
+                                     newGrid.className = 'students-grid';
+                                     newGrid.innerHTML = data.html;
+                                     wrapper.appendChild(newGrid);
+                                 } else {
+                                     wrapper.insertAdjacentHTML('beforeend', data.html);
+                                 }
+                             }
+                        }
+                        
+                        // Update Search Info (X results found)
+                        // For Verifications: .uploads-tabs .search-results-info
+                        // For Students: .students-header .search-results-info ?
+                        
+                        if (window.location.pathname.includes('verifications.php')) {
+                            const uploadsTabs = document.querySelector('.uploads-tabs');
+                            if (uploadsTabs) {
+                                let infoContainer = uploadsTabs.querySelector('.search-results-info');
+                                if (data.info_html) {
+                                    if (infoContainer) {
+                                        infoContainer.outerHTML = data.info_html;
+                                    } else {
+                                        uploadsTabs.insertAdjacentHTML('beforeend', data.info_html);
+                                    }
+                                } else {
+                                    if (infoContainer) infoContainer.remove();
+                                }
+                            }
+                        } else if (window.location.pathname.includes('students.php')) {
+                             const header = document.querySelector('.students-header');
+                             if (header) {
+                                 let infoContainer = header.querySelector('.search-results-info');
+                                 // Wait, where to put it? Maybe after the H2?
+                                 // Use same logic, find existing or append.
+                                 // Better: create a consistent container or just append to header. 
+                                 // My controller generates .search-results-info.
+                                 if (data.info_html) {
+                                     if (infoContainer) {
+                                         infoContainer.outerHTML = data.info_html;
+                                     } else {
+                                         header.insertAdjacentHTML('beforeend', data.info_html);
+                                     }
+                                 } else {
+                                     if (infoContainer) infoContainer.remove();
+                                 }
+                             }
+                        }
+
+                        // Update URL without reload
+                        const newUrl = new URL(window.location.href);
+                        newUrl.searchParams.set('search', searchTerm);
+                        Object.keys(paramsOverride).forEach(key => {
+                            newUrl.searchParams.set(key, paramsOverride[key]);
+                        });
+                        window.history.pushState({}, '', newUrl);
+                    })
+                    .catch(err => {
+                        console.error('Search failed', err);
+                        if(tbody) tbody.style.opacity = '1';
+                        if(studentsGrid) studentsGrid.style.opacity = '1';
+                    });
+             }
+        };
+
+        const debouncedSearch = debounce(performSearch, 300);
+
+        searchInput.addEventListener('input', debouncedSearch);
+
         searchForm.addEventListener('submit', function (e) {
             e.preventDefault();
             const searchTerm = searchInput.value.trim();
             
-            // On the main admin dashboard, redirect to the verifications page with the search query
-            if (window.location.pathname.includes('admin.php')) {
-                window.location.href = `/app/controllers/verifications.php?search=${encodeURIComponent(searchTerm)}`;
-                return;
-            }  else if (filterForm && formSearchInput) {
-                formSearchInput.value = searchTerm;
-                filterForm.submit();
+            // Redirect logic
+            if (window.location.pathname.includes('verifications.php') || window.location.pathname.includes('students.php')) {
+                performSearch(); 
+            } else {
+                 if (searchTerm) {
+                     // Since we removed search from everywhere else, this executes on student/verification page or if user hacked header back.
+                     // But let's keep redirection safety
+                     // Default to verifications? Or based on context?
+                     // If on dashboard, maybe verifications.
+                     window.location.href = `/app/controllers/verifications.php?search=${encodeURIComponent(searchTerm)}`;
+                 }
             }
         });
+
+        // --- AJAX for Tabs (Verifications) ---
+        const tabItems = document.querySelectorAll('.tab-item');
+        tabItems.forEach(tab => {
+            tab.addEventListener('click', function(e) {
+                e.preventDefault();
+                tabItems.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                const url = new URL(this.href);
+                const tabValue = url.searchParams.get('tab');
+                performSearch({ tab: tabValue });
+            });
+        });
+        
+        // --- AJAX for Student Filters ---
+        const filterForm = document.getElementById('filter-sort-form');
+        if (filterForm) {
+            filterForm.addEventListener('submit', function(e) {
+                e.preventDefault(); // Stop reload
+                // Gather data
+                const formData = new FormData(filterForm);
+                const params = {};
+                formData.forEach((value, key) => params[key] = value);
+                // Trigger search with params
+                performSearch(params);
+            });
+            
+            // Also trigger on change for selects for smoother UX?
+            const selects = filterForm.querySelectorAll('select');
+            selects.forEach(select => {
+                select.addEventListener('change', () => {
+                   const formData = new FormData(filterForm);
+                   const params = {};
+                   formData.forEach((value, key) => params[key] = value);
+                   performSearch(params);
+                });
+            });
+        }
     };
     // --- Datepicker Initialization ---
     const startDateInput = document.getElementById('start_date');

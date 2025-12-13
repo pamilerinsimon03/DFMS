@@ -21,53 +21,43 @@ For the application to run correctly, the server must meet the following require
 
 These features automate rejection of blurry or unreadable uploads. Install and configure the following:
 
-### Linux (Debian/Ubuntu)
+### Linux (Debian/Ubuntu 20.04/22.04+)
 
-1. **Install Dependencies**:
+Run the following commands to install the required dependencies (Tesseract OCR, ImageMagick, and PHP extension):
 
-   ```bash
-   sudo apt-get update
-   sudo apt-get install php-gd php-imagick tesseract-ocr ghostscript
-   ```
-2. **Restart Services**:
+```bash
+# 1. Update package list
+sudo apt-get update
 
-   ```bash
-   sudo systemctl restart apache2  # or nginx + php-fpm
-   ```
+# 2. Install Tesseract OCR and its language pack
+sudo apt-get install tesseract-ocr tesseract-ocr-eng -y
+
+# 3. Install ImageMagick and PHP Extension
+# (Replace php8.1 with your installed version if different)
+sudo apt-get install imagemagick php-imagick -y
+
+# 4. Restart Web Server to load new PHP extension
+sudo systemctl restart apache2
+# OR if using Nginx+FPM:
+# sudo systemctl restart php8.1-fpm
+```
 
 ### Windows (XAMPP/WAMP)
 
-1. **Enable PHP Extensions** in `php.ini`:
-
-   ```ini
-   extension=gd
-   extension=imagick
-   extension=fileinfo
-   ```
-
-2. **Install ImageMagick**:
-
-   * Download matching ImageMagick **DLL** binary (x64/TS or NTS)
-   * Extract ZIP, copy `php_imagick.dll` to `C:\xampp\php\ext`.
-   * Copy supporting `CORE_RL_*.dll` to Apache’s `bin` folder (e.g. `C:\xampp\apache\bin`).
-
-3. **Install Ghostscript**:
-
-   * Download and install from [https://www.ghostscript.com/download/gsdnld.html](https://www.ghostscript.com/download/gsdnld.html)
-   * Add `C:\Program Files\gs\gs<version>\bin` to **System PATH**.
-   * Create a `gs.bat` in that folder with:
-
-     ```bat
-     @echo off
-     "C:\Program Files\gs\gs<version>\bin\gswin64c.exe" %*
-     ```
-
-4. **Install Tesseract OCR**:
-
-   * Download from [https://github.com/UB-Mannheim/tesseract/wiki](https://github.com/UB-Mannheim/tesseract/wiki)
-   * Ensure **"Add to PATH"** is checked.
-
-5. **Restart Apache/WAMP** from control panel.
+1.  **Check PHP Version**: Create an `info.php` file (`<?php phpinfo(); ?>`) to see your PHP version (e.g., 8.2), Architecture (x64), and Thread Safety (TS).
+2.  **Install ImageMagick**:
+    *   Download from [ImageMagick Windows Downloads](https://imagemagick.org/script/download.php#windows) (select DLL version, e.g., `ImageMagick-7.1.x-Q16-HDRI-x64-dll.exe`).
+    *   **Important**: Check **"Add to System Path"** during installation.
+3.  **Install PHP Extension**:
+    *   Download from [PECL Imagick](https://pecl.php.net/package/imagick). Choose the DLL matching your PHP version/TS.
+    *   Extract `php_imagick.dll` to `C:\xampp\php\ext\`.
+    *   Extract `CORE_RL_*.dll` and `IM_MOD_RL_*.dll` files to `C:\xampp\apache\bin\`.
+4.  **Install Tesseract OCR**:
+    *   Download installer from [UB Mannheim Tesseract Wiki](https://github.com/UB-Mannheim/tesseract/wiki).
+    *   **Important**: Check **"Add to Path"** during installation so the system can find `tesseract.exe`.
+5.  **Configure PHP**:
+    *   Edit `php.ini` and add `extension=imagick`.
+6.  **Restart Apache**: Restart the server from the XAMPP Control Panel.
 
 ---
 
@@ -200,3 +190,4 @@ All documentation is available in the [`docs/`](docs/) directory:
 - **Audit Logging** - Complete security event tracking
 - **NDPR Compliance** - Full data protection regulation compliance
 - **Session Security** - Secure session management with proper flags
+

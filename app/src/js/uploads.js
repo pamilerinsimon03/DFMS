@@ -65,12 +65,14 @@ document.addEventListener('DOMContentLoaded', function () {
         closeSidebar();
     });
 
-    // Search UX parity with dashboard
+    // --- Dedicated AJAX Search for Uploads Page ---
     const searchContainer = document.getElementById('search-container');
     const searchIconBtn = document.getElementById('search-icon-btn');
     const searchInput = document.querySelector('.search-input');
+    const searchForm = document.querySelector('.search-form');
 
     if (searchIconBtn && searchContainer && searchInput) {
+        // Mobile Toggle
         searchIconBtn.addEventListener('click', (e) => {
             if (window.innerWidth <= 768) {
                 e.preventDefault();
@@ -81,98 +83,174 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        // Submit on Enter
-        searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                searchInput.form.submit();
+        // Debounce Utility
+        const debounce = (func, wait) => {
+            let timeout;
+            return function(...args) {
+                const context = this;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), wait);
+            };
+        };
+
+        const performAjaxSearch = (query, tab = null) => {
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('search', query);
+            currentUrl.searchParams.set('ajax', '1');
+            
+            // If tab is provided, use it. But query param might already be there from URL
+            if (tab) {
+                currentUrl.searchParams.set('tab', tab);
             }
+
+            const tbody = document.querySelector('.uploads-table tbody');
+            const tableWrapper = document.querySelector('.uploads-table-wrapper');
+            
+            if (tbody) tbody.style.opacity = '0.5';
+
+            fetch(currentUrl)
+                .then(response => response.json())
+                .then(data => {
+                    if (tbody) {
+                        tbody.innerHTML = data.html;
+                        tbody.style.opacity = '1';
+                    }
+                    
+                    // Update Search Info
+                    const tabsContainer = document.querySelector('.uploads-tabs');
+                    if (tabsContainer) {
+                        let infoDiv = tabsContainer.querySelector('.search-results-info');
+                        if (data.info_html) {
+                            if (infoDiv) {
+                                infoDiv.outerHTML = data.info_html;
+                            } else {
+                                tabsContainer.insertAdjacentHTML('beforeend', data.info_html);
+                            }
+                        } else {
+                            if (infoDiv) infoDiv.remove();
+                        }
+                    }
+                    
+                    // Re-initialize Lucide icons
+                    if (window.lucide) {
+                        window.lucide.createIcons();
+                    }
+
+                    // Update URL
+                    const newUrl = new URL(window.location.href);
+                    newUrl.searchParams.set('search', query);
+                    if (tab) newUrl.searchParams.set('tab', tab);
+                    window.history.pushState({}, '', newUrl);
+                })
+                .catch(err => {
+                    console.error('Search failed', err);
+                    if (tbody) tbody.style.opacity = '1';
+                });
+        };
+
+        const debouncedAjaxSearch = debounce(performAjaxSearch, 300);
+
+        searchInput.addEventListener('input', function(e) {
+            const query = this.value.toLowerCase().trim();
+            debouncedAjaxSearch(query);
         });
 
-        // Debounced submit while typing
-        let t;
-        searchInput.addEventListener('input', () => {
-            clearTimeout(t);
-            t = setTimeout(() => {
-                searchInput.form.submit();
-            }, 500);
-        });
+        // Prevent default form submission
+        if (searchForm) {
+            searchForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+            });
+        }
     }
+
+
     
     // Tab switching functionality
+
+    // --- AJAX Tab Switching ---
     const tabItems = document.querySelectorAll('.tab-item');
     
     tabItems.forEach(tab => {
-        tab.addEventListener('click', function() {
-            // Remove active class from all tabs
-            tabItems.forEach(item => item.classList.remove('active'));
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
             
-            // Add active class to clicked tab
+            // Remove active class from all
+            tabItems.forEach(item => item.classList.remove('active'));
+            // Add active to clicked
             this.classList.add('active');
             
-            // Here you would typically filter the table based on the selected tab
-            // For now, we'll just show a notification
-            const tabName = this.textContent.trim();
-            console.log(`Switched to ${tabName} tab`);
+            // Extract tab value from href
+            const url = new URL(this.href);
+            const tabValue = url.searchParams.get('tab') || 'total';
+            const searchTerm = searchInput ? searchInput.value.trim() : '';
             
-            // Filter table rows based on selected tab
-            filterTableByTab(tabName);
+            // Perform AJAX fetch
+            performAjaxSearch(searchTerm, tabValue);
         });
     });
-    
-    // Date filter functionality
-    const dateInputs = document.querySelectorAll('.date-input');
-    
-    dateInputs.forEach(input => {
-        input.addEventListener('click', function() {
-            // In a real implementation, this would open a date picker
-            console.log('Date picker would open here');
-        });
-    });
-    
-    // Action button functionality
-    const actionButtons = document.querySelectorAll('.td-action button');
-    
-    actionButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const action = this.textContent.trim();
-            const row = this.closest('.table-row');
-            const documentName = row.querySelector('.td-document').textContent;
-            
-            if (action === 'Reupload Document') {
-                // In a real implementation, this would open a file upload dialog
-                console.log(`Reupload requested for ${documentName}`);
-                alert(`Reupload requested for ${documentName}`);
-            } else {
-                console.log(`${action} clicked for ${documentName}`);
-                alert(`${action} clicked for ${documentName}`);
-            }
-        });
-    });
-    
-    // Function to filter table rows based on selected tab
-    function filterTableByTab(tabName) {
-        document.querySelectorAll('.table-row').forEach(row => {
-            const statusText = row.querySelector('.td-status')
-                                .textContent.trim();
 
-            let show = false;
-            switch (tabName) {
-            case 'Total Uploads':
-                show = true; break;
-            case 'Pending Verification':
-                show = (statusText === 'Pending Approval'); break;
-            case 'Verified':
-                show = (statusText === 'Approved'); break;
-            case 'Rejected':
-                show = (statusText === 'Rejected'); break;
-            default:
-                show = true;  // or false, depending on your UX
-            }
+    // Modified performAjaxSearch to accept tab
+    const performAjaxSearch = (query, tab = null) => {
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('search', query);
+        currentUrl.searchParams.set('ajax', '1');
+        
+        // If tab is provided, use it. Otherwise keep existing or default to total
+        if (tab) {
+            currentUrl.searchParams.set('tab', tab);
+        } else if (!currentUrl.searchParams.has('tab')) {
+            currentUrl.searchParams.set('tab', 'total');
+        }
 
-            row.style.display = show ? '' : 'none';
-        });
-    }
+        const tbody = document.querySelector('.uploads-table tbody');
+        
+        if (tbody) tbody.style.opacity = '0.5';
+
+        fetch(currentUrl)
+            .then(response => response.json())
+            .then(data => {
+                if (tbody) {
+                    tbody.innerHTML = data.html;
+                    tbody.style.opacity = '1';
+                }
+                
+                // Update Search Info
+                const tabsContainer = document.querySelector('.uploads-tabs');
+                if (tabsContainer) {
+                    let infoDiv = tabsContainer.querySelector('.search-results-info');
+                    if (data.info_html) {
+                        if (infoDiv) {
+                            infoDiv.outerHTML = data.info_html;
+                        } else {
+                            tabsContainer.insertAdjacentHTML('beforeend', data.info_html);
+                        }
+                    } else {
+                        if (infoDiv) infoDiv.remove();
+                    }
+                }
+                
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
+
+                // Update URL
+                const newUrl = new URL(window.location.href);
+                newUrl.searchParams.set('search', query);
+                if (tab) newUrl.searchParams.set('tab', tab);
+                window.history.pushState({}, '', newUrl);
+            })
+            .catch(err => {
+                console.error('Search failed', err);
+                if (tbody) tbody.style.opacity = '1';
+            });
+    };
+
+    // Update the earlier definition of performAjaxSearch to match this signature
+    // We need to replace the definition inside the 'if (searchIconBtn...)' block too
+    // But since this replaces the later block, let's just make sure the debounced one works.
+    // The previous performAjaxSearch definition (around line 96) needs to be compatible.
+    // Actually, I should remove the old definition and consolidate it.
+
     
     // Add calendar icon images
     const calendarIcons = document.querySelectorAll('.date-input img');

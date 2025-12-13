@@ -41,17 +41,126 @@ document.addEventListener('DOMContentLoaded', function() {
     const uploadForm = document.getElementById('upload-form');
     const fileUpload = document.getElementById('file-upload');
     const fileNameDisplay = document.getElementById('file-name-display');
-    const uploadButton = document.getElementById('upload-button');
+    const uploadButton = document.getElementById('upload-submit-btn'); // ID changed in HTML
     const uploadContainer = document.getElementById('upload-container');
+    const progressContainer = document.getElementById('upload-progress-container');
+    const progressBar = document.getElementById('upload-progress-bar');
+    const progressText = document.getElementById('upload-progress-text');
 
     // Trigger form submission when the upload button is clicked
     if (uploadButton) {
         uploadButton.addEventListener('click', () => {
-            if (uploadForm.checkValidity()) {
-                uploadForm.submit();
+             if (uploadForm.checkValidity()) {
+                const formData = new FormData(uploadForm);
+                const xhr = new XMLHttpRequest();
+
+                // Show progress UI directly inside the upload box
+                progressContainer.style.display = 'block';
+                progressBar.style.width = '0%';
+                progressText.textContent = '0%';
+                uploadButton.disabled = true;
+                uploadButton.textContent = 'Uploading...';
+
+                xhr.open('POST', '/app/controllers/upload_file.php', true);
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+                // Progress event
+                xhr.upload.onprogress = function(e) {
+                    if (e.lengthComputable) {
+                        const percentComplete = Math.round((e.loaded / e.total) * 100);
+                        progressBar.style.width = percentComplete + '%';
+                        if (percentComplete === 100) {
+                             progressText.textContent = 'Processing & Verifying Quality...';
+                             progressBar.style.backgroundColor = '#2196F3'; // Blue for processing
+                        } else {
+                            progressText.textContent = percentComplete + '%';
+                        }
+                    }
+                };
+
+                // Completion event
+                xhr.onload = function() {
+                    uploadButton.disabled = false;
+                    uploadButton.textContent = 'Upload files';
+                    
+                    if (xhr.status === 200) {
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            if (response.success) {
+                                window.toast.success(response.message);
+                                
+                                // UI Update (No Reload)
+                                uploadForm.reset();
+                                fileNameDisplay.textContent = '';
+                                progressContainer.style.display = 'none';
+
+                                // Find grid and counter
+                                const grid = document.querySelector('.files-grid');
+                                const noFiles = document.querySelector('.no-files');
+                                const counter = document.querySelector('.counter-number');
+                                
+                                if (noFiles) noFiles.remove();
+                                
+                                // Create new card
+                                const newCard = document.createElement('div');
+                                newCard.className = 'file-card';
+                                
+                                // Get document name from response
+                                const docName = response.data && response.data.document_name ? response.data.document_name : 'New Document';
+                                
+                                newCard.innerHTML = `
+                                    <div class="file-image"><img src="/app/src/assets/images/PDF Icon Pic.png" alt="File"></div>
+                                    <div class="file-details">
+                                        <div class="file-name">${docName}</div>
+                                        <div class="file-status pending">
+                                            <div class="status-dot"></div>
+                                            <div class="status-text">Pending</div>
+                                        </div>
+                                    </div>
+                                `;
+                                
+                                // Add click listener to new card
+                                newCard.addEventListener('click', function() {
+                                    alert(`File: ${newCard.querySelector('.file-name').textContent}\nStatus: Pending\n\nDetailed view will be implemented in Phase 4.`);
+                                });
+
+                                // Prepend
+                                grid.insertBefore(newCard, grid.firstChild);
+                                
+                                // Update counter
+                                if (counter) {
+                                    counter.textContent = parseInt(counter.textContent) + 1;
+                                }
+
+                            } else {
+                                window.toast.error(response.message);
+                                progressBar.style.backgroundColor = '#f44336'; // Red
+                                progressText.textContent = 'Failed';
+                            }
+                        } catch (e) {
+                            console.error("Invalid JSON response", xhr.responseText);
+                            window.toast.error("Upload failed: Server error.");
+                        }
+                    } else {
+                        window.toast.error('Upload failed with status ' + xhr.status);
+                    }
+                };
+
+                xhr.onerror = function() {
+                    uploadButton.disabled = false;
+                    uploadButton.textContent = 'Upload files';
+                    window.toast.error('An error occurred during the upload.');
+                };
+
+                xhr.send(formData);
+
             } else {
-                // Optionally, display a message to the user that they need to fill out all fields
-                alert('Please provide a document name and select a file.');
+                // Validate manually to show browser tooltips or custom alert
+                if (!uploadForm.document_name.value) {
+                     window.toast.warning('Please select a document type.');
+                } else if (!uploadForm.file.value) {
+                     window.toast.warning('Please select a file.');
+                }
             }
         });
     }
@@ -183,29 +292,31 @@ Detailed view will be implemented in Phase 4.`);
     uploadPlaceholder.className = 'placeholder-upload';
     todoPlaceholder.className   = 'placeholder-todo';
 
-    // On initial load, insert placeholders where the counter/upload/todo originally live:
-    if (rightSidebar.contains(docsCounter)) {
-        docsPlaceholder.replaceWith(docsCounter);       // (in case it moved on a previous resize)
-        rightSidebar.insertBefore(docsCounter, rightSidebar.firstChild);
-    }
-    if (rightSidebar.contains(uploadSection)) {
-        uploadPlaceholder.replaceWith(uploadSection);
-        rightSidebar.insertBefore(uploadSection, docsCounter.nextSibling);
-    }
-    if (rightSidebar.contains(todoFiles)) {
-        todoPlaceholder.replaceWith(todoFiles);
-        rightSidebar.appendChild(todoFiles);
+    // Check if we are on the dashboard page and have the sidebar elements
+    if (rightSidebar && dashboardContent) {
+        // On initial load, insert placeholders where the counter/upload/todo originally live:
+        if (rightSidebar.contains(docsCounter)) {
+            docsPlaceholder.replaceWith(docsCounter);
+            rightSidebar.insertBefore(docsCounter, rightSidebar.firstChild);
+        }
+        if (rightSidebar.contains(uploadSection)) {
+            uploadPlaceholder.replaceWith(uploadSection);
+            rightSidebar.insertBefore(uploadSection, docsCounter.nextSibling);
+        }
+        if (rightSidebar.contains(todoFiles)) {
+            todoPlaceholder.replaceWith(todoFiles);
+            rightSidebar.appendChild(todoFiles);
+        }
     }
 
     function reorderForMobile() {
+        // Safety check: ensure required elements exist
+        if (!rightSidebar || !dashboardContent) return;
+        
         const w = window.innerWidth;
         if (w <= mobileBreakpoint) {
-            // ───────────────────────────────────────────────────────────────────
-            // MOBILE: take docsCounter & uploadSection OUT of rightSidebar,
-            // and insert them inside dashboardContent, right after user-info-card.
-            // Then take todoFiles out of rightSidebar and append after .files-section.
-            // ───────────────────────────────────────────────────────────────────
-
+            // ... (rest of logic unchanged, just ensured checks pass)
+            
             // 1) If docsCounter is still inside rightSidebar, move it:
             if (rightSidebar.contains(docsCounter)) {
             docsPlaceholder.replaceWith(docsCounter);      // restore docsCounter here
@@ -232,12 +343,8 @@ Detailed view will be implemented in Phase 4.`);
             );
             }
         } else {
-            // ───────────────────────────────────────────────────────────────────
-            // DESKTOP (wider than 768px): put everything BACK inside rightSidebar
-            // in the original order: [docsCounter, uploadSection, todoFiles].
-            // ───────────────────────────────────────────────────────────────────
-
-            // 1) docsCounter → back into rightSidebar, in front:
+            // DESKTOP logic
+             // 1) docsCounter → back into rightSidebar, in front:
             if (! rightSidebar.contains(docsCounter)) {
             dashboardContent.replaceChild(docsPlaceholder, docsCounter);
             rightSidebar.insertBefore(docsCounter, rightSidebar.firstChild);
@@ -285,6 +392,49 @@ Detailed view will be implemented in Phase 4.`);
             }
         }
     });
+
+    // --- Search Functionality (Client-Side for Dashboard) ---
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            const query = this.value.toLowerCase().trim();
+            const fileCards = document.querySelectorAll('.file-card');
+            const filesGrid = document.querySelector('.files-grid');
+            let hasVisible = false;
+
+            if (filesGrid) {
+                fileCards.forEach(card => {
+                    const name = card.querySelector('.file-name').textContent.toLowerCase();
+                    if (name.includes(query)) {
+                        card.style.display = '';
+                        hasVisible = true;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                // Handle "No files" message
+                let noFilesMsg = document.querySelector('.no-files-search');
+                if (!hasVisible) {
+                    if (!noFilesMsg) {
+                        noFilesMsg = document.createElement('div');
+                        noFilesMsg.className = 'no-files no-files-search';
+                        noFilesMsg.textContent = 'No matching files found.';
+                        filesGrid.appendChild(noFilesMsg);
+                    }
+                } else {
+                    if (noFilesMsg) noFilesMsg.remove();
+                }
+            }
+        });
+
+        // Prevent form submission
+        const searchForm = document.querySelector('.search-form');
+        if (searchForm) {
+            searchForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+            });
+        }
+    }
 
 });
 

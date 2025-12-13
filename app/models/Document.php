@@ -3,6 +3,7 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Notification.php';
 require_once __DIR__ . '/../services/AcademicCalendarService.php';
+require_once __DIR__ . '/../services/MailService.php';
 
 class Document
 {
@@ -21,7 +22,7 @@ class Document
 
     public static function getDocumentsByUserId($user_id) {
         global $conn;
-        $sql = "SELECT d.id, d.document_name, d.file_path, d.status, d.level, u.session, d.semester 
+        $sql = "SELECT d.id, d.document_name, d.file_path, d.status, d.level, u.session, d.semester, d.rejection_reason 
                 FROM documents d 
                 JOIN users u ON d.user_id = u.id
                 WHERE d.user_id = ?";
@@ -194,13 +195,15 @@ class Document
         $stmt->execute();
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
-    public static function updateStatus($doc_id, $action)
+    public static function updateStatus($doc_id, $action, $rejection_reason = null)
     {
         global $conn;
         $status = $action === 'verify' || $action === 'approve' ? 'Approved' : 'Rejected';
-        $sql = "UPDATE documents SET status = ? WHERE id = ?";
+        
+        $sql = "UPDATE documents SET status = ?, rejection_reason = ? WHERE id = ?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("si", $status, $doc_id);
+        $reason = ($status === 'Rejected') ? $rejection_reason : null;
+        $stmt->bind_param("ssi", $status, $reason, $doc_id);
         $ok = $stmt->execute();
 
         if ($ok) {
@@ -210,8 +213,28 @@ class Document
                 $title = $status === 'Approved' ? 'Document approved' : 'Document rejected';
                 $message = $status === 'Approved'
                     ? "Your document '" . $doc['document_name'] . "' has been approved."
-                    : "Your document '" . $doc['document_name'] . "' was rejected. Please review and reupload.";
+                    : "Your document '" . $doc['document_name'] . "' was rejected." . ($reason ? " Reason: " . $reason : " Please review and reupload.");
                 Notification::create((int)$doc['user_id'], $title, $message);
+
+                // Send Email Notification
+                $user = User::getById($doc['user_id']);
+                if ($user && !empty($user['email'])) {
+                    $emailSubject = "Document Status: " . $status;
+                    $emailMessage = "<p>Dear " . htmlspecialchars($user['full_name']) . ",</p>";
+                    
+                    if ($status === 'Approved') {
+                        $emailMessage .= "<p>Your document '<strong>" . htmlspecialchars($doc['document_name']) . "</strong>' has been <strong>APPROVED</strong>.</p>";
+                        $emailMessage .= "<p>No further action is required for this document.</p>";
+                    } else {
+                        $emailMessage .= "<p>Your document '<strong>" . htmlspecialchars($doc['document_name']) . "</strong>' has been <strong>REJECTED</strong>.</p>";
+                        if ($reason) {
+                            $emailMessage .= "<p><strong>Reason for rejection:</strong> " . htmlspecialchars($reason) . "</p>";
+                        }
+                        $emailMessage .= "<p>Please review the feedback and re-upload the document via your dashboard.</p>";
+                    }
+                    
+                    MailService::send($user['email'], $emailSubject, $emailMessage);
+                }
             }
         }
 
@@ -573,6 +596,27 @@ class Document
                 'Upload successful',
                 "Your document '" . $docTitle . "' was uploaded and is awaiting verification."
             );
+
+            // Fetch user details for email
+            $user = User::getById($user_id);
+            if ($user && !empty($user['email'])) {
+                $subject = "Upload Received: " . $docTitle;
+                $message = "<p>Dear " . htmlspecialchars($user['full_name']) . ",</p>" .
+                           "<p>Your document '<strong>" . htmlspecialchars($docTitle) . "</strong>' has been successfully uploaded and is pending verification.</p>" .
+                           "<p>Login to your dashboard to check the status.</p>";
+                MailService::send($user['email'], $subject, $message);
+            }
+
+            // Notify Admins
+            $adminEmails = User::getAdmins();
+            if (!empty($adminEmails)) {
+                $adminSubject = "New Document Uploaded";
+                $adminMessage = "<p>A new document has been uploaded by <strong>" . htmlspecialchars($user['full_name']) . "</strong> (" . htmlspecialchars($user['matric_number']) . ").</p>" .
+                                "<p><strong>Document:</strong> " . htmlspecialchars($docTitle) . "</p>" .
+                                "<p>Please login to the admin dashboard to verify it.</p>";
+                MailService::send($adminEmails, $adminSubject, $adminMessage);
+            }
+
             return ['success' => true, 'message' => 'File uploaded successfully.'];
         } else {
             unlink($destination);
@@ -646,6 +690,26 @@ class Document
                 'Reupload received',
                 "Your document '" . $doc['document_name'] . "' was reuploaded and is awaiting verification."
             );
+
+            // Fetch user details for email
+            $user = User::getById($doc['user_id']);
+            if ($user && !empty($user['email'])) {
+                $subject = "Re-upload Received: " . $doc['document_name'];
+                $message = "<p>Dear " . htmlspecialchars($user['full_name']) . ",</p>" .
+                           "<p>Your re-uploaded document '<strong>" . htmlspecialchars($doc['document_name']) . "</strong>' has been received and is pending verification.</p>";
+                MailService::send($user['email'], $subject, $message);
+            }
+
+            // Notify Admins
+            $adminEmails = User::getAdmins();
+            if (!empty($adminEmails)) {
+                $adminSubject = "Document Re-uploaded";
+                $adminMessage = "<p>A document has been re-uploaded by <strong>" . htmlspecialchars($user['full_name']) . "</strong> (" . htmlspecialchars($user['matric_number']) . ").</p>" .
+                                "<p><strong>Document:</strong> " . htmlspecialchars($doc['document_name']) . "</p>" .
+                                "<p>Please login to the admin dashboard to verify it.</p>";
+                MailService::send($adminEmails, $adminSubject, $adminMessage);
+            }
+
             return ['success' => true, 'message' => 'File re-uploaded successfully.'];
         } else {
             unlink($destination); // Clean up uploaded file

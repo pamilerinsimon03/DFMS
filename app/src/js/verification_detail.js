@@ -44,7 +44,43 @@ document.addEventListener('DOMContentLoaded', () => {
     // Close modal when clicking outside the content
     window.addEventListener('click', (event) => {
         if (event.target === modal) {
-        closeModalHandler();
+            closeModalHandler();
+        }
+        // Also close rejection modal if clicking outside
+        const rejectionModal = document.getElementById('rejection-modal');
+        if (event.target === rejectionModal) {
+            rejectionModal.style.display = 'none';
         }
     });
+
+    // Rejection Modal Logic
+    const rejectTriggerBtn = document.getElementById('reject-trigger-btn');
+    const rejectionModal = document.getElementById('rejection-modal');
+    const cancelRejectionBtn = document.getElementById('cancel-rejection');
+    const confirmRejectionBtn = document.getElementById('confirm-rejection');
+    const rejectionTextarea = document.getElementById('rejection-textarea');
+    const hiddenRejectionReason = document.getElementById('hidden-rejection-reason');
+    const rejectForm = document.getElementById('reject-form');
+
+    if (rejectTriggerBtn && rejectionModal) {
+        rejectTriggerBtn.addEventListener('click', () => {
+            rejectionModal.style.display = 'flex';
+            rejectionTextarea.value = ''; // Clear previous input
+            rejectionTextarea.focus();
+        });
+
+        cancelRejectionBtn.addEventListener('click', () => {
+            rejectionModal.style.display = 'none';
+        });
+
+        confirmRejectionBtn.addEventListener('click', () => {
+            const reason = rejectionTextarea.value.trim();
+            if (!reason) {
+                alert('Please provide a reason for rejection.');
+                return;
+            }
+            hiddenRejectionReason.value = reason;
+            rejectForm.submit();
+        });
+    }
 });

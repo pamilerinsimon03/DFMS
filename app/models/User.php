@@ -348,4 +348,22 @@ class User {
         
         return $stmt->execute();
     }
+
+    /**
+     * Get all admin emails
+     * @return array Array of admin emails
+     */
+    public static function getAdmins() {
+        global $conn;
+        // Select admins who have an email address
+        $sql = "SELECT email FROM users WHERE is_admin = 1 AND email IS NOT NULL AND email != ''";
+        $result = $conn->query($sql);
+        $emails = [];
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $emails[] = $row['email'];
+            }
+        }
+        return $emails;
+    }
 }

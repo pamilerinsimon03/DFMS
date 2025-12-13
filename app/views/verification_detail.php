@@ -107,16 +107,18 @@
             <button type="submit" class="approve-btn"><img src="/app/src/assets/images/Check.svg" class="btn-icon"
                     alt="">Approve</button>
         </form>
-        <form action="/app/controllers/verification_detail.php?doc_id=<?php echo $doc_id; ?>" method="POST"
+        <form id="reject-form" action="/app/controllers/verification_detail.php?doc_id=<?php echo $doc_id; ?>" method="POST"
             style="display: inline;">
             <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
             <input type="hidden" name="action" value="reject">
-            <button type="submit" class="reject-btn"><img src="/app/src/assets/images/Close.svg" class="btn-icon"
+            <input type="hidden" name="rejection_reason" id="hidden-rejection-reason">
+            <button type="button" id="reject-trigger-btn" class="reject-btn"><img src="/app/src/assets/images/Close.svg" class="btn-icon"
                     alt="">Reject</button>
         </form>
     </div>
     <?php endif; ?>
 </div>
+
 <div id="doc-modal" class="doc-modal" data-doc-name="<?php echo htmlspecialchars(basename($doc['file_path'])); ?>">
     <span class="close-modal">
         <img src="/app/src/assets/images/Close.svg" alt="Close" />
@@ -126,5 +128,18 @@
     </div>
     <div class="doc-modal-caption">
         <p id="doc-modal-caption-text"></p>
+    </div>
+</div>
+
+<!-- Rejection Reason Modal -->
+<div id="rejection-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center;">
+    <div class="modal-content" style="background: white; padding: 25px; border-radius: 12px; width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+        <h3 style="margin-top: 0; color: #333; font-size: 1.25rem;">Reject Document</h3>
+        <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">Please provide a reason for rejecting this document.</p>
+        <textarea id="rejection-textarea" rows="4" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; resize: vertical; margin-bottom: 20px; font-family: inherit;" placeholder="Reason for rejection..."></textarea>
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" id="cancel-rejection" class="btn-secondary" style="background: #f3f3f3; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; color: #333; font-weight: 500;">Cancel</button>
+            <button type="button" id="confirm-rejection" class="btn-danger" style="background: #FF3B30; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; color: white; font-weight: 500;">Reject Document</button>
+        </div>
     </div>
 </div>

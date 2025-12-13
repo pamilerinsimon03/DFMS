@@ -3,7 +3,7 @@
         <span class="mobile-menu-icon"><img src="/app/src/assets/images/Menu.svg" alt="Menu Icon"></span>
     </button>
     <div class="search-container">
-        <form action="" method="GET" class="search-box">
+        <form method="GET" class="search-box" onsubmit="return false;">
             <div class="search-icon"><img src="/app/src/assets/images/search-normal.svg" alt="Search Icon"></div>
             <input type="text" placeholder="Search by name, matric number, document, status..." class="search-input" name="search" id="search-input"
                 value="<?php echo htmlspecialchars($search); ?>" autocomplete="off">

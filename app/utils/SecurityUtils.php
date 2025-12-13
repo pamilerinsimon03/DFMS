@@ -138,47 +138,4 @@ class SecurityUtils {
         $random = bin2hex(random_bytes(8));
         return "doc_{$userId}_{$timestamp}_{$random}.{$extension}";
     }
-    
-    /**
-     * Check for SQL injection patterns
-     */
-    public static function detectSQLInjection($input) {
-        $patterns = [
-            '/(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION)\b)/i',
-            '/(\b(OR|AND)\s+\d+\s*=\s*\d+)/i',
-            '/(\b(OR|AND)\s+\'[^\']*\'\s*=\s*\'[^\']*\')/i',
-            '/(\b(OR|AND)\s+\"[^\"]*\"\s*=\s*\"[^\"]*\")/i',
-            '/(\b(OR|AND)\s+[a-zA-Z_][a-zA-Z0-9_]*\s*=\s*[a-zA-Z_][a-zA-Z0-9_]*)/i'
-        ];
-        
-        foreach ($patterns as $pattern) {
-            if (preg_match($pattern, $input)) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
-    
-    /**
-     * Check for XSS patterns
-     */
-    public static function detectXSS($input) {
-        $patterns = [
-            '/<script[^>]*>.*?<\/script>/i',
-            '/<iframe[^>]*>.*?<\/iframe>/i',
-            '/<object[^>]*>.*?<\/object>/i',
-            '/<embed[^>]*>.*?<\/embed>/i',
-            '/javascript:/i',
-            '/on\w+\s*=/i'
-        ];
-        
-        foreach ($patterns as $pattern) {
-            if (preg_match($pattern, $input)) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
 }
