@@ -1,5 +1,5 @@
 // Consolidated DOMContentLoaded
-document.addEventListener('DOMContentLoaded', () => {
+const initAdmin = () => {
     // Action dropdown logic is handled by event delegation at the bottom of this file
 
     // close dropdown on outside click
@@ -11,10 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const pieChartCanvas = document.getElementById('uploads-by-status');
 
     // Charts
-    if (barChartCanvas) {
+    if (barChartCanvas && typeof Chart !== 'undefined') {
         new Chart(barChartCanvas, {
             type: 'bar',
-            data: barChartData,
+            data: typeof barChartData !== 'undefined' ? barChartData : {},
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -40,10 +40,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (pieChartCanvas) {
+    if (pieChartCanvas && typeof Chart !== 'undefined') {
         new Chart(pieChartCanvas, {
             type: 'pie',
-            data: pieChartData,
+            data: typeof pieChartData !== 'undefined' ? pieChartData : {},
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -55,26 +55,33 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-});
-document.addEventListener('DOMContentLoaded', function () {
+
     // --- Mobile Sidebar Toggle ---
     const menuToggle = document.getElementById('mobile-menu-toggle');
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('mobile-sidebar-overlay');
     if (menuToggle && sidebar && overlay) {
-        menuToggle.addEventListener('click', function () {
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        });
-        overlay.addEventListener('click', function () {
-            sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-        });
+        // Remove old listeners if any (cloneNode trick or just rely on global delegation elsewhere)
+        // Here we just attach. If re-run, might double attach?
+        // Better: check if attached.
+        if (!menuToggle.hasAttribute('data-init')) {
+            menuToggle.setAttribute('data-init', 'true');
+            menuToggle.addEventListener('click', function () {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+            });
+            overlay.addEventListener('click', function () {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            });
+        }
     }
+
     const searchForm = document.querySelector('.search-box');
     const searchInput = document.getElementById('search-input');
     const filterForm = document.getElementById('filter-sort-form');
     const formSearchInput = document.getElementById('form-search');
+
     // Handle search input submission
     // --- Debounced AJAX Search for Admin ---
     if (searchForm && searchInput) {
@@ -92,7 +99,18 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         const performSearch = (paramsOverride = {}) => {
+             // Fix: If called from event listener, paramsOverride is an Event object.
+             if (paramsOverride instanceof Event) {
+                 paramsOverride = {};
+             }
+
              const searchTerm = searchInput.value.trim();
+             
+             // Hide Add Student button when searching
+             const addStudentBtn = document.querySelector('.add-student-btn');
+             if (addStudentBtn) {
+                 addStudentBtn.style.display = searchTerm.length > 0 ? 'none' : '';
+             }
              
              if (window.location.pathname.includes('admin.php') || window.location.pathname.includes('verifications.php') || window.location.pathname.includes('students.php')) {
                  const currentUrl = new URL(window.location.href);
@@ -105,17 +123,17 @@ document.addEventListener('DOMContentLoaded', function () {
                  currentUrl.searchParams.set('search', searchTerm);
                  
                  // Apply Overrides (filter inputs)
-                 Object.keys(paramsOverride).forEach(key => {
-                     currentUrl.searchParams.set(key, paramsOverride[key]);
-                 });
+                 if (paramsOverride && typeof paramsOverride === 'object') {
+                     Object.keys(paramsOverride).forEach(key => {
+                         currentUrl.searchParams.set(key, paramsOverride[key]);
+                     });
+                 }
 
                  currentUrl.searchParams.set('ajax', '1');
                  
                  const studentsGrid = document.querySelector('.students-grid') || document.querySelector('.no-students');
                  const tbody = document.querySelector('.docs-table tbody');
                  
-                 const targetContainer = studentsGrid ? (document.querySelector('.students-grid') ? document.querySelector('.students-grid').parentNode : document.querySelector('.no-students').parentNode) : tbody; // parent needed for replacement if grid missing? Actually innerHTML is safer.
-
                  // Show loading
                  if (tbody) tbody.style.opacity = '0.5';
                  if (studentsGrid) studentsGrid.style.opacity = '0.5';
@@ -131,61 +149,30 @@ document.addEventListener('DOMContentLoaded', function () {
                              // Robust replacement for students grid
                              const container = document.querySelector('.students-grid');
                              const noStudents = document.querySelector('.no-students');
-                             
+                             const wrapper = document.querySelector('.students-container');
+
                              if (container) {
-                                 container.outerHTML = '<div class="students-grid">' + data.html + '</div>'; // data.html contains cards or no-students? 
-                                 // Wait, my controller returns cards directly OR a div.no-students. 
-                                 // If data.html starts with <div class="no-students">, I should replace container.
-                                 // The controller returns:
-                                 // - <div class="no-students">...</div> if empty.
-                                 // - <a ...>...</a><a ...>...</a> strings if not empty.
-                                 
-                                 // So if data.html contains 'student-card', it's a grid.
-                                 // If it contains 'no-students', it's a div.
-                                 
-                                 // Better approach:
-                                 // If current is grid, replace innerHTML if data is cards.
-                                 // But data might be no-students div.
-                                 
-                                 // Let's rely on parent container selector in views/students.php: .students-container
-                                 const wrapper = document.querySelector('.students-container');
-                                 // Remove existing grid or no-students
-                                 const existingGrid = wrapper.querySelector('.students-grid');
-                                 const existingNo = wrapper.querySelector('.no-students');
-                                 if(existingGrid) existingGrid.remove();
-                                 if(existingNo) existingNo.remove();
-                                 
-                                 // Create new element based on data content hint or just insert HTML
-                                 // Data.html is string of elements.
-                                 if (data.html.includes('student-card')) {
-                                     const newGrid = document.createElement('div');
-                                     newGrid.className = 'students-grid';
-                                     newGrid.innerHTML = data.html;
-                                     wrapper.appendChild(newGrid);
-                                 } else {
-                                     // Assuming data.html is the <div class="no-students">...
-                                     wrapper.insertAdjacentHTML('beforeend', data.html);
-                                 }
-                             } else if (noStudents) {
-                                 // Same logic if starting from empty state
-                                 const wrapper = document.querySelector('.students-container');
-                                  if(noStudents) noStudents.remove();
-                                  
                                   if (data.html.includes('student-card')) {
-                                     const newGrid = document.createElement('div');
-                                     newGrid.className = 'students-grid';
-                                     newGrid.innerHTML = data.html;
-                                     wrapper.appendChild(newGrid);
-                                 } else {
-                                     wrapper.insertAdjacentHTML('beforeend', data.html);
-                                 }
+                                      container.innerHTML = data.html; // Just replace content of grid
+                                      container.style.opacity = '1';
+                                  } else {
+                                      // Replace grid with no-students
+                                      container.outerHTML = data.html;
+                                  }
+                             } else if (noStudents) {
+                                  if (data.html.includes('student-card')) {
+                                     // Replace no-students with grid
+                                     noStudents.outerHTML = '<div class="students-grid">' + data.html + '</div>';
+                                  } else {
+                                     noStudents.outerHTML = data.html;
+                                  }
+                             } else if (wrapper) {
+                                 // Fallback
+                                 wrapper.innerHTML = data.html;
                              }
                         }
                         
                         // Update Search Info (X results found)
-                        // For Verifications: .uploads-tabs .search-results-info
-                        // For Students: .students-header .search-results-info ?
-                        
                         if (window.location.pathname.includes('verifications.php')) {
                             const uploadsTabs = document.querySelector('.uploads-tabs');
                             if (uploadsTabs) {
@@ -204,10 +191,6 @@ document.addEventListener('DOMContentLoaded', function () {
                              const header = document.querySelector('.students-header');
                              if (header) {
                                  let infoContainer = header.querySelector('.search-results-info');
-                                 // Wait, where to put it? Maybe after the H2?
-                                 // Use same logic, find existing or append.
-                                 // Better: create a consistent container or just append to header. 
-                                 // My controller generates .search-results-info.
                                  if (data.info_html) {
                                      if (infoContainer) {
                                          infoContainer.outerHTML = data.info_html;
@@ -238,6 +221,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const debouncedSearch = debounce(performSearch, 300);
 
+        // Remove existing listener if any (by check or clone)
+        // Simplest: just add. Debounce handles rapid firing.
         searchInput.addEventListener('input', debouncedSearch);
 
         searchForm.addEventListener('submit', function (e) {
@@ -249,10 +234,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 performSearch(); 
             } else {
                  if (searchTerm) {
-                     // Since we removed search from everywhere else, this executes on student/verification page or if user hacked header back.
-                     // But let's keep redirection safety
-                     // Default to verifications? Or based on context?
-                     // If on dashboard, maybe verifications.
                      window.location.href = `/app/controllers/verifications.php?search=${encodeURIComponent(searchTerm)}`;
                  }
             }
@@ -272,34 +253,40 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         
         // --- AJAX for Student Filters ---
-        const filterForm = document.getElementById('filter-sort-form');
         if (filterForm) {
-            filterForm.addEventListener('submit', function(e) {
-                e.preventDefault(); // Stop reload
-                // Gather data
-                const formData = new FormData(filterForm);
-                const params = {};
-                formData.forEach((value, key) => params[key] = value);
-                // Trigger search with params
-                performSearch(params);
-            });
-            
-            // Also trigger on change for selects for smoother UX?
-            const selects = filterForm.querySelectorAll('select');
-            selects.forEach(select => {
-                select.addEventListener('change', () => {
-                   const formData = new FormData(filterForm);
-                   const params = {};
-                   formData.forEach((value, key) => params[key] = value);
-                   performSearch(params);
+            // Remove previous submit listeners?
+            // Since we re-init on SPA nav, we should avoid duplicate listeners.
+            // Using a replaced node or checking a flag.
+            if (!filterForm.hasAttribute('data-ajax-init')) {
+                filterForm.setAttribute('data-ajax-init', 'true');
+                
+                filterForm.addEventListener('submit', function(e) {
+                    e.preventDefault(); // Stop reload
+                    // Gather data
+                    const formData = new FormData(filterForm);
+                    const params = {};
+                    formData.forEach((value, key) => params[key] = value);
+                    // Trigger search with params
+                    performSearch(params);
                 });
-            });
+                
+                // Also trigger on change for selects for smoother UX?
+                const selects = filterForm.querySelectorAll('select');
+                selects.forEach(select => {
+                    select.addEventListener('change', () => {
+                       const formData = new FormData(filterForm);
+                       const params = {};
+                       formData.forEach((value, key) => params[key] = value);
+                       performSearch(params);
+                    });
+                });
+            }
         }
     };
-    // --- Datepicker Initialization ---
+    // --- Date Picker Logic ---
     const startDateInput = document.getElementById('start_date');
     const endDateInput = document.getElementById('end_date');
-    if (startDateInput && endDateInput) {
+    if (startDateInput && endDateInput && typeof flatpickr !== 'undefined') {
         const endDatePicker = flatpickr(endDateInput, {
             dateFormat: "Y-m-d",
         });
@@ -310,29 +297,39 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+    
     // --- Action Menu Dropdown Logic ---
-    document.body.addEventListener('click', function (e) {
-        // Find all action menu contents that are currently active
-        const openMenus = document.querySelectorAll('.action-menu-content.active');
-        // Check if the click is on an action button
-        const actionButton = e.target.closest('.action-btn');
-        // If the click is on an action button
-        if (actionButton) {
-            e.preventDefault(); // Prevent any default link behavior
-            const menuContent = actionButton.nextElementSibling;
-            
-            // If the clicked menu is already open, close it. Otherwise, close all other menus and open this one.
-            if (menuContent.classList.contains('active')) {
-                menuContent.classList.remove('active');
+    // Ensure we don't attach double listeners
+    if (!window.adminActionLogicAtttached) {
+        document.body.addEventListener('click', function (e) {
+            // Find all action menu contents that are currently active
+            const openMenus = document.querySelectorAll('.action-menu-content.active');
+            // Check if the click is on an action button
+            const actionButton = e.target.closest('.action-btn');
+            // If the click is on an action button
+            if (actionButton) {
+                e.preventDefault(); // Prevent any default link behavior
+                const menuContent = actionButton.nextElementSibling;
+                
+                // If the clicked menu is already open, close it. Otherwise, close all other menus and open this one.
+                if (menuContent.classList.contains('active')) {
+                    menuContent.classList.remove('active');
+                } else {
+                    openMenus.forEach(menu => menu.classList.remove('active'));
+                    menuContent.classList.add('active');
+                }
             } else {
-                openMenus.forEach(menu => menu.classList.remove('active'));
-                menuContent.classList.add('active');
+                // If the click is outside an action button and its menu, close all open menus.
+                if (!e.target.closest('.action-menu-content')) {
+                    openMenus.forEach(menu => menu.classList.remove('active'));
+                }
             }
-        } else {
-            // If the click is outside an action button and its menu, close all open menus.
-            if (!e.target.closest('.action-menu-content')) {
-                openMenus.forEach(menu => menu.classList.remove('active'));
-            }
-        }
-    });
-});
+        });
+        window.adminActionLogicAtttached = true;
+    }
+};
+
+window.initAdmin = initAdmin;
+
+// Auto-init on page load
+document.addEventListener('DOMContentLoaded', window.initAdmin);

@@ -111,6 +111,7 @@ $active_page = 'admin';
 $css_files = ['admin.css', 'dashboard.css'];
 $js_files = ['admin.js', 'https://cdn.jsdelivr.net/npm/chart.js'];
 
+
 require_once __DIR__ . '/../views/partials/header.php';
 require_once __DIR__ . '/../views/partials/admin_sidebar.php';
 require_once __DIR__ . '/../views/admin.php';

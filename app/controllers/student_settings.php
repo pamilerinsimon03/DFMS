@@ -59,6 +59,20 @@ $active_page = 'settings';
 $css_files = ['dashboard.css', 'student_settings.css'];
 $js_files = ['dashboard.js', 'student_settings.js'];
 
+// SPA Request Handling
+if (isset($_SERVER['HTTP_X_SPA_REQUEST'])) {
+    ob_start();
+    require_once __DIR__ . '/../views/student_settings.php';
+    $html = ob_get_clean();
+    header('Content-Type: application/json');
+    echo json_encode([
+        'html' => $html, 
+        'title' => $page_title,
+        'css_files' => $css_files
+    ]);
+    exit();
+}
+
 require_once __DIR__ . '/../views/partials/header.php';
 require_once __DIR__ . '/../views/partials/sidebar.php';
 require_once __DIR__ . '/../views/student_settings.php';

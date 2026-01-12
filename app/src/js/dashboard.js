@@ -1,47 +1,14 @@
 // Dashboard functionality
-document.addEventListener('DOMContentLoaded', function() {
-    // Menu item click functionality
-    const menuItems = document.querySelectorAll('.menu-item');
+const initDashboard = () => {
+    // Only run if we are on the dashboard page or similar
+    // We can check for a key element to decide if we should run logic
+    // But since this script is included, we might want to run most of it.
     
-    menuItems.forEach(item => {
-        item.addEventListener('click', function () {
-            // Skip if it's already active or it's the logout item
-            if (this.classList.contains('active') || this.classList.contains('logout')) return;
-            
-            // Remove active class from current active item
-            document.querySelector('.menu-item.active').classList.remove('active');
-            document.querySelector('.menu-text.active-text').classList.remove('active-text');
-            document.querySelector('.menu-bg')?.remove();
-            
-            // Add active class to clicked item
-            this.classList.add('active');
-            this.querySelector('.menu-text').classList.add('active-text');
-            
-            // Create background element
-            const bg = document.createElement('div');
-            bg.classList.add('menu-bg');
-            this.prepend(bg);
-            
-            // Handle page navigation
-            const menuText = this.querySelector('.menu-text').textContent.trim();
-            console.log(`Navigating to: ${menuText}`);
-            
-            // Navigate to the appropriate page
-            if (menuText === 'Dashboard') {
-                window.location.href = 'dashboard.php';
-            } else if (menuText === 'My Uploads') {
-                window.location.href = 'uploads.php';
-            } //else {
-            // Other pages not yet implemented
-            //alert(`The ${menuText} page will be implemented in a future phase.`);
-        });
-    });
-
-    // File Upload Functionality
+    // --- File Upload Functionality ---
     const uploadForm = document.getElementById('upload-form');
     const fileUpload = document.getElementById('file-upload');
     const fileNameDisplay = document.getElementById('file-name-display');
-    const uploadButton = document.getElementById('upload-submit-btn'); // ID changed in HTML
+    const uploadButton = document.getElementById('upload-submit-btn');
     const uploadContainer = document.getElementById('upload-container');
     const progressContainer = document.getElementById('upload-progress-container');
     const progressBar = document.getElementById('upload-progress-bar');
@@ -49,7 +16,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Trigger form submission when the upload button is clicked
     if (uploadButton) {
-        uploadButton.addEventListener('click', () => {
+        // Remove existing listeners to avoid duplicates on re-init
+        const newBtn = uploadButton.cloneNode(true);
+        uploadButton.parentNode.replaceChild(newBtn, uploadButton);
+        
+        newBtn.addEventListener('click', () => {
              if (uploadForm.checkValidity()) {
                 const formData = new FormData(uploadForm);
                 const xhr = new XMLHttpRequest();
@@ -58,8 +29,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 progressContainer.style.display = 'block';
                 progressBar.style.width = '0%';
                 progressText.textContent = '0%';
-                uploadButton.disabled = true;
-                uploadButton.textContent = 'Uploading...';
+                newBtn.disabled = true;
+                newBtn.textContent = 'Uploading...';
 
                 xhr.open('POST', '/app/controllers/upload_file.php', true);
                 xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
@@ -80,8 +51,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Completion event
                 xhr.onload = function() {
-                    uploadButton.disabled = false;
-                    uploadButton.textContent = 'Upload files';
+                    newBtn.disabled = false;
+                    newBtn.textContent = 'Upload files';
                     
                     if (xhr.status === 200) {
                         try {
@@ -147,8 +118,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
 
                 xhr.onerror = function() {
-                    uploadButton.disabled = false;
-                    uploadButton.textContent = 'Upload files';
+                    newBtn.disabled = false;
+                    newBtn.textContent = 'Upload files';
                     window.toast.error('An error occurred during the upload.');
                 };
 
@@ -167,9 +138,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Update the file name when a file is selected
     if (fileUpload) {
-        fileUpload.addEventListener('change', () => {
-            if (fileUpload.files.length > 0) {
-                fileNameDisplay.textContent = fileUpload.files[0].name;
+        const newFileUpload = fileUpload.cloneNode(true);
+        fileUpload.parentNode.replaceChild(newFileUpload, fileUpload);
+        
+        newFileUpload.addEventListener('change', () => {
+            if (newFileUpload.files.length > 0) {
+                fileNameDisplay.textContent = newFileUpload.files[0].name;
             } else {
                 fileNameDisplay.textContent = '';
             }
@@ -178,31 +152,43 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Drag and drop functionality
     if (uploadContainer) {
-        uploadContainer.addEventListener('dragover', (event) => {
+        // Clone to remove old listeners
+        const newContainer = uploadContainer.cloneNode(true);
+        uploadContainer.parentNode.replaceChild(newContainer, uploadContainer);
+        
+        newContainer.addEventListener('dragover', (event) => {
             event.preventDefault();
-            uploadContainer.classList.add('dragover');
+            newContainer.classList.add('dragover');
         });
 
-        uploadContainer.addEventListener('dragleave', () => {
-            uploadContainer.classList.remove('dragover');
+        newContainer.addEventListener('dragleave', () => {
+            newContainer.classList.remove('dragover');
         });
 
-        uploadContainer.addEventListener('drop', (event) => {
+        newContainer.addEventListener('drop', (event) => {
             event.preventDefault();
-            uploadContainer.classList.remove('dragover');
+            newContainer.classList.remove('dragover');
             const files = event.dataTransfer.files;
             if (files.length > 0) {
-                fileUpload.files = files;
-                fileNameDisplay.textContent = files[0].name;
+                // We need to update the file input, but file inputs are read-only for security on some browsers
+                // but setting files property works in modern browsers
+                const fileInput = document.getElementById('file-upload');
+                if(fileInput) fileInput.files = files;
+                if(fileNameDisplay) fileNameDisplay.textContent = files[0].name;
             }
         });
     }
     
     // Notification icon functionality
-    // Notifications dropdown
-    // Support multiple pages and markup variations
     const notifIcons = document.querySelectorAll('.notification-icon');
     notifIcons.forEach(icon => {
+        // We can't easily clone these without losing inner structure references or bindings 
+        // if they were complex, but here it's simple.
+        // Better to just ensure we don't double bind. 
+        // Simplest way for re-init safe code is to check a data attribute.
+        if (icon.hasAttribute('data-init')) return;
+        icon.setAttribute('data-init', 'true');
+
         const dropdown = icon.querySelector('.notifications-dropdown');
         if (!dropdown) return;
 
@@ -212,12 +198,31 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    document.addEventListener('click', () => {
-        document.querySelectorAll('.notifications-dropdown').forEach(d => d.style.display = 'none');
-    });
+    // Global click to close notifications - check if listener already exists? 
+    // It's hard to check global listeners. 
+    // For SPA, we might accumulate these. 
+    // Ideally we'd remove them on cleanup, but we don't have cleanup yet.
+    // For now, let's name the function so we can remove it?
+    // Or just check if we attached it.
+    if (!window.dashboardGlobalClickAttached) {
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.notifications-dropdown').forEach(d => d.style.display = 'none');
+             // Also close action menus
+             const actionMenus = document.querySelectorAll('.action-menu'); // Re-query as they might be new
+             actionMenus.forEach(menu => {
+                 const content = menu.querySelector('.action-menu-content');
+                 if(content) content.style.display = 'none';
+             });
+        });
+        window.dashboardGlobalClickAttached = true;
+    }
 
     document.querySelectorAll('.mark-read-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
+        // Cloning to remove listeners
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+
+        newBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             try {
                 const res = await fetch('/app/controllers/notifications_mark_read.php', { method: 'POST' });
@@ -234,232 +239,246 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // File card click functionality
     const fileCards = document.querySelectorAll('.file-card');
-    
     fileCards.forEach(card => {
+        if(card.hasAttribute('data-init')) return;
+        card.setAttribute('data-init', 'true');
+        
         card.addEventListener('click', function() {
             const fileName = this.querySelector('.file-name').textContent;
             const status = this.querySelector('.file-status').classList.contains('verified') ? 'Verified' : 'Pending';
             
-            alert(`File: ${fileName}
-Status: ${status}
-
-Detailed view will be implemented in Phase 4.`);
+            // Temporary alert
+            // alert(`File: ${fileName}\nStatus: ${status}\n\nDetailed view will be implemented in Phase 4.`);
         });
     });
-    const burger = document.getElementById('mobile-menu-toggle');
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('mobile-sidebar-overlay');
 
-    function openSidebar() {
-        sidebar.classList.add('open');
-        overlay.classList.add('open');
-    }
-    function closeSidebar() {
-        sidebar.classList.remove('open');
-        overlay.classList.remove('open');
-    }
-
-    burger.addEventListener('click', function(e) {
-        e.stopPropagation();
-        if (sidebar.classList.contains('open')) {
-        closeSidebar();
-        } else {
-        openSidebar();
-        }
-    });
-
-    // If you click the overlay itself, close the sidebar
-    overlay.addEventListener('click', function() {
-        closeSidebar();
-    });
-
-    // Grab references to everything we need:
-    const mobileBreakpoint = 768;
-    const dashboardContent = document.querySelector('.dashboard-content');
-    const filesSection     = document.querySelector('.files-section');
-    const rightSidebar     = document.querySelector('.right-sidebar');
-    const docsCounter      = document.querySelector('.documents-counter');
-    const uploadSection    = document.querySelector('.upload-section');
-    const todoFiles        = document.querySelector('.todo-files');
-
-    // We will keep placeholders so that we can restore the HTML exactly on desktop:
-    const docsPlaceholder   = document.createElement('div');
-    const uploadPlaceholder = document.createElement('div');
-    const todoPlaceholder   = document.createElement('div');
-
-    // Give them non‐intrusive class names so they don't break your CSS:
-    docsPlaceholder.className   = 'placeholder-docs';
-    uploadPlaceholder.className = 'placeholder-upload';
-    todoPlaceholder.className   = 'placeholder-todo';
-
-    // Check if we are on the dashboard page and have the sidebar elements
-    if (rightSidebar && dashboardContent) {
-        // On initial load, insert placeholders where the counter/upload/todo originally live:
-        if (rightSidebar.contains(docsCounter)) {
-            docsPlaceholder.replaceWith(docsCounter);
-            rightSidebar.insertBefore(docsCounter, rightSidebar.firstChild);
-        }
-        if (rightSidebar.contains(uploadSection)) {
-            uploadPlaceholder.replaceWith(uploadSection);
-            rightSidebar.insertBefore(uploadSection, docsCounter.nextSibling);
-        }
-        if (rightSidebar.contains(todoFiles)) {
-            todoPlaceholder.replaceWith(todoFiles);
-            rightSidebar.appendChild(todoFiles);
-        }
-    }
-
-    function reorderForMobile() {
-        // Safety check: ensure required elements exist
-        if (!rightSidebar || !dashboardContent) return;
-        
-        const w = window.innerWidth;
-        if (w <= mobileBreakpoint) {
-            // ... (rest of logic unchanged, just ensured checks pass)
+    // --- Mobile Sidebar Helper Logic (Event Delegation) ---
+    // Ensure we only attach the global listener ONCE
+    if (!window.mobileSidebarLogicAttached) {
+        document.addEventListener('click', (e) => {
+            const sidebar = document.getElementById('sidebar');
+            let overlay = document.getElementById('mobile-sidebar-overlay');
             
-            // 1) If docsCounter is still inside rightSidebar, move it:
-            if (rightSidebar.contains(docsCounter)) {
-            docsPlaceholder.replaceWith(docsCounter);      // restore docsCounter here
-            dashboardContent.insertBefore(
-                docsCounter,
-                dashboardContent.querySelector('.user-info-card').nextSibling
-            );
+            // Auto-create overlay if missing (lazy init)
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'mobile-sidebar-overlay';
+                document.body.appendChild(overlay);
             }
 
-            // 2) Similarly for uploadSection:
-            if (rightSidebar.contains(uploadSection)) {
-            uploadPlaceholder.replaceWith(uploadSection);
-            const afterUserCard = dashboardContent.querySelector('.user-info-card').nextSibling;
-            // If docsCounter was just inserted, afterUserCard is docsCounter. So insert uploadSection after docsCounter:
-            dashboardContent.insertBefore(uploadSection, afterUserCard.nextSibling);
+            // 1. Toggle Button Click
+            const toggleBtn = e.target.closest('#mobile-menu-toggle');
+            if (toggleBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (sidebar) {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                }
+                return;
             }
 
-            // 3) Now move todoFiles out of rightSidebar and place it right after .files-section:
-            if (rightSidebar.contains(todoFiles)) {
-            todoPlaceholder.replaceWith(todoFiles);
-            dashboardContent.insertBefore(
-                todoFiles,
-                filesSection.nextSibling
-            );
-            }
-        } else {
-            // DESKTOP logic
-             // 1) docsCounter → back into rightSidebar, in front:
-            if (! rightSidebar.contains(docsCounter)) {
-            dashboardContent.replaceChild(docsPlaceholder, docsCounter);
-            rightSidebar.insertBefore(docsCounter, rightSidebar.firstChild);
+            // 3. Close Button Click
+            if (e.target.closest('#mobile-sidebar-close')) {
+                e.preventDefault();
+                 if (sidebar) sidebar.classList.remove('active');
+                 if (overlay) overlay.classList.remove('active');
+                 return;
             }
 
-            // 2) uploadSection → second child of rightSidebar:
-            if (! rightSidebar.contains(uploadSection)) {
-            dashboardContent.replaceChild(uploadPlaceholder, uploadSection);
-            rightSidebar.insertBefore(uploadSection, docsCounter.nextSibling);
+            // 4. Menu Item Click (Navigation)
+            if (e.target.closest('.menu-item')) {
+                // Allow default navigation (no preventDefault), just close sidebar
+                 if (sidebar) sidebar.classList.remove('active');
+                 if (overlay) overlay.classList.remove('active');
+                 // Do not return, let the event propagate to links
             }
 
-            // 3) todoFiles → last child of rightSidebar:
-            if (! rightSidebar.contains(todoFiles)) {
-            dashboardContent.replaceChild(todoPlaceholder, todoFiles);
-            rightSidebar.appendChild(todoFiles);
+            // 2. Overlay Click
+            if (e.target.closest('#mobile-sidebar-overlay')) {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+                return;
             }
-        }
+        });
+        window.mobileSidebarLogicAttached = true;
+    }
+    
+    // Ensure overlay exists on init just in case
+    if (!document.getElementById('mobile-sidebar-overlay')) {
+         const overlay = document.createElement('div');
+         overlay.id = 'mobile-sidebar-overlay';
+         document.body.appendChild(overlay);
     }
 
-    const fileUploadInput = document.getElementById('file-upload');
-
-    fileUploadInput.addEventListener('change', function() {
-        if (this.files.length > 0) {
-            fileNameDisplay.textContent = this.files[0].name;
-        } else {
-            fileNameDisplay.textContent = '';
-        }
-    });
-
-
-    // Run on load, then again on every resize:
-    reorderForMobile();
-    window.addEventListener('resize', reorderForMobile);
-
-    const searchContainer = document.getElementById('search-container');
-    const searchIconBtn = document.getElementById('search-icon-btn');
-    const searchInput = document.querySelector('.search-input');
-
-    searchIconBtn.addEventListener('click', (e) => {
-        if (window.innerWidth <= 768) {
-            e.preventDefault();
-            searchContainer.classList.toggle('active');
-            if (searchContainer.classList.contains('active')) {
-                searchInput.focus();
-            }
-        }
-    });
-
-    // --- Search Functionality (Client-Side for Dashboard) ---
-    if (searchInput) {
-        searchInput.addEventListener('input', function(e) {
-            const query = this.value.toLowerCase().trim();
-            const fileCards = document.querySelectorAll('.file-card');
-            const filesGrid = document.querySelector('.files-grid');
-            let hasVisible = false;
-
-            if (filesGrid) {
-                fileCards.forEach(card => {
-                    const name = card.querySelector('.file-name').textContent.toLowerCase();
-                    if (name.includes(query)) {
-                        card.style.display = '';
-                        hasVisible = true;
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-
-                // Handle "No files" message
-                let noFilesMsg = document.querySelector('.no-files-search');
-                if (!hasVisible) {
-                    if (!noFilesMsg) {
-                        noFilesMsg = document.createElement('div');
-                        noFilesMsg.className = 'no-files no-files-search';
-                        noFilesMsg.textContent = 'No matching files found.';
-                        filesGrid.appendChild(noFilesMsg);
-                    }
-                } else {
-                    if (noFilesMsg) noFilesMsg.remove();
+    // click outside search
+    if (!window.searchCloseAttached) {
+        document.addEventListener('click', (e) => {
+            const searchContainer = document.getElementById('search-container');
+            const searchIconBtn = document.getElementById('search-icon-btn');
+            
+            // If click is outside search container AND outside the toggle button
+            if (searchContainer && searchContainer.classList.contains('active')) {
+                if (!searchContainer.contains(e.target) && (!searchIconBtn || !searchIconBtn.contains(e.target))) {
+                    searchContainer.classList.remove('active');
                 }
             }
         });
+        window.searchCloseAttached = true;
+    }
 
-        // Prevent form submission
+    // --- Search Functionality (Client-Side for Dashboard) ---
+    const searchContainer = document.getElementById('search-container');
+    const searchIconBtn = document.getElementById('search-icon-btn');
+    const searchInput = document.querySelector('.search-input');
+    
+    if (searchIconBtn && searchContainer && searchInput) {
+        // Search container is in header (global). Check init.
+        if (!searchIconBtn.hasAttribute('data-init')) {
+            searchIconBtn.setAttribute('data-init', 'true');
+            searchIconBtn.addEventListener('click', (e) => {
+                if (window.innerWidth <= 768) {
+                    e.preventDefault();
+                    e.stopPropagation(); // Stop bubbling
+                    searchContainer.classList.toggle('active');
+                    if (searchContainer.classList.contains('active')) {
+                        setTimeout(() => searchInput.focus(), 100); // Delay focus
+                    }
+                }
+            });
+        }
+    }
+
+    if (searchInput) {
+        // Search input is in header (global).
+        if (!searchInput.hasAttribute('data-init')) {
+             searchInput.setAttribute('data-init', 'true');
+             searchInput.addEventListener('input', function(e) {
+                const query = this.value.toLowerCase().trim();
+                const fileCards = document.querySelectorAll('.file-card');
+                const filesGrid = document.querySelector('.files-grid');
+                let hasVisible = false;
+
+                if (filesGrid) {
+                    fileCards.forEach(card => {
+                        const name = card.querySelector('.file-name').textContent.toLowerCase();
+                        if (name.includes(query)) {
+                            card.style.display = '';
+                            hasVisible = true;
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+
+                    // Handle "No files" message
+                    let noFilesMsg = document.querySelector('.no-files-search');
+                    if (!hasVisible) {
+                        if (!noFilesMsg) {
+                            noFilesMsg = document.createElement('div');
+                            noFilesMsg.className = 'no-files no-files-search';
+                            noFilesMsg.textContent = 'No matching files found.';
+                            filesGrid.appendChild(noFilesMsg);
+                        }
+                    } else {
+                        if (noFilesMsg) noFilesMsg.remove();
+                    }
+                }
+            });
+        }
+
         const searchForm = document.querySelector('.search-form');
-        if (searchForm) {
+        if (searchForm && !searchForm.hasAttribute('data-init')) {
+            searchForm.setAttribute('data-init', 'true');
             searchForm.addEventListener('submit', (e) => {
                 e.preventDefault();
             });
         }
     }
 
-});
+    // Mobile Reorder Logic
+    // This logic manipulates DOM elements that ARE re-rendered (dashboard content)
+    // So we should run it every time initDashboard is called.
+    const mobileBreakpoint = 768;
+    const dashboardContent = document.querySelector('.dashboard-content');
+    const rightSidebar     = document.querySelector('.right-sidebar');
+    
+    if (rightSidebar && dashboardContent) {
+        // Definition of reorder function
+        const reorderForMobile = () => {
+             const docsCounter      = document.querySelector('.documents-counter');
+             const uploadSection    = document.querySelector('.upload-section');
+             const todoFiles        = document.querySelector('.todo-files');
+             const filesSection     = document.querySelector('.files-section');
+             
+             if (!docsCounter || !uploadSection || !todoFiles || !filesSection) return;
 
-document.addEventListener('DOMContentLoaded', () => {
-    const actionMenus = document.querySelectorAll('.action-menu');
+             // Logic to move elements...
+             // Since this is complex and depends on current DOM state which wipes on navigation,
+             // We can just run it.
+             const w = window.innerWidth;
+             if (w <= mobileBreakpoint) {
+                 // Move to main content
+                 if (rightSidebar.contains(docsCounter)) {
+                     dashboardContent.insertBefore(docsCounter, dashboardContent.querySelector('.user-info-card').nextSibling);
+                 }
+                 if (rightSidebar.contains(uploadSection)) {
+                    // insert after docsCounter
+                    dashboardContent.insertBefore(uploadSection, docsCounter.nextSibling);
+                 }
+                 if (rightSidebar.contains(todoFiles)) {
+                    dashboardContent.insertBefore(todoFiles, filesSection.nextSibling);
+                 }
+             } else {
+                 // Return to sidebar
+                 // This requires placeholders or knowing order. 
+                 // For now, simpler check:
+                 if (!rightSidebar.contains(docsCounter)) rightSidebar.prepend(docsCounter);
+                 if (!rightSidebar.contains(uploadSection)) rightSidebar.insertBefore(uploadSection, docsCounter.nextSibling);
+                 if (!rightSidebar.contains(todoFiles)) rightSidebar.appendChild(todoFiles);
+             }
+        };
 
-    actionMenus.forEach(menu => {
-        const btn = menu.querySelector('.action-btn');
-        const menuContent = menu.querySelector('.action-menu-content');
+        // Run immediately
+        reorderForMobile();
+        
+        // Add resize listener only once
+        if (!window.dashboardResizeAttached) {
+            window.addEventListener('resize', reorderForMobile);
+            window.dashboardResizeAttached = true;
+        }
+    }
 
-        btn.addEventListener('click', (e) => {
+    // --- Profile Dropdown Logic (Global) ---
+    const userProfiles = document.querySelectorAll('.user-profile');
+    userProfiles.forEach(profile => {
+        if (profile.hasAttribute('data-init')) return;
+        profile.setAttribute('data-init', 'true');
+        
+        profile.addEventListener('click', function(e) {
             e.stopPropagation();
-            // Close other menus
-            actionMenus.forEach(otherMenu => {
-                if (otherMenu !== menu) {
-                    otherMenu.querySelector('.action-menu-content').style.display = 'none';
-                }
-            });
-            menuContent.style.display = menuContent.style.display === 'block' ? 'none' : 'block';
+            // Close other dropdowns
+            document.querySelectorAll('.notifications-dropdown').forEach(d => d.style.display = 'none');
+             
+            // Toggle this one
+            const dropdown = this.querySelector('.profile-dropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('active');
+            }
         });
     });
 
-    document.addEventListener('click', () => {
-        actionMenus.forEach(menu => {
-            menu.querySelector('.action-menu-content').style.display = 'none';
+    // Close profile dropdown on global click
+    if (!window.profileCloseAttached) {
+        document.addEventListener('click', () => {
+             document.querySelectorAll('.profile-dropdown').forEach(d => d.classList.remove('active'));
         });
-    });
-});
+        window.profileCloseAttached = true;
+    }
+};
+
+// Expose globally
+window.initDashboard = initDashboard;
+
+// Auto-run on load
+document.addEventListener('DOMContentLoaded', initDashboard);

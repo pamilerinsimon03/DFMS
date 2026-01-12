@@ -45,6 +45,7 @@ $css_files = ['admin.css', 'students.css', 'datepicker.css'];
 $js_files = ['admin.js'];
 
 // --- Handle AJAX Request ---
+
 if (isset($_GET['ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')) {
     $html = '';
     

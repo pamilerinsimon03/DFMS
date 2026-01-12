@@ -83,8 +83,23 @@ $unread_count = Notification::countUnread($user_id);
 // Prepare view variables
 $page_title = 'My Uploads';
 $active_page = 'uploads';
-$css_files = ['uploads.css', 'dashboard.css'];
+$css_files = ['uploads.css'];
 $js_files = ['uploads.js', 'dashboard.js'];
+
+// SPA Request Handling
+if (isset($_SERVER['HTTP_X_SPA_REQUEST'])) {
+    ob_start();
+    require_once __DIR__ . '/../views/uploads.php';
+    $html = ob_get_clean();
+    header('Content-Type: application/json');
+    echo json_encode([
+        'html' => $html, 
+        'title' => $page_title,
+        'css_files' => $css_files,
+        'js_files' => $js_files
+    ]);
+    exit();
+}
 
 // --- AJAX Response Handling ---
 if (isset($_GET['ajax']) || (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')) {

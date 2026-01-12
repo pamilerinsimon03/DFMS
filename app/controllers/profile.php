@@ -75,6 +75,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = "Failed to update profile. Please try again.";
             }
         }
+    } elseif ($action === 'upload_photo') {
+        if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
+            $file = $_FILES['profile_photo'];
+            $allowed_types = ['image/jpeg', 'image/png', 'image/jpg'];
+            $max_size = 2 * 1024 * 1024; // 2MB
+            
+            if (!in_array($file['type'], $allowed_types)) {
+                $error = "Invalid file type. Only JPG, JPEG, and PNG are allowed.";
+            } elseif ($file['size'] > $max_size) {
+                $error = "File size too large. Maximum size is 2MB.";
+            } else {
+                // Determine extension and target path
+                $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+                $target_dir = __DIR__ . '/../src/assets/uploads/profile_pictures/';
+                
+                if (!file_exists($target_dir)) {
+                    mkdir($target_dir, 0777, true);
+                }
+                
+                // Remove old files for this user
+                foreach (['jpg', 'jpeg', 'png'] as $old_ext) {
+                    $old_file = $target_dir . "user_{$user_id}.{$old_ext}";
+                    if (file_exists($old_file)) {
+                        unlink($old_file);
+                    }
+                }
+                
+                $target_file = $target_dir . "user_{$user_id}." . $ext;
+                
+                if (move_uploaded_file($file['tmp_name'], $target_file)) {
+                    $success = "Profile photo updated successfully!";
+                } else {
+                    $error = "Failed to upload photo. Please check permissions.";
+                }
+            }
+        } else {
+            $error = "No file selected or upload failed.";
+        }
     }
 }
 
@@ -86,6 +124,20 @@ $js_files = ['profile.js', 'dashboard.js'];
 // Notifications for header dropdown
 $notifications = Notification::getForUser($user_id, 15);
 $unread_count = Notification::countUnread($user_id);
+
+// SPA Request Handling
+if (isset($_SERVER['HTTP_X_SPA_REQUEST'])) {
+    ob_start();
+    require_once __DIR__ . '/../views/profile.php';
+    $html = ob_get_clean();
+    header('Content-Type: application/json');
+    echo json_encode([
+        'html' => $html, 
+        'title' => $page_title,
+        'css_files' => $css_files
+    ]);
+    exit();
+}
 
 require_once __DIR__ . '/../views/partials/header.php';
 require_once __DIR__ . '/../views/partials/sidebar.php';

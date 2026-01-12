@@ -8,6 +8,8 @@
                     class="menu-item <?php echo $active_page === 'admin' ? 'active' : ''; ?>">
                     <div class="menu-icon">
                         <img src="/app/src/assets/images/home<?php echo $active_page === 'admin' ? '' : ' white'; ?>.svg"
+                            data-active-src="/app/src/assets/images/home.svg"
+                            data-inactive-src="/app/src/assets/images/home white.svg"
                             alt="Dashboard Icon">
                     </div>
                     <div class="menu-text <?php echo $active_page === 'admin' ? 'active-text' : ''; ?>">
@@ -17,6 +19,8 @@
                     class="menu-item <?php echo $active_page === 'verifications' ? 'active' : ''; ?>">
                     <div class="menu-icon">
                         <img src="/app/src/assets/images/verification<?php echo $active_page === 'verifications' ? ' purple' : ''; ?>.svg"
+                            data-active-src="/app/src/assets/images/verification purple.svg"
+                            data-inactive-src="/app/src/assets/images/verification.svg"
                             alt="Verifications Icon">
                     </div>
                     <div class="menu-text <?php echo $active_page === 'verifications' ? 'active-text' : ''; ?>">
@@ -26,6 +30,8 @@
                     class="menu-item <?php echo $active_page === 'students' ? 'active' : ''; ?>">
                     <div class="menu-icon">
                         <img src="/app/src/assets/images/User-Circle<?php echo $active_page === 'students' ? '-Purple' : ''; ?>.svg"
+                            data-active-src="/app/src/assets/images/User-Circle-Purple.svg"
+                            data-inactive-src="/app/src/assets/images/User-Circle.svg"
                             alt="Students Icon">
                     </div>
                     <div class="menu-text <?php echo $active_page === 'students' ? 'active-text' : ''; ?>">
@@ -35,6 +41,8 @@
                     class="menu-item <?php echo $active_page === 'add_student' ? 'active' : ''; ?>">
                     <div class="menu-icon">
                         <img src="/app/src/assets/images/User-Circle<?php echo $active_page === 'add_student' ? '-Purple' : ''; ?>.svg"
+                            data-active-src="/app/src/assets/images/User-Circle-Purple.svg"
+                            data-inactive-src="/app/src/assets/images/User-Circle.svg"
                             alt="Add Student Icon">
                     </div>
                     <div class="menu-text <?php echo $active_page === 'add_student' ? 'active-text' : ''; ?>">
@@ -58,7 +66,10 @@
                 <?php endif; ?>
                 <a href="/app/controllers/settings.php"
                     class="menu-item <?php echo $active_page === 'settings' ? 'active' : ''; ?>">
-                    <div class="menu-icon"><img src="/app/src/assets/images/settings.svg" alt="Settings Icon"></div>
+                    <div class="menu-icon"><img src="/app/src/assets/images/settings.svg" 
+                        data-active-src="/app/src/assets/images/settings.svg"
+                        data-inactive-src="/app/src/assets/images/settings.svg"
+                        alt="Settings Icon"></div>
                     <div class="menu-text <?php echo $active_page === 'settings' ? 'active-text' : ''; ?>">Settings</div>
                 </a>
 

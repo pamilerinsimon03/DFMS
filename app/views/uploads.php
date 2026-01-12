@@ -1,4 +1,4 @@
-<div class="header">
+<div class="header uploads-header-custom">
     <button id="mobile-menu-toggle" class="mobile-menu-btn" aria-label="Open Menu">
         <span class="mobile-menu-icon"><img src="/app/src/assets/images/Menu.svg" alt="Menu Icon"></span>
     </button>
@@ -43,12 +43,26 @@
             </div>
         </div>
         <div class="user-profile">
-            <img src="/app/src/assets/images/Small Avatar.svg" alt="User Profile" class="avatar">
+            <img src="<?php echo User::getProfilePicture($user['id']); ?>" alt="User Profile" class="avatar" style="object-fit:cover;">
             <div class="user-info">
                 <div class="user-name"><?php echo htmlspecialchars($user['full_name']); ?></div>
                 <div class="user-id">Matric No: <?php echo htmlspecialchars($user['matric_number']); ?></div>
             </div>
             <div class="dropdown-icon"><img src="/app/src/assets/images/arrow-down.svg" alt="Dropdown Icon"></div>
+            
+            <!-- Dropdown Menu -->
+            <div class="profile-dropdown">
+                <a href="<?php echo User::isAdmin($_SESSION['user_id'] ?? 0) ? '/app/controllers/student_profile.php' : '/app/controllers/profile.php'; ?>" class="dropdown-item">
+                    <img src="/app/src/assets/images/User-Circle.svg" alt="Profile"> Profile
+                </a>
+                <a href="<?php echo User::isAdmin($_SESSION['user_id'] ?? 0) ? '/app/controllers/settings.php' : '/app/controllers/student_settings.php'; ?>" class="dropdown-item">
+                    <img src="/app/src/assets/images/settings.svg" alt="Settings"> Settings
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="/app/controllers/logout.php" class="dropdown-item logout">
+                    <img src="/app/src/assets/images/log-out.svg" alt="Logout"> Log out
+                </a>
+            </div>
         </div>
     </div>
 </div>
@@ -56,14 +70,15 @@
 <div class="uploads-content">
     <div class="uploads-tabs">
         <div class="tabs-left">
-            <a href="/app/controllers/uploads.php?tab=total"
+            <a href="/app/controllers/uploads.php?tab=total" data-no-spa="true"
                 class="tab-item <?php echo $tab === 'total' ? 'active' : ''; ?>">Total Uploads</a>
-            <a href="/app/controllers/uploads.php?tab=Pending%20Approval"
+            <a href="/app/controllers/uploads.php?tab=Pending%20Approval" data-no-spa="true"
                 class="tab-item <?php echo $tab === 'pending approval' ? 'active' : ''; ?>">Pending Verification</a>
-            <a href="/app/controllers/uploads.php?tab=Approved"
+            <a href="/app/controllers/uploads.php?tab=Approved" data-no-spa="true"
                 class="tab-item <?php echo $tab === 'approved' ? 'active' : ''; ?>">Verified</a>
-            <a href="/app/controllers/uploads.php?tab=Rejected"
+            <a href="/app/controllers/uploads.php?tab=Rejected" data-no-spa="true"
                 class="tab-item <?php echo $tab === 'rejected' ? 'active' : ''; ?>">Rejected</a>
+            <div class="tabs-indicator"></div>
         </div>
     </div>
     <div class="uploads-table-wrapper">

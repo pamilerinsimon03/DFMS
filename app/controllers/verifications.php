@@ -75,6 +75,7 @@ $css_files = ['admin.css', 'uploads.css'];
 $js_files = ['admin_verifications.js', 'admin.js'];
 
 // --- Render View or JSON Response ---
+
 if (isset($_GET['ajax']) || (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')) {
     ob_start();
     if (empty($documents)): ?>

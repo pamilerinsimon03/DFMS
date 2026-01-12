@@ -43,12 +43,29 @@
             </div>
         </div>
         <div class="user-profile">
-            <img src="/app/src/assets/images/Small Avatar.svg" alt="User Profile" class="avatar">
+            <img src="<?php echo User::getProfilePicture($user['id']); ?>" alt="User Profile" class="avatar" style="object-fit:cover;">
             <div class="user-info">
                 <div class="user-name"><?php echo htmlspecialchars($user['full_name']); ?></div>
                 <div class="user-id">Matric No: <?php echo htmlspecialchars($user['matric_number']); ?></div>
             </div>
             <div class="dropdown-icon"><img src="/app/src/assets/images/arrow-down.svg" alt="Dropdown Icon"></div>
+            
+            <!-- Dropdown Menu -->
+            <div class="profile-dropdown">
+                <a href="<?php echo User::isAdmin($_SESSION['user_id'] ?? 0) ? '/app/controllers/student_profile.php' : '/app/controllers/profile.php'; ?>" class="dropdown-item">
+                    <img src="/app/src/assets/images/User-Circle.svg" alt="Profile">
+                    Profile
+                </a>
+                <a href="<?php echo User::isAdmin($_SESSION['user_id'] ?? 0) ? '/app/controllers/settings.php' : '/app/controllers/student_settings.php'; ?>" class="dropdown-item">
+                    <img src="/app/src/assets/images/settings.svg" alt="Settings">
+                    Settings
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="/app/controllers/logout.php" class="dropdown-item logout">
+                    <img src="/app/src/assets/images/log-out.svg" alt="Logout">
+                    Log out
+                </a>
+            </div>
         </div>
     </div>
 </div>
@@ -56,7 +73,7 @@
 <div class="main-body-content">
     <div class="dashboard-content">
         <div class="user-info-card">
-            <img src="/app/src/assets/images/Big Avatar.svg" alt="User Photo" class="user-photo">
+            <img src="<?php echo User::getProfilePicture($user['id']); ?>" alt="User Photo" class="user-photo" style="object-fit:cover;">
             <div class="user-details">
                 <div class="user-detail-row">
                     <div class="detail-item">

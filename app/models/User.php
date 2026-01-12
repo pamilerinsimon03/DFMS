@@ -366,4 +366,26 @@ class User {
         }
         return $emails;
     }
+
+    /**
+     * Get user's profile picture URL
+     * @param int $user_id
+     * @return string Path to image
+     */
+    public static function getProfilePicture($user_id) {
+        // defined upload directory
+        $target_dir = __DIR__ . '/../src/assets/uploads/profile_pictures/';
+        $web_path = '/app/src/assets/uploads/profile_pictures/';
+        
+        // Check for existing files (jpg, png, jpeg)
+        $extensions = ['jpg', 'jpeg', 'png'];
+        foreach ($extensions as $ext) {
+            if (file_exists($target_dir . "user_{$user_id}.{$ext}")) {
+                return $web_path . "user_{$user_id}.{$ext}?v=" . time(); // Add version to bust cache
+            }
+        }
+        
+        // Default
+        return '/app/src/assets/images/Small Avatar.svg';
+    }
 }

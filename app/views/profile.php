@@ -8,41 +8,53 @@
         <h1>My Profile</h1>
     </div>
     <div class="header-right">
-        <div class="search-container">
-            <div class="notification-icon" id="notif-bell">
-                <img src="/app/src/assets/images/notification-bing.svg" alt="Notification Icon">
-                <?php if (($unread_count ?? 0) > 0): ?>
-                <div class="notification-dot"></div>
-                <?php endif; ?>
-                <div class="notifications-dropdown" id="notif-dropdown" style="display:none;">
-                    <div class="notif-header">
-                        <span>Notifications</span>
-                        <button id="mark-all-read" class="mark-read-btn">Mark all as read</button>
-                    </div>
-                    <?php if (empty($notifications)): ?>
-                    <div class="notif-empty">No notifications yet.</div>
-                    <?php else: ?>
-                    <ul class="notif-list">
-                        <?php foreach ($notifications as $n): ?>
-                        <li class="notif-item <?php echo $n['is_read'] ? '' : 'unread'; ?>">
-                            <div class="notif-title"><?php echo htmlspecialchars($n['title']); ?></div>
-                            <div class="notif-message"><?php echo htmlspecialchars($n['message']); ?></div>
-                            <div class="notif-time"><?php echo date('M d, Y H:i', strtotime($n['created_at'])); ?></div>
-                        </li>
-                        <?php endforeach; ?>
-                    </ul>
-                    <?php endif; ?>
+        <div class="notification-icon" id="notif-bell">
+            <img src="/app/src/assets/images/notification-bing.svg" alt="Notification Icon">
+            <?php if (($unread_count ?? 0) > 0): ?>
+            <div class="notification-dot"></div>
+            <?php endif; ?>
+            <div class="notifications-dropdown" id="notif-dropdown" style="display:none;">
+                <div class="notif-header">
+                    <span>Notifications</span>
+                    <button id="mark-all-read" class="mark-read-btn">Mark all as read</button>
                 </div>
+                <?php if (empty($notifications)): ?>
+                <div class="notif-empty">No notifications yet.</div>
+                <?php else: ?>
+                <ul class="notif-list">
+                    <?php foreach ($notifications as $n): ?>
+                    <li class="notif-item <?php echo $n['is_read'] ? '' : 'unread'; ?>">
+                        <div class="notif-title"><?php echo htmlspecialchars($n['title']); ?></div>
+                        <div class="notif-message"><?php echo htmlspecialchars($n['message']); ?></div>
+                        <div class="notif-time"><?php echo date('M d, Y H:i', strtotime($n['created_at'])); ?></div>
+                    </li>
+                    <?php endforeach; ?>
+                </ul>
+                <?php endif; ?>
             </div>
         </div>
         <div class="user-profile">
-            <img src="/app/src/assets/images/Small Avatar.svg" alt="User Profile" class="avatar">
+            <img src="<?php echo User::getProfilePicture($user['id']); ?>" alt="User Profile" class="avatar" style="object-fit:cover;">
             <div class="user-info">
                 <div class="user-name"><?php echo htmlspecialchars($user['full_name']); ?></div>
                 <div class="user-id">Matric No: <?php echo htmlspecialchars($user['matric_number']); ?></div>
             </div>
             <div class="dropdown-icon">
                 <img src="/app/src/assets/images/arrow-down.svg" alt="Dropdown Icon">
+            </div>
+            
+            <!-- Dropdown Menu -->
+            <div class="profile-dropdown" id="profile-dropdown-menu">
+                <a href="<?php echo User::isAdmin($_SESSION['user_id'] ?? 0) ? '/app/controllers/student_profile.php' : '/app/controllers/profile.php'; ?>" class="dropdown-item">
+                    <img src="/app/src/assets/images/User-Circle.svg" alt="Profile"> Profile
+                </a>
+                <a href="<?php echo User::isAdmin($_SESSION['user_id'] ?? 0) ? '/app/controllers/settings.php' : '/app/controllers/student_settings.php'; ?>" class="dropdown-item">
+                    <img src="/app/src/assets/images/settings.svg" alt="Settings"> Settings
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="/app/controllers/logout.php" class="dropdown-item logout">
+                    <img src="/app/src/assets/images/log-out.svg" alt="Logout"> Log out
+                </a>
             </div>
         </div>
     </div>
@@ -206,8 +218,41 @@
     </div>
 </div>
 
-        <!-- Account Information Section -->
-        <div class="profile-card">
+<!-- Profile Sidebar Section -->
+<div class="profile-sidebar">
+<!-- Profile Photo Section -->
+<div class="profile-card">
+    <div class="card-header">
+        <div class="card-icon">
+            <img src="/app/src/assets/images/User-Circle-Purple.svg" alt="Photo Icon">
+        </div>
+        <div class="card-title">
+            <h3>Profile Photo</h3>
+            <p>Update your profile picture</p>
+        </div>
+    </div>
+    <div class="card-body" style="text-align: center;">
+        <div class="profile-photo-preview" style="margin-bottom: 20px;">
+            <img src="<?php echo User::getProfilePicture($user['id']); ?>" alt="Current Profile Photo" 
+                 style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 4px solid #f3f4f6;">
+        </div>
+        
+        <form action="" method="POST" enctype="multipart/form-data" id="photo-upload-form">
+            <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+            <input type="hidden" name="action" value="upload_photo">
+            
+            <input type="file" name="profile_photo" id="profile_photo_input" accept="image/*" style="display: none;" onchange="document.getElementById('photo-upload-form').submit();">
+            
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('profile_photo_input').click();">
+                Change Photo
+            </button>
+            <p style="margin-top: 10px; font-size: 0.8rem; color: #666;">Max size: 2MB. Formats: JPG, PNG.</p>
+        </form>
+    </div>
+</div>
+
+<!-- Account Information Section -->
+<div class="profile-card">
             <div class="card-header">
                 <div class="card-icon">
                     <img src="/app/src/assets/images/Document.svg" alt="Account Icon">
@@ -265,7 +310,68 @@
             </div>
         </div>
     </div>
+</div> <!-- End Profile Sidebar -->
+    </div>
         </div>
     </div>
 </div>
+
+<script>
+    // Force Binding for Notification Dropdown on Profile Page
+    document.addEventListener('DOMContentLoaded', function() {
+        const notifBell = document.getElementById('notif-bell');
+        const notifDropdown = document.getElementById('notif-dropdown');
+        
+        if (notifBell && notifDropdown) {
+            // Remove any existing listeners by cloning (optional, but cleaner)
+            const newBell = notifBell.cloneNode(true);
+            notifBell.parentNode.replaceChild(newBell, notifBell);
+            
+            // Re-find the dropdown inside the new bell or via ID
+            const newDropdown = document.getElementById('notif-dropdown');
+            
+            newBell.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const isVisible = newDropdown.style.display === 'block';
+                newDropdown.style.display = isVisible ? 'none' : 'block';
+            });
+            
+            // Close on outside click
+            document.addEventListener('click', function(e) {
+                if (!newBell.contains(e.target)) {
+                    newDropdown.style.display = 'none';
+                }
+            });
+        }
+        
+        // Force Binding for Profile Dropdown as well
+        const userProfile = document.querySelector('.user-profile');
+        const profileDropdown = document.getElementById('profile-dropdown-menu'); // targeted by ID
+        
+        if (userProfile && profileDropdown) {
+             const newProfile = userProfile.cloneNode(true);
+             userProfile.parentNode.replaceChild(newProfile, userProfile);
+             
+             // We need to re-find the dropdown inside the cloned element because it's a child
+             const reFoundDropdown = newProfile.querySelector('.profile-dropdown');
+             
+             newProfile.addEventListener('click', function(e) {
+                 e.stopPropagation();
+                 // Close notifications if open
+                 const notifDD = document.getElementById('notif-dropdown');
+                 if(notifDD) notifDD.style.display = 'none';
+                 
+                 reFoundDropdown.classList.toggle('active');
+             });
+             
+             document.addEventListener('click', function(e) {
+                if (!newProfile.contains(e.target)) {
+                    reFoundDropdown.classList.remove('active');
+                }
+             });
+        }
+    });
+</script>
 

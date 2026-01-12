@@ -9,9 +9,20 @@
 }
 
 /* Prevent horizontal overflow */
-.uploads-content, .uploads-table-wrapper, .uploads-table, .uploads-tabs, .tabs-left {
+/* Prevent horizontal overflow on main container but allow on specific wrappers */
+.uploads-content {
     max-width: 100%;
     overflow-x: hidden;
+}
+
+.uploads-table-wrapper, .uploads-tabs, .tabs-left {
+    max-width: 100%;
+    overflow-x: auto; /* Allow scrolling */
+    -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+    scrollbar-width: none; /* Hide scrollbar Firefox */
+}
+.uploads-table-wrapper::-webkit-scrollbar, .uploads-tabs::-webkit-scrollbar, .tabs-left::-webkit-scrollbar {
+    display: none; /* Hide scrollbar Webkit */
 }
 
 /* Tabs navigation */
@@ -27,6 +38,7 @@
     display: flex;
     align-items: center;
     gap: 29px;
+    position: relative; /* Context for indicator */
 }
 
 .tab-item {
@@ -35,12 +47,25 @@
     font-size: 16px;
     font-weight: 400;
     cursor: pointer;
+    transition: color 0.3s ease;
+    border-bottom: none; /* Removed static border */
+    position: relative;
+    text-decoration: none; /* Ensure no underline from link */
 }
 
 .tab-item.active {
-    border-bottom: 2px solid #FAA62C;
     color: #01017A;
     font-weight: 700;
+}
+
+.tabs-indicator {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background-color: #FAA62C;
+    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); /* Smooth spring-like effect */
+    border-radius: 3px 3px 0 0;
 }
 
 /* Date filter */
@@ -250,93 +275,253 @@
     .tabs-left { gap: 16px; white-space: nowrap; }
     .tab-item { padding: 8px 4px; font-size: 14px; }
 
-    /* Transform table into cards */
-    .uploads-content { padding: 8px; }
-    .uploads-table-wrapper { overflow-x: hidden; width: 100%; }
-    .uploads-table { border-spacing: 0; width: 100%; max-width: 100%; table-layout: fixed; }
-    .uploads-table thead { display: none; }
-    .uploads-table tbody { display: block; width: 100%; max-width: 100%; }
-    .uploads-table tbody tr { 
-        display: block; 
-        background: #FFFFFF; 
-        border: 1px solid #EAEAEA; 
-        border-radius: 12px; 
-        padding: 8px 12px; 
-        margin: 0 0 12px 10px; 
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        width: 100%;
+    /* Scrollable Table for Mobile */
+    .uploads-content { padding: 16px; }
+    /* -------------------------------- */
+    /* Table / Card Layout Fixes        */
+    /* -------------------------------- */
+    .uploads-table-wrapper {
+        width: 100% !important;
+        overflow-x: hidden !important; /* No horizontal scroll for wrapper in card mode */
+        padding: 0 4px; /* Slight buffer */
         box-sizing: border-box;
-        max-width: 100%;
-        overflow: hidden;
-        max-width: 92vw; /* keep card comfortably inside viewport */
     }
-    .uploads-table tbody td { 
-        display: flex;
-        justify-content: flex-start;
-        align-items: center; 
-        gap: 6px;
-        padding: 8px 6px; 
-        border-bottom: 1px solid #F3F3F3;
-        font-size: 14px;
-        width: 100%;
-        max-width: 100%;
-        box-sizing: border-box;
-        overflow: hidden;
-    }
-    .uploads-table tbody td .cell-value { flex: 1; min-width: 0; text-align: left; overflow: hidden; }
-    .uploads-table tbody td .truncate { max-width: calc(70vw - 120px); }
-    .uploads-table tbody td:last-child { border-bottom: none; }
 
-    /* Labels for each cell */
-    .uploads-table tbody td:before {
+    .uploads-table {
+        display: block !important;
+        width: 100% !important;
+        min-width: 0 !important; /* Reset strict min-width */
+    }
+
+    .uploads-table thead {
+        display: none !important; /* Hide headers */
+    }
+
+    .uploads-table tbody {
+        display: block !important;
+        width: 100% !important;
+    }
+
+    /* Card Style Row */
+    .uploads-table tbody tr {
+        display: flex !important;
+        flex-direction: column !important;
+        background: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        margin-bottom: 16px !important;
+        padding: 16px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        width: 100% !important; /* Full width of container */
+        box-sizing: border-box !important; /* Include padding in width */
+    }
+
+    /* Card Items */
+    .uploads-table tbody td {
+        display: flex !important;
+        justify-content: space-between;
+        align-items: center; /* Center vertically specifically for action buttons */
+        padding: 8px 0 !important;
+        border-bottom: 1px solid #f5f5f5;
+        font-size: 14px;
+        text-align: right;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .uploads-table tbody td:last-child {
+        border-bottom: none;
+        justify-content: center; /* Center action buttons */
+        padding-top: 16px !important;
+    }
+
+    /* Labels for Card Items */
+    .uploads-table tbody td::before {
         content: attr(data-label);
         font-weight: 600;
-        color: #555;
-        margin-right: 8px;
-        flex: 0 0 90px;
+        color: #666;
+        text-align: left;
+        margin-right: auto; /* Push label to left */
+        flex-shrink: 0; /* Don't shrink label */
+    }
+    
+    /* Document Link Styling in Card & Truncation */
+    .uploads-table td:nth-child(2) {
+        font-weight: 500;
+        color: #333;
     }
 
-    /* Fallback labels using column order if data-label not present */
-    .uploads-table tbody tr td:nth-child(1):before { content: 'SN'; }
-    .uploads-table tbody tr td:nth-child(2):before { content: 'Name'; }
-    .uploads-table tbody tr td:nth-child(3):before { content: 'Document'; }
-    .uploads-table tbody tr td:nth-child(4):before { content: 'Date'; }
-    .uploads-table tbody tr td:nth-child(5):before { content: 'Status'; }
-    .uploads-table tbody tr td:nth-child(6):before { content: 'Action'; }
+    /* Strict truncation for Document Name */
+    .uploads-table tbody td.td-document .cell-value {
+        max-width: 150px !important; /* Force truncation width */
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        display: inline-block !important; /* Ensure block context */
+        vertical-align: middle !important;
+    }
 
-    /* Status layout */
-    .td-status .status-wrapper { justify-content: flex-start; max-width: calc(100vw - 130px); overflow: hidden; }
+    .cell-value {
+        display: inline-block;
+    }
 
-    /* Buttons full width on mobile cards */
+    /* Restore button sizing for table view */
     .td-action button, .btn-danger {
-        width: 60%;
-        max-width: 240px;
-        height: 32px;
-        padding: 6px 10px;
-        font-size: 13px;
-        margin: 6px 0 0 0;
-        display: inline-flex;
-        justify-content: center;
-        align-items: center;
-        box-sizing: border-box;
-    }
-
-    /* Reupload label needs different sizing to avoid squeeze */
-    .td-action .btn-danger {
         width: auto;
-        max-width: 100%;
-        height: auto;
-        padding: 8px 12px;
-        font-size: 13px;
-        white-space: nowrap;
-        border-radius: 6px;
+        max-width: none;
+        height: 36px;
+        margin: 0;
+        display: inline-flex;
     }
-
-    /* Ensure no element can extend beyond viewport */
+    
+    /* Ensure no element can extend beyond viewport, EXCEPT scrolling tabs and table */
     .uploads-content *, .uploads-table *, .uploads-table-wrapper * {
         max-width: 100%;
         box-sizing: border-box;
-        word-break: break-word;
+    }
+    
+    /* Exceptions for scrolling */
+    .tabs-left, .tabs-left * { max-width: none !important; }
+    .uploads-table, .uploads-table * { max-width: none !important; }
+
+    /* Flexbox Fix: Allow main content to shrink below its children's size */
+    .main-content {
+        min-width: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important; /* Changed from 100vw to 100% to account for scrollbar */
+        overflow-x: hidden !important;
+        display: block !important; 
+        box-sizing: border-box !important;
+    }
+}
+
+/* Mobile specific layout fixes */
+/* Mobile Reimplementation for Uploads Page */
+/* Mobile Reimplementation for Uploads Page */
+@media (max-width: 768px) {
+    /* -------------------------------- */
+    /* Header Layout Fixes              */
+    /* -------------------------------- */
+    .header.uploads-header-custom {
+        padding: 10px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Hide welcome message on mobile to save space */
+    .header.uploads-header-custom .welcome {
+        display: none;
+    }
+
+    /* Container for Search, Notification, Profile */
+    .header.uploads-header-custom .header-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: auto;
+        margin-left: auto;
+        flex-shrink: 0;
+    }
+
+    /* Search Container - Keep it in flow */
+    .header.uploads-header-custom .search-container {
+        position: static;
+        width: auto;
+        display: flex;
+        align-items: center;
+    }
+    
+    /* Ensure Icon Buttons are visible and sized correctly */
+    .header.uploads-header-custom .search-icon-btn,
+    .header.uploads-header-custom .notification-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        padding: 0;
+    }
+
+    /* Fix Search Box Width - Override global 250px */
+    .header.uploads-header-custom .search-box {
+        width: 40px;
+        padding: 5px;
+        background: transparent;
+        border: none;
+        transition: width 0.3s ease;
+    }
+
+    /* Maintain expansion logic */
+    .header.uploads-header-custom .search-container.active .search-box {
+         width: calc(100% - 32px) !important;
+         background-color: #F5F5F5;
+         border: 1px solid #E0E0E0;
+    }
+
+    /* Force Profile Visibility */
+    .header.uploads-header-custom .user-profile {
+        display: flex !important;
+        align-items: center;
+        padding: 0;
+        margin: 0;
+        width: auto;
+    }
+    
+    .header.uploads-header-custom .user-profile .avatar {
+        display: block;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    /* Hide text details to compact the header */
+    .header.uploads-header-custom .user-profile .user-info,
+    .header.uploads-header-custom .user-profile .dropdown-icon {
+        display: none !important;
+    }
+    
+    /* Ensure visible visibility for right header elements */
+    .header.uploads-header-custom .header-right .search-container,
+    .header.uploads-header-custom .header-right .notification-icon,
+    .header.uploads-header-custom .header-right .user-profile {
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    /* -------------------------------- */
+    /* Tabs Layout Fixes                */
+    /* -------------------------------- */
+    .uploads-tabs {
+        display: block !important;
+        width: 100% !important;
+        overflow-x: auto !important;
+        padding-bottom: 5px; 
+        margin-bottom: 16px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; 
+    }
+    
+    /* Ensure items flow horizontally */
+    .tabs-left {
+        display: flex !important;
+        flex-direction: row !important;
+        width: max-content !important;
+        max-width: none !important; /* Start with none, override below if needed but max-content usually enough */
+        gap: 20px;
+        padding: 0 4px;
+        border-bottom: none; 
+    }
+
+    .tab-item {
+        flex: 0 0 auto !important;
+        white-space: nowrap !important;
+        padding: 8px 4px;
+        font-size: 14px;
+        display: inline-block;
     }
 }
 
