@@ -519,6 +519,6 @@ END //
 DELIMITER ;
 
 CALL UpgradeDocumentsTable();
-DROP PROCEDURE UpgradeDocumentsTable();
+DROP PROCEDURE UpgradeDocumentsTable;
 
 COMMIT;

@@ -20,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $document_name = SecurityUtils::validateInput($_POST['document_name'] ?? '', 'string', 100);
     $user_id = $_SESSION['user_id'];
     $file = $_FILES['file'];
+    $debug_messages = [];
     
     if (!$document_name) {
         $_SESSION['upload_message'] = 'Invalid document name.';
@@ -30,6 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     $filePath = $file['tmp_name'];
     define('MIN_OCR_CONFIDENCE', 60);
+    define('MIN_BLURRINESS', 80);
     function sendUploadResponse($success, $message, $debug_msg = [], $userId = null, $data = []) {
         $isAjax = false;
         if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {

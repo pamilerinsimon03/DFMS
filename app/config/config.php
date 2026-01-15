@@ -1,5 +1,6 @@
 <?php
 if (php_sapi_name() !== 'cli') {
+    date_default_timezone_set('Africa/Lagos');
     session_set_cookie_params([
         'lifetime' => 3600, // 1 hour
         'path' => '/',

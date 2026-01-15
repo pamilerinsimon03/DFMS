@@ -8,30 +8,46 @@ const initDashboard = () => {
     const progressBar = document.getElementById('upload-progress-bar');
     const progressText = document.getElementById('upload-progress-text');
 
+    // --- Upload Functionality (Direct Binding) ---
+    // Using direct property assignments ensures handlers are always attached 
+    // to the current DOM elements, avoiding duplication or detachment issues.
+
+    if (fileUpload) {
+        fileUpload.onchange = function() {
+            if (this.files && this.files.length > 0) {
+                if (fileNameDisplay) fileNameDisplay.textContent = this.files[0].name;
+            } else {
+                if (fileNameDisplay) fileNameDisplay.textContent = '';
+            }
+        };
+    }
+
     if (uploadButton) {
-        const newBtn = uploadButton.cloneNode(true);
-        uploadButton.parentNode.replaceChild(newBtn, uploadButton);
-        
-        newBtn.addEventListener('click', () => {
-             if (uploadForm.checkValidity()) {
+        uploadButton.onclick = function(e) {
+            e.preventDefault();
+            
+            if (uploadForm && uploadForm.checkValidity()) {
                 const formData = new FormData(uploadForm);
                 const xhr = new XMLHttpRequest();
 
-                progressContainer.style.display = 'block';
-                progressBar.style.width = '0%';
-                progressText.textContent = '0%';
-                newBtn.disabled = true;
-                newBtn.textContent = 'Uploading...';
+                if (progressContainer) {
+                    progressContainer.style.display = 'block';
+                    if (progressBar) { progressBar.style.width = '0%'; progressBar.style.backgroundColor = '#4caf50'; }
+                    if (progressText) progressText.textContent = '0%';
+                }
+                
+                uploadButton.disabled = true;
+                uploadButton.textContent = 'Uploading...';
 
                 xhr.open('POST', '/app/controllers/upload_file.php', true);
                 xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 
-                xhr.upload.onprogress = function(e) {
-                    if (e.lengthComputable) {
-                        const percentComplete = Math.round((e.loaded / e.total) * 100);
+                xhr.upload.onprogress = function(evt) {
+                    if (evt.lengthComputable && progressBar && progressText) {
+                        const percentComplete = Math.round((evt.loaded / evt.total) * 100);
                         progressBar.style.width = percentComplete + '%';
                         if (percentComplete === 100) {
-                             progressText.textContent = 'Processing & Verifying Quality...';
+                             progressText.textContent = 'Processing...';
                              progressBar.style.backgroundColor = '#2196F3';
                         } else {
                             progressText.textContent = percentComplete + '%';
@@ -40,18 +56,18 @@ const initDashboard = () => {
                 };
 
                 xhr.onload = function() {
-                    newBtn.disabled = false;
-                    newBtn.textContent = 'Upload files';
+                    uploadButton.disabled = false;
+                    uploadButton.textContent = 'Upload files';
                     
                     if (xhr.status === 200) {
                         try {
                             const response = JSON.parse(xhr.responseText);
                             if (response.success) {
-                                window.toast.success(response.message);
+                                if (window.toast) window.toast.success(response.message);
                                 
                                 uploadForm.reset();
-                                fileNameDisplay.textContent = '';
-                                progressContainer.style.display = 'none';
+                                if (fileNameDisplay) fileNameDisplay.textContent = '';
+                                if (progressContainer) progressContainer.style.display = 'none';
 
                                 const grid = document.querySelector('.files-grid');
                                 const noFiles = document.querySelector('.no-files');
@@ -61,7 +77,6 @@ const initDashboard = () => {
                                 
                                 const newCard = document.createElement('div');
                                 newCard.className = 'file-card';
-                                
                                 const docName = response.data && response.data.document_name ? response.data.document_name : 'New Document';
                                 
                                 newCard.innerHTML = `
@@ -75,78 +90,64 @@ const initDashboard = () => {
                                     </div>
                                 `;
                                 
-                                newCard.addEventListener('click', function() {
-                                    alert(`File: ${newCard.querySelector('.file-name').textContent}\nStatus: Pending\n\nDetailed view will be implemented in Phase 4.`);
-                                });
+                                newCard.onclick = function() {
+                                    alert(`File: ${docName}\nStatus: Pending\n\nDetailed view will be implemented in Phase 4.`);
+                                };
 
                                 if (grid) grid.insertBefore(newCard, grid.firstChild);
-                                
-                                if (counter) {
-                                    counter.textContent = parseInt(counter.textContent) + 1;
-                                }
+                                if (counter) counter.textContent = parseInt(counter.textContent) + 1;
 
                             } else {
-                                window.toast.error(response.message);
-                                progressBar.style.backgroundColor = '#f44336';
-                                progressText.textContent = 'Failed';
+                                if (window.toast) window.toast.error(response.message);
+                                if (progressBar) progressBar.style.backgroundColor = '#f44336';
+                                if (progressText) progressText.textContent = 'Failed';
                             }
                         } catch (e) {
                             console.error("Invalid JSON response", xhr.responseText);
-                            window.toast.error("Upload failed: Server error.");
+                            if (window.toast) window.toast.error("Upload failed: Server error.");
                         }
                     } else {
-                        window.toast.error('Upload failed with status ' + xhr.status);
+                        if (window.toast) window.toast.error('Upload failed with status ' + xhr.status);
                     }
                 };
 
                 xhr.onerror = function() {
-                    newBtn.disabled = false;
-                    newBtn.textContent = 'Upload files';
-                    window.toast.error('An error occurred during the upload.');
+                    uploadButton.disabled = false;
+                    uploadButton.textContent = 'Upload files';
+                    if (window.toast) window.toast.error('An error occurred during the upload.');
                 };
 
                 xhr.send(formData);
 
+            } else if (uploadForm) {
+                 uploadForm.reportValidity();
             }
-        });
-    }
-
-    if (fileUpload) {
-        const newFileUpload = fileUpload.cloneNode(true);
-        fileUpload.parentNode.replaceChild(newFileUpload, fileUpload);
-        
-        newFileUpload.addEventListener('change', () => {
-            if (newFileUpload.files.length > 0) {
-                fileNameDisplay.textContent = newFileUpload.files[0].name;
-            } else {
-                fileNameDisplay.textContent = '';
-            }
-        });
+        };
     }
 
     if (uploadContainer) {
-        const newContainer = uploadContainer.cloneNode(true);
-        uploadContainer.parentNode.replaceChild(newContainer, uploadContainer);
-        
-        newContainer.addEventListener('dragover', (event) => {
-            event.preventDefault();
-            newContainer.classList.add('dragover');
-        });
+        uploadContainer.ondragover = function(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        };
 
-        newContainer.addEventListener('dragleave', () => {
-            newContainer.classList.remove('dragover');
-        });
-
-        newContainer.addEventListener('drop', (event) => {
-            event.preventDefault();
-            newContainer.classList.remove('dragover');
-            const files = event.dataTransfer.files;
-            if (files.length > 0) {
-                const fileInput = document.getElementById('file-upload');
-                if(fileInput) fileInput.files = files;
-                if(fileNameDisplay) fileNameDisplay.textContent = files[0].name;
+        uploadContainer.ondragleave = function(e) {
+            if (!this.contains(e.relatedTarget)) {
+                this.classList.remove('dragover');
             }
-        });
+        };
+
+        uploadContainer.ondrop = function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                if (fileUpload) {
+                    fileUpload.files = e.dataTransfer.files;
+                    if (fileNameDisplay) fileNameDisplay.textContent = e.dataTransfer.files[0].name;
+                }
+            }
+        };
     }
     
     const notifIcons = document.querySelectorAll('.notification-icon');
