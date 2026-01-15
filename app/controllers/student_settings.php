@@ -12,19 +12,15 @@ $user = User::getById($user_id);
 $error = '';
 $success = '';
 
-// Handle password change
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'change_password') {
-    // Validate CSRF token
     requireCSRFToken();
     
-    // Include security utilities
     require_once __DIR__ . '/../utils/SecurityUtils.php';
     
     $current_password = $_POST['current_password'] ?? '';
     $new_password = $_POST['new_password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
     
-    // Validate password strength
     if (strlen($new_password) < 8) {
         $error = "New password must be at least 8 characters long.";
     }
@@ -40,13 +36,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     } else {
         $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
         if (User::updatePassword($user_id, $hashed_password)) {
-            // Log password change
             SecurityUtils::logSecurityEvent('password_changed', [
                 'user_id' => $user_id,
                 'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown'
             ]);
             $success = "Password changed successfully.";
-            // Refresh user data
             $user = User::getById($user_id);
         } else {
             $error = "Failed to update password. Please try again.";
@@ -59,7 +53,6 @@ $active_page = 'settings';
 $css_files = ['dashboard.css', 'student_settings.css'];
 $js_files = ['dashboard.js', 'student_settings.js'];
 
-// SPA Request Handling
 if (isset($_SERVER['HTTP_X_SPA_REQUEST'])) {
     ob_start();
     require_once __DIR__ . '/../views/student_settings.php';

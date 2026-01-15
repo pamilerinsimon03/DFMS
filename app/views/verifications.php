@@ -65,7 +65,7 @@
                 </div>
             </div>
 
-            <?php if (!$user['department_id']): // Super admin view ?>
+            <?php if (!$user['department_id']): ?>
             <select name="department">
                 <option value="">All Departments</option>
                 <?php 
@@ -198,7 +198,6 @@
     </div>
 </div>
 <style>
-/* Style for sort links to make them look like normal table headers */
 .sort-link {
     color: inherit;
     text-decoration: none;

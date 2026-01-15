@@ -72,7 +72,6 @@
     <?php endif; ?>
 
     <div class="settings-grid">
-        <!-- Password Management Section -->
         <div class="settings-card">
             <div class="card-header">
                 <div class="card-icon">
@@ -129,7 +128,6 @@
             </div>
         </div>
 
-        <!-- Account Information Section -->
         <div class="settings-card">
             <div class="card-header">
                 <div class="card-icon">
@@ -181,7 +179,6 @@
             </div>
         </div>
 
-        <!-- Security Tips Section -->
         <div class="settings-card">
             <div class="card-header">
                 <div class="card-icon">
@@ -242,7 +239,6 @@ function togglePassword(inputId) {
     }
 }
 
-// Auto-hide alerts after 5 seconds
 document.addEventListener('DOMContentLoaded', function() {
     const alerts = document.querySelectorAll('.alert');
     alerts.forEach(alert => {

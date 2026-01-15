@@ -31,7 +31,6 @@
         </a>
     </div>
     
-    <!-- Department Filter Indicator -->
     <?php if ($user['matric_number'] === 'SUPER_ADMIN' && $filter_department_id === null): ?>
         <div class="filter-indicator">
             <span class="filter-badge">Showing all students from all departments</span>

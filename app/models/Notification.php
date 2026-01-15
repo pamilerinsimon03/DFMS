@@ -41,5 +41,3 @@ class Notification
         return $stmt->execute();
     }
 }
-
-

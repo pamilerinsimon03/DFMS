@@ -1,19 +1,9 @@
-// JavaScript for uploads page functionality
-
 const initUploads = () => {
-    // Only run if we are on the uploads page
     if (!document.querySelector('.uploads-content')) return;
 
-    // --- Search & Tabs Logic ---
     const searchContainer = document.getElementById('search-container');
     const searchIconBtn = document.getElementById('search-icon-btn');
     const searchInput = document.querySelector('.search-input');
-    const searchForm = document.querySelector('.search-form');
-    
-    // Mobile Search Toggle is handled by dashboard.js globally. 
-    // We do not attach a duplicate listener here to avoid double-toggling.
-
-    // Debounce Utility
     const debounce = (func, wait) => {
         let timeout;
         return function(...args) {
@@ -28,7 +18,6 @@ const initUploads = () => {
         if (query !== null) currentUrl.searchParams.set('search', query);
         currentUrl.searchParams.set('ajax', '1');
         
-        // If tab is provided, use it. Otherwise keep existing or default to total
         if (tab) {
             currentUrl.searchParams.set('tab', tab);
         } else if (!currentUrl.searchParams.has('tab')) {
@@ -47,7 +36,6 @@ const initUploads = () => {
                     tbody.style.opacity = '1';
                 }
                 
-                // Update Search Info
                 const tabsContainer = document.querySelector('.uploads-tabs');
                 if (tabsContainer) {
                     let infoDiv = tabsContainer.querySelector('.search-results-info');
@@ -66,8 +54,6 @@ const initUploads = () => {
                     window.lucide.createIcons();
                 }
 
-                // Update URL (SPA friendly pushState is handled here for search/tabs)
-                // Note: SPA router also handles pushState. We should ensure they play nice.
                 const newUrl = new URL(window.location.href);
                 if (query !== null) newUrl.searchParams.set('search', query);
                 if (tab) newUrl.searchParams.set('tab', tab);
@@ -119,7 +105,6 @@ const initUploads = () => {
     // Initial State Check
     const activeTab = document.querySelector('.tab-item.active');
     if (activeTab) {
-        // Run immediately but also slightly delayed in case of font loading shift
         updateIndicator(activeTab);
         setTimeout(() => updateIndicator(activeTab), 100);
         
@@ -137,15 +122,11 @@ const initUploads = () => {
         tab.addEventListener('click', function(e) {
             e.preventDefault();
             
-            // Remove active class from all
             tabItems.forEach(item => item.classList.remove('active'));
-            // Add active to clicked
             this.classList.add('active');
             
-            // Animate Line
             updateIndicator(this);
             
-            // Extract tab value from href
             const url = new URL(this.href);
             const tabValue = url.searchParams.get('tab') || 'total';
             const searchTerm = searchInput ? searchInput.value.trim() : '';
@@ -155,18 +136,8 @@ const initUploads = () => {
         });
     });
 
-    // --- Sidebar Toggle for Uploads Page ---
-    // REMOVED: Managed globally by dashboard.js to prevent double-binding and conflicts.
-    /*
-    const burger = document.getElementById('mobile-menu-toggle');
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('mobile-sidebar-overlay');
-
-    if (burger && sidebar && overlay) {
-       // ... Logic removed ...
-    }
-    */
 };
+
 
 // Expose globally
 window.initUploads = initUploads;

@@ -8,7 +8,6 @@ $error = '';
 $success = '';
 
 if ($mode === 'request' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Validate CSRF token
     requireCSRFToken();
     
     $matric_number = $_POST['matric_number'];
@@ -17,8 +16,6 @@ if ($mode === 'request' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($user) {
         $token = bin2hex(random_bytes(32));
         PasswordReset::create($user['id'], $token);
-        // TODO: Implement email sending functionality
-        // For now, log the reset link securely (not in HTML)
         error_log("Password reset requested for user {$user['id']}: /app/controllers/reset_password.php?token=$token");
         $success = "Password reset link has been sent to your registered email address.";
     } else {

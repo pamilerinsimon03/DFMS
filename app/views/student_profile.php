@@ -110,10 +110,10 @@
                         </td>
                         <td class="action-cell">
                             <div class="dropdown-wrapper">
-                                <!-- the “more” icon -->
+                                
                                 <img src="/app/src/assets/images/more.svg" alt="More" class="dropdown-toggle" />
 
-                                <!-- hidden by default -->
+
                                 <ul class="dropdown-menu">
                                     <li>
                                         <a href="/app/controllers/download_document.php?id=<?= $doc['id'] ?>">

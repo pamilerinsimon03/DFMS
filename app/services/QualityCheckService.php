@@ -2,9 +2,6 @@
 
 class QualityCheckService
 {
-    /**
-     * Checks if a file is an image.
-     */
     public static function isImage($filePath)
     {
         if (!file_exists($filePath) || !is_readable($filePath)) return false;
@@ -16,27 +13,14 @@ class QualityCheckService
         return in_array($mime, $imageMimes);
     }
 
-    /**
-     * Calculates blur score using the Laplacian Variance method.
-     * 
-     * @param string $filePath Path to the image file
-     * @param array &$debug_messages Array to store debug info
-     * @return float Score (higher is sharper). Returns negative on error.
-     */
     public static function getBlurriness($filePath, array &$debug_messages)
     {
-        // Strategy 1: Imagick (Preferred - Fast & Accurate)
         if (extension_loaded('imagick')) {
             try {
                 $image = new Imagick($filePath);
                 
-                // transform to grayscale to simplify analysis
                 $image->setImageType(Imagick::IMGTYPE_GRAYSCALE);
                 
-                // Laplacian Kernel
-                //  -1 -1 -1
-                //  -1  8 -1
-                //  -1 -1 -1
                 $matrix = [
                     [-1, -1, -1],
                     [-1,  8, -1],
@@ -46,11 +30,8 @@ class QualityCheckService
                 $kernel = \ImagickKernel::fromMatrix($matrix);
                 $image->convolveImage($kernel);
                 
-                // Calculate standard deviation of the convolved image
                 $stats = $image->getImageChannelStatistics();
                 
-                // Different Imagick versions return different keys (0 vs user_defined)
-                // We use CHANNEL_DEFAULT which usually covers all active channels (Gray)
                 $stdDev = 0;
                 if (isset($stats[Imagick::CHANNEL_DEFAULT])) {
                      $stdDev = $stats[Imagick::CHANNEL_DEFAULT]['standardDeviation'];
@@ -69,13 +50,9 @@ class QualityCheckService
             }
         }
         
-        // Strategy 2: GD (Fallback - Slower, requires memory management)
         return self::getBlurrinessGD($filePath, $debug_messages);
     }
 
-    /**
-     * Fallback GD implementation for blur detection
-     */
     private static function getBlurrinessGD($filePath, array &$debug_messages)
     {
         if (!function_exists('imagecreatefromstring') || !function_exists('imageconvolution')) {
@@ -92,8 +69,6 @@ class QualityCheckService
             return -2;
         }
 
-        // Resize strict limit for performance (max 400px longest side)
-        // Smaller images are faster to loop through in PHP
         $maxDim = 400;
         $w = imagesx($img);
         $h = imagesy($img);
@@ -116,14 +91,12 @@ class QualityCheckService
             return -3;
         }
 
-        // Calculate Variance
         $sum = 0;
         $sumSq = 0;
         $pixelCount = 0;
         
-        // Optimize loop: Skip step to sample pixels instead of all (faster approximation)
         $step = 2; 
-
+        
         for ($y = 0; $y < $h; $y += $step) {
             for ($x = 0; $x < $w; $x += $step) {
                 $rgb = imagecolorat($img, $x, $y);
@@ -148,15 +121,9 @@ class QualityCheckService
         return $stdDev;
     }
 
-    /**
-     * Calculates OCR confidence using Tesseract.
-     * Uses preprocessing for better accuracy.
-     */
     public static function getOcrConfidence($filePath, array &$debug_messages)
     {
-        // Locate Tesseract
         $tessBin = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') ? 'tesseract.exe' : 'tesseract';
-        // Check PATH
         $tessPath = null;
         if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
             $path = trim(shell_exec("where $tessBin 2>nul"));
@@ -171,16 +138,13 @@ class QualityCheckService
             return -1;
         }
 
-        // Preparation
         $workImage = $filePath;
         $isTemp = false;
 
-        // Preprocessing with Imagick if available
         if (extension_loaded('imagick')) {
             try {
                 $im = new Imagick();
                 
-                // specific PDF handling
                 $mime = mime_content_type($filePath);
                 if (strpos($mime, 'pdf') !== false) {
                     $im->setResolution(300, 300); // Good balance for OCR
@@ -190,7 +154,6 @@ class QualityCheckService
                     $im->readImage($filePath);
                 }
 
-                // Enhancements for OCR
                 $im->setImageType(Imagick::IMGTYPE_GRAYSCALE);
                 $im->contrastImage(1); // Increase contrast
                 // $im->adaptiveThresholdImage(10, 10, 0); // Local binarization (can be aggressive, optional)
@@ -209,12 +172,7 @@ class QualityCheckService
             }
         }
 
-        // Tesseract Command Construction
-        // --psm 3 (Auto page segmentation)
-        // --oem 1 (Neural Net LSTM - Faster/Better if data present)
-        // tsv output for confidence extraction
         $outFileBase = tempnam(sys_get_temp_dir(), 'ocr_out_');
-        // Unlink because tesseract appends extension
         @unlink($outFileBase);
 
         $cmd = sprintf(
@@ -227,7 +185,6 @@ class QualityCheckService
         
         $output = shell_exec($cmd);
         
-        // Cleanup temp input if we created one
         if ($isTemp && file_exists($workImage)) {
             @unlink($workImage);
         }
@@ -238,15 +195,11 @@ class QualityCheckService
             return 0;
         }
 
-        // Parse TSV
-        // Level	Page_num	Block_num	Par_num	Line_num	Word_num	Left	Top	Width	Height	Conf	Text
         $handle = fopen($tsvFile, "r");
         $confidences = [];
         $header = fgetcsv($handle, 0, "\t"); // skip header
         
         while (($data = fgetcsv($handle, 0, "\t")) !== FALSE) {
-            // Index 10 is usually Conf (0-100), check header if paranoid, but standard is fixed.
-            // Check if word is not empty (sometimes structural rows have -1 conf)
             $conf = isset($data[10]) ? (int)$data[10] : -1;
             $text = isset($data[11]) ? trim($data[11]) : '';
             

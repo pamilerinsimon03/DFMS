@@ -12,13 +12,11 @@
     </div>
     <?php endif; ?>
 
-    <!-- Toast notification data -->
     <?php if ($message): ?>
     <div data-<?php echo $message_type; ?>="<?php echo htmlspecialchars($message); ?>" style="display: none;"></div>
     <?php endif; ?>
 
     <div class="file-management-container">
-        <!-- Add New File Requirement -->
         <div class="card">
             <div class="card-header">
                 <h3>Add New File Requirement</h3>
@@ -55,7 +53,6 @@
             </div>
         </div>
 
-        <!-- File Requirements List -->
         <div class="card">
             <div class="card-header">
                 <h3>Current File Requirements</h3>
@@ -139,7 +136,6 @@
     </div>
 </div>
 
-<!-- Edit Modal -->
 <div id="editModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -186,10 +182,7 @@
 </div>
 
 <script>
-// Edit requirement function
 function editRequirement(id) {
-    // Get requirement data (you might want to fetch this via AJAX)
-    // For now, we'll populate from the existing data
     const requirement = <?php echo json_encode($file_requirements); ?>.find(r => r.id == id);
     
     if (requirement) {
@@ -203,12 +196,10 @@ function editRequirement(id) {
     }
 }
 
-// Close edit modal
 function closeEditModal() {
     document.getElementById('editModal').style.display = 'none';
 }
 
-// Close modal when clicking outside
 window.onclick = function(event) {
     const modal = document.getElementById('editModal');
     if (event.target == modal) {

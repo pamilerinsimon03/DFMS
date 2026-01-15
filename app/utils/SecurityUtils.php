@@ -2,21 +2,15 @@
 
 class SecurityUtils {
     
-    // Rate limiting storage (in production, use Redis or database)
     private static $rateLimitStore = [];
     
-    /**
-     * Validate and sanitize input
-     */
     public static function validateInput($input, $type = 'string', $maxLength = 255) {
         if (empty($input)) {
             return null;
         }
         
-        // Trim whitespace
         $input = trim($input);
         
-        // Check length
         if (strlen($input) > $maxLength) {
             return false;
         }
@@ -36,14 +30,11 @@ class SecurityUtils {
         }
     }
     
-    /**
-     * Rate limiting for login attempts
-     */
     public static function checkRateLimit($identifier, $maxAttempts = 5, $timeWindow = 900) {
         $key = 'rate_limit_' . $identifier;
         $now = time();
         
-        // Clean old entries
+        
         if (isset(self::$rateLimitStore[$key])) {
             self::$rateLimitStore[$key] = array_filter(
                 self::$rateLimitStore[$key], 
@@ -55,19 +46,16 @@ class SecurityUtils {
             self::$rateLimitStore[$key] = [];
         }
         
-        // Check if limit exceeded
+        
         if (count(self::$rateLimitStore[$key]) >= $maxAttempts) {
             return false;
         }
         
-        // Add current attempt
+        
         self::$rateLimitStore[$key][] = $now;
         return true;
     }
     
-    /**
-     * Log security events
-     */
     public static function logSecurityEvent($event, $details = []) {
         $logEntry = [
             'timestamp' => date('Y-m-d H:i:s'),
@@ -87,30 +75,27 @@ class SecurityUtils {
         file_put_contents($logFile, json_encode($logEntry) . "\n", FILE_APPEND | LOCK_EX);
     }
     
-    /**
-     * Validate file upload
-     */
     public static function validateFileUpload($file, $allowedTypes = ['pdf', 'jpg', 'jpeg', 'png']) {
         $errors = [];
         
-        // Check for upload errors
+        
         if ($file['error'] !== UPLOAD_ERR_OK) {
             $errors[] = 'File upload error: ' . $file['error'];
             return $errors;
         }
         
-        // Check file size (5MB limit)
+        
         if ($file['size'] > 5242880) {
             $errors[] = 'File size exceeds 5MB limit';
         }
         
-        // Check file extension
+        
         $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
         if (!in_array($extension, $allowedTypes)) {
             $errors[] = 'File type not allowed';
         }
         
-        // Check MIME type
+        
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $mimeType = finfo_file($finfo, $file['tmp_name']);
         finfo_close($finfo);
@@ -129,9 +114,6 @@ class SecurityUtils {
         return $errors;
     }
     
-    /**
-     * Generate secure filename
-     */
     public static function generateSecureFilename($originalName, $userId) {
         $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
         $timestamp = time();

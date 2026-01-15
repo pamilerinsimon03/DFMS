@@ -112,7 +112,6 @@
     </div>
 </div>
 
-<!-- Rejection Reason Modal -->
 <div id="rejection-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center;">
     <div class="modal-content" style="background: white; padding: 25px; border-radius: 12px; width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
         <h3 style="margin-top: 0; color: #333; font-size: 1.25rem;">Reject Document</h3>

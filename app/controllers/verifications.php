@@ -20,7 +20,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
     exit();
 }
 
-// --- Parameters for Filtering and Sorting ---
 $tab = $_GET['tab'] ?? 'all';
 $start_date = !empty($_GET['start_date']) ? $_GET['start_date'] : '2025-01-01';
 $end_date = !empty($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-d');
@@ -34,8 +33,6 @@ $program_type = $_GET['program_type'] ?? null;
 $sort_by = $_GET['sort_by'] ?? 'upload_date';
 $sort_order = $_GET['sort_order'] ?? 'desc';
 
-// --- Status Mapping ---
-// Maps the 'tab' parameter from the URL to the actual status string in the database.
 $status_map = [
     'all' => null, // No status filter
     'pending' => 'Pending Approval',
@@ -44,7 +41,6 @@ $status_map = [
 ];
 $status_filter = $status_map[$tab] ?? null;
 
-// --- Prepare Sorting Links and Indicators for the View ---
 $sort_links = [];
 $sort_indicators = [];
 $columns_to_sort = ['full_name', 'department', 'level', 'upload_date'];
@@ -61,20 +57,15 @@ foreach ($columns_to_sort as $column) {
     }
 }
 
-// --- Fetch Data from Model ---
 $documents = Document::getAllDocuments($status_filter, $start_date, $end_date, $search, $page, $per_page, $department_id, $level, $mode, $program_type, $sort_by, $sort_order);
 $total = Document::countAllDocuments($status_filter, $start_date, $end_date, $search, $department_id, $level, $mode, $program_type);
 
-// --- Pagination ---
 $total_pages = ceil($total / $per_page);
 
-// --- Page Setup ---
 $page_title = 'Admin Verifications';
 $active_page = 'verifications';
 $css_files = ['admin.css', 'uploads.css'];
 $js_files = ['admin_verifications.js', 'admin.js'];
-
-// --- Render View or JSON Response ---
 
 if (isset($_GET['ajax']) || (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')) {
     ob_start();
@@ -113,7 +104,6 @@ if (isset($_GET['ajax']) || (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtol
     endif;
     $html = ob_get_clean();
 
-    // Generate Search Info HTML
     ob_start();
     if (!empty($search)): ?>
         <div class="search-results-info">

@@ -3,7 +3,6 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../utils/SecurityUtils.php';
 
-// Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: /public/index.php");
     exit();
@@ -13,7 +12,6 @@ $user = User::getById($_SESSION['user_id']);
 $message = '';
 $error = '';
 
-// Handle data subject rights requests
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     requireCSRFToken();
     
@@ -21,7 +19,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     switch ($action) {
         case 'access_data':
-            // Right to access personal data
             $userData = User::getById($_SESSION['user_id']);
             $documents = Document::getDocumentsByUserId($_SESSION['user_id']);
             
@@ -34,7 +31,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             break;
             
         case 'rectify_data':
-            // Right to rectification
             $field = $_POST['field'] ?? '';
             $new_value = $_POST['new_value'] ?? '';
             
@@ -55,7 +51,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             break;
             
         case 'delete_data':
-            // Right to erasure (with restrictions for educational records)
             SecurityUtils::logSecurityEvent('data_erasure_request', [
                 'user_id' => $_SESSION['user_id'],
                 'action' => 'delete_data'
@@ -65,7 +60,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             break;
             
         case 'restrict_processing':
-            // Right to restrict processing
             SecurityUtils::logSecurityEvent('processing_restriction_request', [
                 'user_id' => $_SESSION['user_id'],
                 'action' => 'restrict_processing'

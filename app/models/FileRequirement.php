@@ -3,9 +3,6 @@ require_once __DIR__ . '/../config/config.php';
 
 class FileRequirement {
     
-    /**
-     * Get all file requirements for a department
-     */
     public static function getByDepartment($department_id, $active_only = true) {
         global $conn;
         
@@ -27,9 +24,6 @@ class FileRequirement {
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
     
-    /**
-     * Get all active file requirements for a department (for students)
-     */
     public static function getActiveForDepartment($department_id) {
         global $conn;
         
@@ -45,9 +39,6 @@ class FileRequirement {
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
     
-    /**
-     * Create a new file requirement
-     */
     public static function create($department_id, $document_name, $description, $due_date, $created_by) {
         global $conn;
         
@@ -64,9 +55,6 @@ class FileRequirement {
         }
     }
     
-    /**
-     * Update a file requirement
-     */
     public static function update($id, $document_name, $description, $due_date, $is_active) {
         global $conn;
         
@@ -84,9 +72,6 @@ class FileRequirement {
         }
     }
     
-    /**
-     * Delete a file requirement
-     */
     public static function delete($id) {
         global $conn;
         
@@ -101,9 +86,6 @@ class FileRequirement {
         }
     }
     
-    /**
-     * Get a file requirement by ID
-     */
     public static function getById($id) {
         global $conn;
         
@@ -119,9 +101,6 @@ class FileRequirement {
         return $stmt->get_result()->fetch_assoc();
     }
     
-    /**
-     * Toggle active status
-     */
     public static function toggleActive($id) {
         global $conn;
         
@@ -139,4 +118,3 @@ class FileRequirement {
         }
     }
 }
-?>

@@ -16,10 +16,8 @@ if (!isset($_GET['id'])) {
 $student_id = $_GET['id'];
 $student = User::getById($student_id);
 
-// Get current user (admin) information
 $user = User::getById($_SESSION['user_id']);
 
-// Verify admin has access to this student's department
 if ($user['matric_number'] !== 'SUPER_ADMIN') {
     if ($student['department_id'] !== $user['department_id']) {
         header("HTTP/1.1 403 Forbidden");

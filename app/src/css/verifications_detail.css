@@ -1,14 +1,10 @@
-/* Styles for Verification Detail page */
 .subheader {
   display: flex;
   align-items: center;
   padding: 0 32px;
-  /* match your header side‐padding */
   height: 56px;
-  /* same height as header divider → gives room */
 }
 
-/* Make the button itself just wrap the icon */
 .back-btn {
   background: none;
   border: none;
@@ -16,7 +12,6 @@
   cursor: pointer;
 }
 
-/* Rotate arrow to point left, size it */
 .back-icon {
   width: 40px;
   height: 40px;

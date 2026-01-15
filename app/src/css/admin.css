@@ -363,14 +363,14 @@
   display: none; 
   position: absolute;
   right: 0;
-  top: 100%; /* Below the button */
+  top: 100%;
   margin-top: 4px;
   background-color: #ffffff;
   min-width: 160px;
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-  z-index: 10000; /* Ensure it stays on top */
-  overflow: visible; /* Don't clip internal content */
+  z-index: 10000;
+  overflow: visible;
   text-align: left;
 }
 
@@ -546,7 +546,6 @@
 }
 
 
-/* Lucide Icons Styling */
 .lucide {
     width: 24px;
     height: 24px;
@@ -559,12 +558,10 @@
     margin-right: 6px;
 }
 
-/* Card Header Icons - High Contrast (White on Purple/Blue) */
 .card-header .lucide {
     stroke: #FFFFFF;
 }
 
-/* Primary/Warning/Secondary Button Icons - High Contrast */
 .btn-primary .lucide,
 .btn-secondary .lucide,
 .btn-warning .lucide,
@@ -572,14 +569,12 @@
     stroke: #FFFFFF;
 }
 
-/* Form Icons */
 .file-icon .lucide {
     width: 24px;
     height: 24px;
-    stroke: #6366f1; /* Primary color */
+    stroke: #6366f1;
 }
 
-/* Status Colors */
 .text-success {
     stroke: #28a745;
 }
@@ -593,7 +588,6 @@
     height: 20px;
 }
 
-/* Adjust card icon container alignment */
 .card-icon {
     display: flex;
     align-items: center;

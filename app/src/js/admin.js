@@ -1,4 +1,3 @@
-// Consolidated DOMContentLoaded
 const initAdmin = () => {
     // Action dropdown logic is handled by event delegation at the bottom of this file
 
@@ -10,7 +9,6 @@ const initAdmin = () => {
     const barChartCanvas = document.getElementById('uploads-by-month');
     const pieChartCanvas = document.getElementById('uploads-by-status');
 
-    // Charts
     if (barChartCanvas && typeof Chart !== 'undefined') {
         new Chart(barChartCanvas, {
             type: 'bar',
@@ -56,7 +54,6 @@ const initAdmin = () => {
         });
     }
 
-    // --- Mobile Sidebar Toggle ---
     const menuToggle = document.getElementById('mobile-menu-toggle');
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('mobile-sidebar-overlay');
@@ -82,8 +79,6 @@ const initAdmin = () => {
     const filterForm = document.getElementById('filter-sort-form');
     const formSearchInput = document.getElementById('form-search');
 
-    // Handle search input submission
-    // --- Debounced AJAX Search for Admin ---
     if (searchForm && searchInput) {
         
         const debounce = (func, wait) => {
@@ -99,7 +94,6 @@ const initAdmin = () => {
         };
 
         const performSearch = (paramsOverride = {}) => {
-             // Fix: If called from event listener, paramsOverride is an Event object.
              if (paramsOverride instanceof Event) {
                  paramsOverride = {};
              }
@@ -134,10 +128,6 @@ const initAdmin = () => {
                  const studentsGrid = document.querySelector('.students-grid') || document.querySelector('.no-students');
                  const tbody = document.querySelector('.docs-table tbody');
                  
-                 // Show loading
-                 if (tbody) tbody.style.opacity = '0.5';
-                 if (studentsGrid) studentsGrid.style.opacity = '0.5';
-
                  fetch(currentUrl)
                     .then(response => response.json())
                     .then(data => {
@@ -283,7 +273,6 @@ const initAdmin = () => {
             }
         }
     };
-    // --- Date Picker Logic ---
     const startDateInput = document.getElementById('start_date');
     const endDateInput = document.getElementById('end_date');
     if (startDateInput && endDateInput && typeof flatpickr !== 'undefined') {
@@ -298,8 +287,6 @@ const initAdmin = () => {
         });
     }
     
-    // --- Action Menu Dropdown Logic ---
-    // Ensure we don't attach double listeners
     if (!window.adminActionLogicAtttached) {
         document.body.addEventListener('click', function (e) {
             // Find all action menu contents that are currently active
@@ -331,5 +318,4 @@ const initAdmin = () => {
 
 window.initAdmin = initAdmin;
 
-// Auto-init on page load
 document.addEventListener('DOMContentLoaded', window.initAdmin);

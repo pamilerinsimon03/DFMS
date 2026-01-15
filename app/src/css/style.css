@@ -403,7 +403,6 @@
     left: 158px; 
 }
 
-/* Responsive styles */
 @media (max-width: 768px) {
     .log-in .div {
         overflow-x: hidden;
@@ -539,7 +538,6 @@
     }
 }
 
-/* Tablet-specific adjustments */
 @media (min-width: 769px) and (max-width: 1024px) {
     .log-in .frame {
         top: 125px; /* Consistent with desktop */
@@ -565,7 +563,6 @@
         left: 0;
     }
     
-    /* Fix for small screens */
     .log-in .frame-6 {
         padding: 0px 16px;
         border-radius: 8px;

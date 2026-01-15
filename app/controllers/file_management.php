@@ -3,7 +3,6 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/FileRequirement.php';
 
-// Check if user is admin (but not SUPER_ADMIN)
 if (!isset($_SESSION['user_id']) || !User::isAdmin($_SESSION['user_id'])) {
     header("Location: /public/index.php");
     exit();
@@ -11,7 +10,6 @@ if (!isset($_SESSION['user_id']) || !User::isAdmin($_SESSION['user_id'])) {
 
 $user = User::getById($_SESSION['user_id']);
 
-// SUPER_ADMIN cannot access this page
 if ($user['matric_number'] === 'SUPER_ADMIN') {
     header("Location: /app/controllers/admin.php");
     exit();
@@ -20,9 +18,7 @@ if ($user['matric_number'] === 'SUPER_ADMIN') {
 $message = '';
 $message_type = '';
 
-// Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Validate CSRF token
     requireCSRFToken();
     
     $action = $_POST['action'] ?? '';
@@ -108,7 +104,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get file requirements for this department
 $file_requirements = FileRequirement::getByDepartment($user['department_id'], false);
 
 $page_title = 'File Management';

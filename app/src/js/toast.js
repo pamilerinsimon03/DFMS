@@ -1,8 +1,3 @@
-/**
- * Toast Notification System
- * Provides user-friendly notifications for various actions
- */
-
 class ToastNotification {
     constructor() {
         this.container = null;
@@ -10,7 +5,6 @@ class ToastNotification {
     }
 
     init() {
-        // Create toast container if it doesn't exist
         if (!document.getElementById('toast-container')) {
             this.container = document.createElement('div');
             this.container.id = 'toast-container';
@@ -25,7 +19,6 @@ class ToastNotification {
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
         
-        // Create toast content
         const icon = this.getIcon(type);
         const content = `
             <div class="toast-content">
@@ -36,14 +29,10 @@ class ToastNotification {
         `;
         
         toast.innerHTML = content;
-        
-        // Add to container
         this.container.appendChild(toast);
         
-        // Trigger animation
         setTimeout(() => toast.classList.add('show'), 100);
         
-        // Auto remove
         if (duration > 0) {
             setTimeout(() => {
                 toast.classList.remove('show');
@@ -81,20 +70,19 @@ class ToastNotification {
     }
 }
 
-// Global instance
 window.toast = new ToastNotification();
 
-// Auto-show login errors from PHP session
-document.addEventListener('DOMContentLoaded', function() {
-    // Check for login error in session
+const initToastMessages = () => {
     const errorMessage = document.querySelector('[data-error]');
     if (errorMessage) {
-        toast.error(errorMessage.getAttribute('data-error'));
+        window.toast.error(errorMessage.getAttribute('data-error'));
     }
     
-    // Check for login success
     const successMessage = document.querySelector('[data-success]');
     if (successMessage) {
-        toast.success(successMessage.getAttribute('data-success'));
+        window.toast.success(successMessage.getAttribute('data-success'));
     }
-});
+};
+
+window.initToastMessages = initToastMessages;
+document.addEventListener('DOMContentLoaded', initToastMessages);

@@ -22,7 +22,7 @@
                 <img src="/app/src/assets/images/arrow-down.svg" alt="Dropdown Icon">
             </div>
 
-            <!-- Dropdown Menu -->
+            
             <div class="profile-dropdown">
                 <a href="<?php echo User::isAdmin($_SESSION['user_id'] ?? 0) ? '/app/controllers/student_profile.php' : '/app/controllers/profile.php'; ?>" class="dropdown-item">
                     <img src="/app/src/assets/images/User-Circle.svg" alt="Profile"> Profile
@@ -59,7 +59,6 @@
     <?php endif; ?>
 
     <div class="settings-grid">
-        <!-- Password Management Section -->
         <div class="settings-card">
             <div class="card-header">
                 <h3>Password Management</h3>
@@ -67,7 +66,6 @@
             </div>
             <div class="card-content">
                 <?php if ($user['matric_number'] === 'SUPER_ADMIN'): ?>
-                    <!-- Super Admin can change any admin password -->
                     <form method="POST" class="password-form">
                         <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                         <div class="form-group">
@@ -93,7 +91,6 @@
                         </button>
                     </form>
                 <?php else: ?>
-                    <!-- Regular admins can only update student passwords -->
                     <div class="info-box">
                         <p><strong>Student Password Update</strong></p>
                         <p>Update all existing student passwords to the new format: <strong>surname12345</strong></p>
@@ -109,7 +106,6 @@
             </div>
         </div>
 
-        <!-- System Information Section -->
         <div class="settings-card">
             <div class="card-header">
                 <h3>System Information</h3>
@@ -137,7 +133,6 @@
             </div>
         </div>
 
-        <!-- User Management Section -->
         <div class="settings-card">
             <div class="card-header">
                 <h3>User Management</h3>
@@ -167,7 +162,6 @@
             </div>
         </div>
 
-        <!-- System Preferences Section -->
         <div class="settings-card">
             <div class="card-header">
                 <h3>System Preferences</h3>
@@ -202,7 +196,6 @@
             </div>
         </div>
 
-        <!-- Backup & Maintenance Section -->
         <div class="settings-card">
             <div class="card-header">
                 <h3>Backup & Maintenance</h3>
@@ -226,7 +219,6 @@
             </div>
         </div>
 
-        <!-- Security Settings Section -->
         <div class="settings-card">
             <div class="card-header">
                 <h3>Security Settings</h3>

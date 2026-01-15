@@ -10,9 +10,7 @@ if (!isset($_SESSION['user_id']) || !User::isAdmin($_SESSION['user_id'])) {
 $message = '';
 $message_type = '';
 
-// Handle password update request
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_passwords') {
-    // Validate CSRF token
     requireCSRFToken();
     
     $result = User::updateAllStudentPasswords();

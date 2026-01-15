@@ -11,20 +11,15 @@ if (!isset($_SESSION['user_id']) || !User::isAdmin($_SESSION['user_id'])) {
 $user = User::getById($_SESSION['user_id']);
 $department_id = $user['department_id'] ?? null;
 
-// Use a wider date range by default (last 6 months instead of 30 days)
 $start_date = $_GET['start_date'] ?? date('Y-m-d', strtotime('-6 months'));
 $end_date = $_GET['end_date'] ?? date('Y-m-d');
 
-// Fetch KPI stats
-// For SUPER_ADMIN (department_id = NULL), show all documents from all departments
 $total_docs = Document::countAllDocuments(null, $start_date, $end_date, null, $department_id, null, null, null);
 $approved_docs = Document::countAllDocuments('Approved', $start_date, $end_date, null, $department_id, null, null, null);
 $pending_docs = Document::countAllDocuments('Pending Approval', $start_date, $end_date, null, $department_id, null, null, null);
 $rejected_docs = Document::countAllDocuments('Rejected', $start_date, $end_date, null, $department_id, null, null, null);
 
-// If no documents found in the date range, try without date filter to see if there are any documents at all
 if ($total_docs == 0) {
-    // Get all documents without date filter to check if there are any documents in the system
     $all_docs_sql = "SELECT COUNT(d.id) as total FROM documents d JOIN users u ON d.user_id = u.id";
     $params = [];
     $types = '';
@@ -43,9 +38,7 @@ if ($total_docs == 0) {
     $stmt->execute();
     $all_docs_count = $stmt->get_result()->fetch_assoc()['total'];
     
-    // If there are documents but none in the date range, adjust the date range to include all documents
     if ($all_docs_count > 0) {
-        // Get the earliest and latest document dates
         $date_range_sql = "SELECT MIN(d.created_at) as earliest, MAX(d.created_at) as latest FROM documents d JOIN users u ON d.user_id = u.id";
         if ($department_id) {
             $date_range_sql .= " WHERE u.department_id = ?";
@@ -58,11 +51,9 @@ if ($total_docs == 0) {
         $stmt->execute();
         $date_range = $stmt->get_result()->fetch_assoc();
         
-        // Use the actual date range of documents
         $start_date = date('Y-m-d', strtotime($date_range['earliest']));
         $end_date = date('Y-m-d', strtotime($date_range['latest']));
         
-        // Re-fetch stats with the adjusted date range
         $total_docs = Document::countAllDocuments(null, $start_date, $end_date, null, $department_id, null, null, null);
         $approved_docs = Document::countAllDocuments('Approved', $start_date, $end_date, null, $department_id, null, null, null);
         $pending_docs = Document::countAllDocuments('Pending Approval', $start_date, $end_date, null, $department_id, null, null, null);
@@ -70,7 +61,6 @@ if ($total_docs == 0) {
     }
 }
 
-// Fetch data for charts
 $uploads_by_month = Document::getUploadsByMonth($start_date, $end_date, $department_id);
 $verification_breakdown = Document::getVerificationBreakdown($start_date, $end_date, $department_id);
 
@@ -80,20 +70,16 @@ $upload_counts = array_values($uploads_by_month);
 $breakdown_labels = array_keys($verification_breakdown);
 $breakdown_counts = array_values($verification_breakdown);
 
-// Fetch recent pending documents for the table
 $recent_pending = Document::getPendingDocuments($start_date, $end_date, 5, $department_id);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_POST['doc_id'])) {
-    // Validate CSRF token
     requireCSRFToken();
     
-    // Include security utilities for logging
     require_once __DIR__ . '/../utils/SecurityUtils.php';
     
     $doc_id = $_POST['doc_id'];
     $action = $_POST['action'];
     
-    // Log the document status change
     SecurityUtils::logSecurityEvent('document_status_change', [
         'user_id' => $_SESSION['user_id'],
         'doc_id' => $doc_id,

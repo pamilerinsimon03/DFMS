@@ -1,6 +1,3 @@
-/* Uploads page specific styles */
-
-/* Main content layout */
 .uploads-content {
     width: 100%;
     padding: 20px 24px;
@@ -8,8 +5,6 @@
     overflow-x: hidden;
 }
 
-/* Prevent horizontal overflow */
-/* Prevent horizontal overflow on main container but allow on specific wrappers */
 .uploads-content {
     max-width: 100%;
     overflow-x: hidden;
@@ -25,7 +20,6 @@
     display: none; /* Hide scrollbar Webkit */
 }
 
-/* Tabs navigation */
 .uploads-tabs {
     display: flex;
     justify-content: space-between;
@@ -38,7 +32,7 @@
     display: flex;
     align-items: center;
     gap: 29px;
-    position: relative; /* Context for indicator */
+    position: relative;
 }
 
 .tab-item {
@@ -48,9 +42,9 @@
     font-weight: 400;
     cursor: pointer;
     transition: color 0.3s ease;
-    border-bottom: none; /* Removed static border */
+    border-bottom: none;
     position: relative;
-    text-decoration: none; /* Ensure no underline from link */
+    text-decoration: none;
 }
 
 .tab-item.active {
@@ -64,11 +58,10 @@
     left: 0;
     height: 3px;
     background-color: #FAA62C;
-    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); /* Smooth spring-like effect */
+    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
     border-radius: 3px 3px 0 0;
 }
 
-/* Date filter */
 .date-filter {
     display: flex;
     align-items: center;
@@ -99,7 +92,6 @@
     font-size: 14px;
 }
 
-/* Uploads table */
 .uploads-table {
     width: 100%;
     align-items: center;
@@ -109,7 +101,6 @@
 }
 .uploads-table-wrapper { width: 100%; overflow-x: auto; }
 
-/* Truncation helpers */
 .cell-value { display: inline-block; max-width: 100%; }
 .truncate {
     display: inline-block;
@@ -126,7 +117,6 @@
     vertical-align: middle;
 }
 
-/* Table header */
 .uploads-table thead {
     background: #F6F8FE;
     border-radius: 12px;
@@ -143,8 +133,7 @@
 }
 .status-wrapper {
     display: flex;
-    align-items: center;  /* vertical centering */
-    gap: 6px;             /* space between dot & text */
+    gap: 6px;
 }
 
 .td-status .status-dot {
@@ -181,9 +170,8 @@
     color: #F21B3F;
 }
 
-/* Buttons */
 .td-action button {
-    justify-content: center;        /* centers horizontally */
+    justify-content: center;
     align-items: center;
     width: 229px;
     height: 36px;
@@ -222,7 +210,6 @@
     width: 250px;
 }
 
-/* Responsive adjustments */
 @media (max-width: 1200px) {
     .uploads-tabs {
         flex-direction: column;
@@ -264,37 +251,31 @@
     }
 }
 @media (max-width: 768px) {
-    /* Header simplification on mobile */
     .header .welcome { display: none; }
     .header .user-profile { display: none; }
     .header .header-right { display: flex; gap: 12px; }
     .header .search-container { display: flex; align-items: center; gap: 12px; }
 
-    /* Tabs: allow horizontal scroll if too many */
     .uploads-tabs { overflow-x: auto; }
     .tabs-left { gap: 16px; white-space: nowrap; }
     .tab-item { padding: 8px 4px; font-size: 14px; }
 
-    /* Scrollable Table for Mobile */
     .uploads-content { padding: 16px; }
-    /* -------------------------------- */
-    /* Table / Card Layout Fixes        */
-    /* -------------------------------- */
     .uploads-table-wrapper {
         width: 100% !important;
-        overflow-x: hidden !important; /* No horizontal scroll for wrapper in card mode */
-        padding: 0 4px; /* Slight buffer */
+        overflow-x: hidden !important; 
+        padding: 0 4px; 
         box-sizing: border-box;
     }
 
     .uploads-table {
         display: block !important;
         width: 100% !important;
-        min-width: 0 !important; /* Reset strict min-width */
+        min-width: 0 !important;
     }
 
     .uploads-table thead {
-        display: none !important; /* Hide headers */
+        display: none !important;
     }
 
     .uploads-table tbody {
@@ -302,7 +283,6 @@
         width: 100% !important;
     }
 
-    /* Card Style Row */
     .uploads-table tbody tr {
         display: flex !important;
         flex-direction: column !important;
@@ -312,15 +292,13 @@
         margin-bottom: 16px !important;
         padding: 16px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        width: 100% !important; /* Full width of container */
-        box-sizing: border-box !important; /* Include padding in width */
+        box-sizing: border-box !important;
     }
 
-    /* Card Items */
     .uploads-table tbody td {
         display: flex !important;
         justify-content: space-between;
-        align-items: center; /* Center vertically specifically for action buttons */
+        align-items: center; 
         padding: 8px 0 !important;
         border-bottom: 1px solid #f5f5f5;
         font-size: 14px;
@@ -328,36 +306,30 @@
         width: 100% !important;
         box-sizing: border-box !important;
     }
-
     .uploads-table tbody td:last-child {
         border-bottom: none;
-        justify-content: center; /* Center action buttons */
+        justify-content: center;
         padding-top: 16px !important;
     }
 
-    /* Labels for Card Items */
     .uploads-table tbody td::before {
         content: attr(data-label);
         font-weight: 600;
         color: #666;
         text-align: left;
-        margin-right: auto; /* Push label to left */
-        flex-shrink: 0; /* Don't shrink label */
+        flex-shrink: 0;
     }
     
-    /* Document Link Styling in Card & Truncation */
     .uploads-table td:nth-child(2) {
-        font-weight: 500;
         color: #333;
     }
 
-    /* Strict truncation for Document Name */
     .uploads-table tbody td.td-document .cell-value {
-        max-width: 150px !important; /* Force truncation width */
+        max-width: 150px !important; 
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
-        display: inline-block !important; /* Ensure block context */
+        display: inline-block !important; 
         vertical-align: middle !important;
     }
 
@@ -365,7 +337,6 @@
         display: inline-block;
     }
 
-    /* Restore button sizing for table view */
     .td-action button, .btn-danger {
         width: auto;
         max-width: none;
@@ -374,34 +345,22 @@
         display: inline-flex;
     }
     
-    /* Ensure no element can extend beyond viewport, EXCEPT scrolling tabs and table */
     .uploads-content *, .uploads-table *, .uploads-table-wrapper * {
         max-width: 100%;
         box-sizing: border-box;
     }
     
-    /* Exceptions for scrolling */
     .tabs-left, .tabs-left * { max-width: none !important; }
     .uploads-table, .uploads-table * { max-width: none !important; }
 
-    /* Flexbox Fix: Allow main content to shrink below its children's size */
     .main-content {
         min-width: 0 !important;
         width: 100% !important;
-        max-width: 100% !important; /* Changed from 100vw to 100% to account for scrollbar */
+        max-width: 100% !important; 
         overflow-x: hidden !important;
         display: block !important; 
         box-sizing: border-box !important;
     }
-}
-
-/* Mobile specific layout fixes */
-/* Mobile Reimplementation for Uploads Page */
-/* Mobile Reimplementation for Uploads Page */
-@media (max-width: 768px) {
-    /* -------------------------------- */
-    /* Header Layout Fixes              */
-    /* -------------------------------- */
     .header.uploads-header-custom {
         padding: 10px 16px;
         display: flex;
@@ -411,12 +370,10 @@
         box-sizing: border-box;
     }
 
-    /* Hide welcome message on mobile to save space */
     .header.uploads-header-custom .welcome {
         display: none;
     }
 
-    /* Container for Search, Notification, Profile */
     .header.uploads-header-custom .header-right {
         display: flex;
         align-items: center;
@@ -426,7 +383,6 @@
         flex-shrink: 0;
     }
 
-    /* Search Container - Keep it in flow */
     .header.uploads-header-custom .search-container {
         position: static;
         width: auto;
@@ -434,7 +390,6 @@
         align-items: center;
     }
     
-    /* Ensure Icon Buttons are visible and sized correctly */
     .header.uploads-header-custom .search-icon-btn,
     .header.uploads-header-custom .notification-icon {
         display: flex;
@@ -445,7 +400,6 @@
         padding: 0;
     }
 
-    /* Fix Search Box Width - Override global 250px */
     .header.uploads-header-custom .search-box {
         width: 40px;
         padding: 5px;
@@ -454,14 +408,12 @@
         transition: width 0.3s ease;
     }
 
-    /* Maintain expansion logic */
     .header.uploads-header-custom .search-container.active .search-box {
          width: calc(100% - 32px) !important;
          background-color: #F5F5F5;
          border: 1px solid #E0E0E0;
     }
 
-    /* Force Profile Visibility */
     .header.uploads-header-custom .user-profile {
         display: flex !important;
         align-items: center;
@@ -478,13 +430,11 @@
         object-fit: cover;
     }
 
-    /* Hide text details to compact the header */
     .header.uploads-header-custom .user-profile .user-info,
     .header.uploads-header-custom .user-profile .dropdown-icon {
         display: none !important;
     }
     
-    /* Ensure visible visibility for right header elements */
     .header.uploads-header-custom .header-right .search-container,
     .header.uploads-header-custom .header-right .notification-icon,
     .header.uploads-header-custom .header-right .user-profile {
@@ -492,9 +442,6 @@
         opacity: 1 !important;
     }
 
-    /* -------------------------------- */
-    /* Tabs Layout Fixes                */
-    /* -------------------------------- */
     .uploads-tabs {
         display: block !important;
         width: 100% !important;
@@ -505,7 +452,6 @@
         scrollbar-width: none; 
     }
     
-    /* Ensure items flow horizontally */
     .tabs-left {
         display: flex !important;
         flex-direction: row !important;
@@ -525,7 +471,6 @@
     }
 }
 
-/* Override for uploads page to show search */
 body.uploads-page .header .header-right {
     display: flex !important;
 }

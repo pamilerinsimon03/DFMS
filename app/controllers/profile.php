@@ -13,7 +13,6 @@ $user = User::getById($user_id);
 $error = '';
 $success = '';
 
-// Check if profile is complete and if it's been more than 48 hours since account creation
 $profile_complete = !empty($user['email']) && !empty($user['phone_number']) && !empty($user['date_of_birth']) && 
                    !empty($user['gender']) && !empty($user['state_of_origin']) && !empty($user['address']) &&
                    !empty($user['emergency_contact_name']) && !empty($user['emergency_contact_phone']);
@@ -22,13 +21,11 @@ $account_age_hours = (time() - strtotime($user['created_at'])) / 3600;
 $mandatory_update_required = $account_age_hours > 48 && !$profile_complete;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Validate CSRF token
     requireCSRFToken();
     
     $action = $_POST['action'] ?? 'update_profile';
     
     if ($action === 'update_profile') {
-        // Validate required fields
         $required_fields = ['full_name', 'email', 'phone_number', 'date_of_birth', 'gender', 
                            'state_of_origin', 'address', 'emergency_contact_name', 
                            'emergency_contact_phone', 'emergency_contact_relationship'];
@@ -43,10 +40,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($missing_fields)) {
             $error = "Please fill in all required fields: " . implode(', ', $missing_fields);
         } else {
-            // Include security utilities
             require_once __DIR__ . '/../utils/SecurityUtils.php';
             
-            // Prepare profile data with validation
             $profile_data = [
                 'full_name' => SecurityUtils::validateInput($_POST['full_name'] ?? '', 'string', 100),
                 'email' => SecurityUtils::validateInput($_POST['email'] ?? '', 'email', 255),
@@ -62,13 +57,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'profile_updated_at' => date('Y-m-d H:i:s')
             ];
             
-            // Update profile
             if (User::updateStudentProfile($user_id, $profile_data)) {
                 $success = "Profile updated successfully!";
-                $user = User::getById($user_id); // Refresh user data
+                $user = User::getById($user_id); 
                 $_SESSION['full_name'] = $profile_data['full_name'];
                 
-                // Re-check if profile is now complete
                 $profile_complete = true;
                 $mandatory_update_required = false;
             } else {
@@ -86,7 +79,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif ($file['size'] > $max_size) {
                 $error = "File size too large. Maximum size is 2MB.";
             } else {
-                // Determine extension and target path
                 $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
                 $target_dir = __DIR__ . '/../src/assets/uploads/profile_pictures/';
                 
@@ -94,7 +86,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     mkdir($target_dir, 0777, true);
                 }
                 
-                // Remove old files for this user
                 foreach (['jpg', 'jpeg', 'png'] as $old_ext) {
                     $old_file = $target_dir . "user_{$user_id}.{$old_ext}";
                     if (file_exists($old_file)) {
@@ -121,11 +112,9 @@ $active_page = 'profile';
 $css_files = ['profile.css', 'dashboard.css'];
 $js_files = ['profile.js', 'dashboard.js'];
 
-// Notifications for header dropdown
 $notifications = Notification::getForUser($user_id, 15);
 $unread_count = Notification::countUnread($user_id);
 
-// SPA Request Handling
 if (isset($_SERVER['HTTP_X_SPA_REQUEST'])) {
     ob_start();
     require_once __DIR__ . '/../views/profile.php';

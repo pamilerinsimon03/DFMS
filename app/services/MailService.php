@@ -5,32 +5,20 @@ class MailService
     private static $fromEmail = 'noreply@dfms.codeweb.ng'; // Default sender
     private static $fromName = 'DFMS Notification';
 
-    /**
-     * Send an email
-     *
-     * @param string|array $to Recipient email(s)
-     * @param string $subject Email subject
-     * @param string $message Email body (HTML)
-     * @return bool True if accepted for delivery, false otherwise
-     */
     public static function send($to, $subject, $message)
     {
-        // Handle array of recipients
         if (is_array($to)) {
             $to = implode(',', $to);
         }
 
-        // Headers
         $headers = [];
         $headers[] = 'MIME-Version: 1.0';
         $headers[] = 'Content-type: text/html; charset=utf-8';
         $headers[] = 'From: ' . self::$fromName . ' <' . self::$fromEmail . '>';
         $headers[] = 'X-Mailer: PHP/' . phpversion();
 
-        // Wrap message in a basic HTML template
         $htmlBody = self::wrapMessage($subject, $message);
 
-        // Send
         return mail($to, $subject, $htmlBody, implode("\r\n", $headers));
     }
 

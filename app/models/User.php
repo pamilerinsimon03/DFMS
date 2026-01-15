@@ -2,12 +2,6 @@
 require_once __DIR__ . '/../config/config.php';
 
 class User {
-    /**
-     * Retrieves a user's full details, including their department code.
-     *
-     * @param int $id The user's ID.
-     * @return array|null An associative array of the user's data or null if not found.
-     */
     public static function getById($id) {
         global $conn;
         $sql = "
@@ -22,8 +16,6 @@ class User {
         $stmt->bind_param("i", $id);
         $stmt->execute();
         $user = $stmt->get_result()->fetch_assoc();
-
-        // No need to set default values since they're now in the database
 
         return $user;
     }
@@ -42,20 +34,12 @@ class User {
         return $user && $user['is_admin'] == 1;
     }
 
-    /**
-     * Generate password based on surname
-     * @param string $full_name Full name of the student
-     * @return string Generated password (surname in lowercase + 12345)
-     */
     public static function generatePassword($full_name) {
-        // Extract surname (last name)
         $name_parts = explode(' ', trim($full_name));
         $surname = end($name_parts);
         
-        // Convert to lowercase and remove any special characters
         $surname = strtolower(preg_replace('/[^a-zA-Z]/', '', $surname));
         
-        // If surname is empty, use 'student' as fallback
         if (empty($surname)) {
             $surname = 'student';
         }
@@ -63,21 +47,14 @@ class User {
         return $surname . '12345';
     }
 
-    /**
-     * Create a new student user
-     * @param array $student_data Array containing student information
-     * @return array Result with success status and message
-     */
     public static function createStudent($student_data) {
         global $conn;
         
-        // Check if matric number already exists
         $existing_user = self::getByMatricNumber($student_data['matric_number']);
         if ($existing_user) {
             return ['success' => false, 'message' => 'Matric number already exists.'];
         }
         
-        // Generate password from surname
         $password = self::generatePassword($student_data['full_name']);
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
         
@@ -113,10 +90,6 @@ class User {
         }
     }
 
-    /**
-     * Get all departments
-     * @return array Array of departments
-     */
     public static function getAllDepartments() {
         global $conn;
         $sql = "SELECT * FROM departments ORDER BY name";
@@ -124,10 +97,6 @@ class User {
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 
-    /**
-     * Update all existing student passwords to new format
-     * @return array Result with success status and message
-     */
     public static function updateAllStudentPasswords() {
         global $conn;
         
@@ -196,7 +165,6 @@ class User {
         }
         if ($start_date && $end_date) {
             $sql .= " AND u.created_at BETWEEN ? AND ?";
-            // Create variables for datetime strings
             $start_datetime = $start_date . ' 00:00:00';
             $end_datetime = $end_date . ' 23:59:59';
             $params[] = $start_datetime;
@@ -253,7 +221,6 @@ class User {
         }
         if ($start_date && $end_date) {
             $sql .= " AND created_at BETWEEN ? AND ?";
-            // Create variables for datetime strings
             $start_datetime = $start_date . ' 00:00:00';
             $end_datetime = $end_date . ' 23:59:59';
             $params[] = $start_datetime;
@@ -301,12 +268,6 @@ class User {
         return $stmt->execute();
     }
 
-    /**
-     * Update student profile with comprehensive information
-     * @param int $id User ID
-     * @param array $data Array containing profile data
-     * @return bool Success status
-     */
     public static function updateStudentProfile($id, $data) {
         global $conn;
         
@@ -349,13 +310,8 @@ class User {
         return $stmt->execute();
     }
 
-    /**
-     * Get all admin emails
-     * @return array Array of admin emails
-     */
     public static function getAdmins() {
         global $conn;
-        // Select admins who have an email address
         $sql = "SELECT email FROM users WHERE is_admin = 1 AND email IS NOT NULL AND email != ''";
         $result = $conn->query($sql);
         $emails = [];
@@ -367,25 +323,17 @@ class User {
         return $emails;
     }
 
-    /**
-     * Get user's profile picture URL
-     * @param int $user_id
-     * @return string Path to image
-     */
     public static function getProfilePicture($user_id) {
-        // defined upload directory
         $target_dir = __DIR__ . '/../src/assets/uploads/profile_pictures/';
         $web_path = '/app/src/assets/uploads/profile_pictures/';
         
-        // Check for existing files (jpg, png, jpeg)
         $extensions = ['jpg', 'jpeg', 'png'];
         foreach ($extensions as $ext) {
             if (file_exists($target_dir . "user_{$user_id}.{$ext}")) {
-                return $web_path . "user_{$user_id}.{$ext}?v=" . time(); // Add version to bust cache
+                return $web_path . "user_{$user_id}.{$ext}?v=" . time();
             }
         }
         
-        // Default
         return '/app/src/assets/images/Small Avatar.svg';
     }
 }

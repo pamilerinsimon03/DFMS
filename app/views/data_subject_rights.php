@@ -19,7 +19,6 @@
     <?php endif; ?>
 
     <div class="rights-grid">
-        <!-- Right to Access -->
         <div class="right-card">
             <h3>Right to Access</h3>
             <p>Request a copy of all personal data we hold about you.</p>
@@ -30,7 +29,6 @@
             </form>
         </div>
 
-        <!-- Right to Rectification -->
         <div class="right-card">
             <h3>Right to Rectification</h3>
             <p>Correct inaccurate or incomplete personal data.</p>
@@ -55,7 +53,6 @@
             </form>
         </div>
 
-        <!-- Right to Erasure -->
         <div class="right-card">
             <h3>Right to Erasure</h3>
             <p>Request deletion of your personal data (subject to legal requirements).</p>
@@ -66,7 +63,6 @@
             </form>
         </div>
 
-        <!-- Right to Restrict Processing -->
         <div class="right-card">
             <h3>Right to Restrict Processing</h3>
             <p>Limit how we process your personal data.</p>

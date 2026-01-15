@@ -108,7 +108,6 @@ class Document
                 JOIN users u ON d.user_id = u.id
                 WHERE d.created_at BETWEEN ? AND ?";
         
-        // Create variables for datetime strings
         $start_datetime = $start_date . ' 00:00:00';
         $end_datetime = $end_date . ' 23:59:59';
         
@@ -142,7 +141,6 @@ class Document
                   JOIN users u ON d.user_id = u.id
                   WHERE d.created_at BETWEEN ? AND ?";
         
-        // Create variables for datetime strings
         $start_datetime = $start_date . ' 00:00:00';
         $end_datetime = $end_date . ' 23:59:59';
         
@@ -182,7 +180,6 @@ class Document
         $sql .= " ORDER BY d.created_at DESC LIMIT ?";
         $stmt = $conn->prepare($sql);
 
-        // Create variables for datetime strings
         $start_datetime = $start_date . ' 00:00:00';
         $end_datetime = $end_date . ' 23:59:59';
 
@@ -207,7 +204,6 @@ class Document
         $ok = $stmt->execute();
 
         if ($ok) {
-            // Fetch doc to know owner and name
             $doc = self::getById($doc_id);
             if ($doc && isset($doc['user_id'])) {
                 $title = $status === 'Approved' ? 'Document approved' : 'Document rejected';
@@ -216,7 +212,6 @@ class Document
                     : "Your document '" . $doc['document_name'] . "' was rejected." . ($reason ? " Reason: " . $reason : " Please review and reupload.");
                 Notification::create((int)$doc['user_id'], $title, $message);
 
-                // Send Email Notification
                 $user = User::getById($doc['user_id']);
                 if ($user && !empty($user['email'])) {
                     $emailSubject = "Document Status: " . $status;
@@ -241,9 +236,7 @@ class Document
         return $ok;
     }
 
-    /**
-     * Generate smart search terms for fuzzy matching
-     */
+
     private static function generateSearchTerms($search) {
         $search = trim($search);
         if (empty($search)) {
@@ -252,15 +245,12 @@ class Document
         
         $terms = [];
         
-        // Original search term
         $terms[] = '%' . $search . '%';
         
-        // Case variations
         $terms[] = '%' . strtolower($search) . '%';
         $terms[] = '%' . strtoupper($search) . '%';
         $terms[] = '%' . ucfirst(strtolower($search)) . '%';
         
-        // Handle common typos and variations
         $variations = [
             'approv' => 'approved',
             'pend' => 'pending',
@@ -285,22 +275,16 @@ class Document
             }
         }
         
-        // Handle matric number patterns (common variations)
         if (preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $search)) {
-            // Format: 20/21/1234
             $terms[] = '%' . $search . '%';
         } elseif (preg_match('/^\d{10}$/', $search)) {
-            // Format: 2021123456
             $terms[] = '%' . $search . '%';
         }
         
-        // Remove duplicates and return
         return array_unique($terms);
     }
 
-    /**
-     * Get search suggestions based on existing data
-     */
+
     public static function getSearchSuggestions($query, $limit = 10) {
         global $conn;
         
@@ -437,7 +421,6 @@ class Document
         $params = [];
         $types = '';
 
-        // Create variables for datetime strings
         $start_datetime = $start_date . ' 00:00:00';
         $end_datetime = $end_date . ' 23:59:59';
 
@@ -514,10 +497,8 @@ class Document
     {
         global $conn;
         
-        // Include security utilities
         require_once __DIR__ . '/../utils/SecurityUtils.php';
 
-        // Validate file upload using security utilities
         $validationErrors = SecurityUtils::validateFileUpload($file);
         if (!empty($validationErrors)) {
             SecurityUtils::logSecurityEvent('file_upload_validation_failed', [
@@ -528,13 +509,11 @@ class Document
             return ['success' => false, 'message' => 'File validation failed: ' . implode(', ', $validationErrors)];
         }
 
-        // Create secure upload directory outside webroot
         $upload_dir = __DIR__ . '/../../secure_uploads/';
         if (!is_dir($upload_dir)) {
             mkdir($upload_dir, 0755, true);
         }
         
-        // Generate secure filename
         $secure_filename = SecurityUtils::generateSecureFilename($file['name'], $user_id);
         $file_path = 'secure_uploads/' . $secure_filename;
         $destination = $upload_dir . $secure_filename;
@@ -548,7 +527,6 @@ class Document
             return ['success' => false, 'message' => 'Failed to move uploaded file.'];
         }
         
-        // Log successful file upload
         SecurityUtils::logSecurityEvent('file_upload_success', [
             'user_id' => $user_id,
             'original_filename' => $file['name'],
@@ -589,15 +567,12 @@ class Document
         );
 
         if ($stmt->execute()) {
-            // Create notification for user
             $docTitle = $document_name;
             Notification::create(
                 $user_id,
                 'Upload successful',
                 "Your document '" . $docTitle . "' was uploaded and is awaiting verification."
             );
-
-            // Fetch user details for email
             $user = User::getById($user_id);
             if ($user && !empty($user['email'])) {
                 $subject = "Upload Received: " . $docTitle;
@@ -628,16 +603,13 @@ class Document
     {
         global $conn;
         
-        // Include security utilities
         require_once __DIR__ . '/../utils/SecurityUtils.php';
 
-        // 1. Get document details first
         $doc = self::getById($doc_id);
         if (!$doc) {
             return ['success' => false, 'message' => 'Document not found.'];
         }
 
-        // 2. Validate file upload using security utilities
         $validationErrors = SecurityUtils::validateFileUpload($new_file);
         if (!empty($validationErrors)) {
             SecurityUtils::logSecurityEvent('file_reupload_validation_failed', [
@@ -649,7 +621,6 @@ class Document
             return ['success' => false, 'message' => 'File validation failed: ' . implode(', ', $validationErrors)];
         }
 
-        // 2. Move the new file to secure location
         $upload_dir = __DIR__ . '/../../secure_uploads/';
         if (!is_dir($upload_dir)) {
             mkdir($upload_dir, 0755, true);
@@ -664,7 +635,6 @@ class Document
             return ['success' => false, 'message' => 'Failed to move uploaded file.'];
         }
 
-        // 3. Update the database
         $sql = "UPDATE documents SET file_path = ?, status = 'Pending Approval', created_at = NOW() WHERE id = ?";
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
@@ -683,7 +653,6 @@ class Document
                 'file_size' => $new_file['size']
             ]);
             
-            // Notify user of reupload awaiting verification
             $doc = self::getById($doc_id);
             Notification::create(
                 (int)$doc['user_id'],
@@ -691,7 +660,6 @@ class Document
                 "Your document '" . $doc['document_name'] . "' was reuploaded and is awaiting verification."
             );
 
-            // Fetch user details for email
             $user = User::getById($doc['user_id']);
             if ($user && !empty($user['email'])) {
                 $subject = "Re-upload Received: " . $doc['document_name'];
@@ -700,7 +668,6 @@ class Document
                 MailService::send($user['email'], $subject, $message);
             }
 
-            // Notify Admins
             $adminEmails = User::getAdmins();
             if (!empty($adminEmails)) {
                 $adminSubject = "Document Re-uploaded";
@@ -712,7 +679,7 @@ class Document
 
             return ['success' => true, 'message' => 'File re-uploaded successfully.'];
         } else {
-            unlink($destination); // Clean up uploaded file
+            unlink($destination);
             return ['success' => false, 'message' => 'Database error: ' . $stmt->error];
         }
     }

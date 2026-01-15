@@ -2,21 +2,15 @@
 
 class DataRetention {
     
-    /**
-     * Clean up expired data according to retention policies
-     */
     public static function cleanupExpiredData() {
         global $conn;
         
-        // Clean up expired password reset tokens (24 hours)
         $sql = "DELETE FROM password_resets WHERE created_at < DATE_SUB(NOW(), INTERVAL 24 HOUR)";
         $conn->query($sql);
         
-        // Clean up old notifications (1 year)
         $sql = "DELETE FROM notifications WHERE created_at < DATE_SUB(NOW(), INTERVAL 1 YEAR)";
         $conn->query($sql);
         
-        // Clean up old security logs (1 year)
         $logFile = __DIR__ . '/../logs/security.log';
         if (file_exists($logFile)) {
             $lines = file($logFile);
@@ -34,22 +28,17 @@ class DataRetention {
             file_put_contents($logFile, implode('', $filteredLines));
         }
         
-        // Log cleanup activity
         SecurityUtils::logSecurityEvent('data_retention_cleanup', [
             'timestamp' => date('Y-m-d H:i:s'),
             'action' => 'cleanup_expired_data'
         ]);
     }
     
-    /**
-     * Get data retention summary for a user
-     */
     public static function getRetentionSummary($userId) {
         global $conn;
         
         $summary = [];
         
-        // Get user data
         $user = User::getById($userId);
         if ($user) {
             $summary['user_data'] = [
@@ -58,7 +47,6 @@ class DataRetention {
             ];
         }
         
-        // Get document data
         $sql = "SELECT COUNT(*) as count, MIN(created_at) as oldest, MAX(created_at) as newest 
                 FROM documents WHERE user_id = ?";
         $stmt = $conn->prepare($sql);
@@ -78,9 +66,6 @@ class DataRetention {
         return $summary;
     }
     
-    /**
-     * Schedule data deletion for graduated students
-     */
     public static function scheduleDataDeletion($userId, $reason = 'graduation') {
         global $conn;
         

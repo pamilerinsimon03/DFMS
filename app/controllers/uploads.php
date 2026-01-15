@@ -15,9 +15,7 @@ $user_id = $_SESSION['user_id'];
 $user = User::getById($user_id);
 $tab = isset($_GET['tab']) ? strtolower($_GET['tab']) : 'total';
 
-// Handle re-upload logic
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reupload_id'])) {
-    // Validate CSRF token
     requireCSRFToken();
     
     $doc_id = $_POST['reupload_id'];
@@ -25,29 +23,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reupload_id'])) {
     $original_doc = Document::getById($doc_id);
 
     if ($original_doc && $original_doc['user_id'] == $user_id) {
-        // --- Quality Validation ---
         $filePath = $file['tmp_name'];
         $debug_messages = [];
         $isValid = true;
-        // define('MIN_BLURRINESS', 15.0);
-        // define('MIN_OCR_CONFIDENCE', 60);
-
         
-        // if (QualityCheckService::isImage($filePath)) {
-        //     $blurriness = QualityCheckService::getBlurriness($filePath, $debug_messages);
-        //     if ($blurriness < MIN_BLURRINESS) {
-        //         $_SESSION['upload_message'] = "Re-upload failed: The image is too blurry.";
-        //         $isValid = false;
-        //     }
-        // } elseif (strtolower(pathinfo($file['name'], PATHINFO_EXTENSION)) === 'pdf') {
-        //     $ocrConfidence = QualityCheckService::getOcrConfidence($filePath, $debug_messages);
-        //     if ($ocrConfidence < MIN_OCR_CONFIDENCE) {
-        //         $_SESSION['upload_message'] = "Re-upload failed: PDF text has low confidence.";
-        //         $isValid = false;
-        //     }
-        // }
-        // QualityCheckService::logDebugMessages($user_id, $debug_messages);
-
         if ($isValid) {
             $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
             $generated_filename = FilenameGenerator::generate($user_id, $original_doc['document_name'], $original_doc['semester'], $extension);
@@ -63,7 +42,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reupload_id'])) {
     exit();
 }
 
-// Fetch documents for the view
 $search = $_GET['search'] ?? null;
 if ($tab === 'total') {
     $documents = Document::getByUserId($user_id, $search);
@@ -76,17 +54,14 @@ if ($tab === 'total') {
     }
 }
 
-// Notifications for header dropdown
 $notifications = Notification::getForUser($user_id, 15);
 $unread_count = Notification::countUnread($user_id);
 
-// Prepare view variables
 $page_title = 'My Uploads';
 $active_page = 'uploads';
 $css_files = ['uploads.css'];
 $js_files = ['uploads.js', 'dashboard.js'];
 
-// SPA Request Handling
 if (isset($_SERVER['HTTP_X_SPA_REQUEST'])) {
     ob_start();
     require_once __DIR__ . '/../views/uploads.php';
@@ -101,7 +76,6 @@ if (isset($_SERVER['HTTP_X_SPA_REQUEST'])) {
     exit();
 }
 
-// --- AJAX Response Handling ---
 if (isset($_GET['ajax']) || (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')) {
     ob_start();
     if (empty($documents)): ?>
@@ -144,9 +118,7 @@ if (isset($_GET['ajax']) || (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtol
     endif;
     $html = ob_get_clean();
 
-    // Generate Info HTML
-    ob_start(); // Placeholder for info if needed, or return empty?
-    // Verifications has search info, let's add it if search is active.
+    ob_start(); 
     if (!empty($search)): ?>
          <div class="search-results-info">
             <span class="results-count"><?php echo count($documents); ?> result<?php echo count($documents) !== 1 ? 's' : ''; ?> found</span>

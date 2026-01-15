@@ -13,25 +13,20 @@ $message = '';
 $message_type = '';
 $import_results = [];
 
-// Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Validate CSRF token
     requireCSRFToken();
     
     $action = $_POST['action'] ?? '';
     
     if ($action === 'import_csv') {
-        // Handle CSV upload and import
         if (isset($_FILES['csv_file']) && $_FILES['csv_file']['error'] === UPLOAD_ERR_OK) {
             $file = $_FILES['csv_file'];
             
-            // Validate file type
             $file_extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
             if ($file_extension !== 'csv') {
                 $message = 'Please upload a valid CSV file.';
                 $message_type = 'error';
             } else {
-                // Process CSV file
                 $handle = fopen($file['tmp_name'], 'r');
                 if ($handle) {
                     $row_number = 0;
@@ -41,12 +36,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     while (($data = fgetcsv($handle)) !== FALSE) {
                         $row_number++;
                         
-                        // Skip header row
                         if ($row_number === 1) {
                             continue;
                         }
                         
-                        // Validate required columns
                         if (count($data) < 6) {
                             $import_results[] = [
                                 'row' => $row_number,
@@ -57,7 +50,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             continue;
                         }
                         
-                        // Extract data
                         $student_data = [
                             'matric_number' => trim($data[0]),
                             'full_name' => trim($data[1]),
@@ -70,7 +62,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'email' => trim($data[8] ?? '')
                         ];
                         
-                        // Validate required fields
                         if (empty($student_data['matric_number']) || empty($student_data['full_name'])) {
                             $import_results[] = [
                                 'row' => $row_number,
@@ -81,7 +72,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             continue;
                         }
                         
-                        // Create student
                         $result = User::createStudent($student_data);
                         
                         if ($result['success']) {
@@ -115,8 +105,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message_type = 'error';
         }
     } else {
-        // Handle individual student addition
-        // Validate required fields
         $required_fields = ['matric_number', 'full_name', 'level', 'session', 'programme', 'department_id'];
         $missing_fields = [];
         
@@ -130,7 +118,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'Please fill in all required fields: ' . implode(', ', $missing_fields);
             $message_type = 'error';
         } else {
-            // Prepare student data
             $student_data = [
                 'matric_number' => trim($_POST['matric_number']),
                 'full_name' => trim($_POST['full_name']),
@@ -143,14 +130,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'email' => trim($_POST['email'] ?? '')
             ];
             
-            // Create the student
             $result = User::createStudent($student_data);
             
             if ($result['success']) {
                 $message = $result['message'];
                 $message_type = 'success';
                 
-                // Clear form data on success
                 $_POST = [];
             } else {
                 $message = $result['message'];

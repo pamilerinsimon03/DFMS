@@ -1,7 +1,5 @@
 <?php
-// Prevent session errors in CLI mode
 if (php_sapi_name() !== 'cli') {
-    // Set secure session parameters BEFORE starting session
     session_set_cookie_params([
         'lifetime' => 3600, // 1 hour
         'path' => '/',
@@ -13,7 +11,6 @@ if (php_sapi_name() !== 'cli') {
     session_start();
 }
 
-// Check if running from CLI or on a local web server
 if (php_sapi_name() === 'cli' || (isset($_SERVER['SERVER_NAME']) && $_SERVER['SERVER_NAME'] === 'localhost')) {
     // Local machine
     $db_host = 'localhost';
@@ -28,7 +25,6 @@ if (php_sapi_name() === 'cli' || (isset($_SERVER['SERVER_NAME']) && $_SERVER['SE
     $db_name = $_ENV['DB_NAME'] ?? 'dfms_prod';
 }
 
-// For compatibility with the reconcile script that expects constants
 define('DB_HOST', $db_host);
 define('DB_USER', $db_user);
 define('DB_PASS', $db_pass);
@@ -36,7 +32,6 @@ define('DB_NAME', $db_name);
 
 $conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
 
-// CSRF Protection Functions
 function generateCSRFToken() {
     if (!isset($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -54,8 +49,6 @@ function requireCSRFToken() {
         die('CSRF token validation failed');
     }
 }
-
-// Session security is now configured above before session_start()
 
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);

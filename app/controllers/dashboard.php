@@ -18,7 +18,6 @@ if (User::isAdmin($user_id)) {
     $start_date = $_GET['start_date'] ?? date('Y-m-d', strtotime('-30 days'));
     $end_date = $_GET['end_date'] ?? date('Y-m-d');
 
-    // Fetch stats based on department, ensuring they default to 0
     $total_docs = Document::countAllDocuments('all', $start_date, $end_date, null, $department_id, null, null, null) ?? 0;
     $pending_docs = Document::countAllDocuments('pending', $start_date, $end_date, null, $department_id, null, null, null) ?? 0;
     $approved_docs = Document::countAllDocuments('approved', $start_date, $end_date, null, $department_id, null, null, null) ?? 0;
@@ -31,7 +30,6 @@ if (User::isAdmin($user_id)) {
     $css_files = ['admin.css', 'dashboard.css'];
     $js_files = ['admin.js'];
     
-    // SPA Request Handling
     if (isset($_SERVER['HTTP_X_SPA_REQUEST'])) {
         ob_start();
         require_once __DIR__ . '/../views/admin.php';
@@ -48,10 +46,9 @@ if (User::isAdmin($user_id)) {
 
     require_once __DIR__ . '/../views/partials/header.php';
     require_once __DIR__ . '/../views/partials/admin_sidebar.php';
-    require_once __DIR__ . '/../views/admin.php'; // Admin dashboard view
+    require_once __DIR__ . '/../views/admin.php';
     require_once __DIR__ . '/../views/partials/footer.php';
 } else {
-    // Student view
     $search = $_GET['search'] ?? null;
     $documents = Document::getByUserId($user_id, $search);
     $notifications = Notification::getForUser($user_id, 15);
@@ -60,7 +57,6 @@ if (User::isAdmin($user_id)) {
     $total_docs = count(Document::getByUserId($user_id));
     $document_types = require __DIR__ . '/../config/document_types.php';
     
-    // Get file requirements from database for this student's department
     $file_requirements = FileRequirement::getActiveForDepartment($user['department_id']);
     $required_docs = [];
     foreach ($file_requirements as $req) {
@@ -79,7 +75,6 @@ if (User::isAdmin($user_id)) {
     $css_files = ['style.css', 'styleguide.css', 'dashboard.css'];
     $js_files = ['dashboard.js'];
 
-    // SPA Request Handling
     if (isset($_SERVER['HTTP_X_SPA_REQUEST'])) {
         ob_start();
         require_once __DIR__ . '/../views/dashboard.php';

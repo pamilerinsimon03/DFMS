@@ -50,7 +50,6 @@
             </div>
             <div class="dropdown-icon"><img src="/app/src/assets/images/arrow-down.svg" alt="Dropdown Icon"></div>
             
-            <!-- Dropdown Menu -->
             <div class="profile-dropdown">
                 <a href="<?php echo User::isAdmin($_SESSION['user_id'] ?? 0) ? '/app/controllers/student_profile.php' : '/app/controllers/profile.php'; ?>" class="dropdown-item">
                     <img src="/app/src/assets/images/User-Circle.svg" alt="Profile"> Profile

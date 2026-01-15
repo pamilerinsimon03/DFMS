@@ -10,13 +10,11 @@
         </div>
     <?php endif; ?>
 
-    <!-- Tab Navigation -->
     <div class="tab-navigation">
         <button class="tab-button active" data-tab="individual">Individual Student</button>
         <button class="tab-button" data-tab="bulk">Bulk Import</button>
     </div>
 
-    <!-- Individual Student Tab -->
     <div class="tab-content active" id="individual-tab">
         <div class="form-container">
             <form method="POST" class="add-student-form">
@@ -107,7 +105,6 @@
         </div>
     </div>
 
-    <!-- Bulk Import Tab -->
     <div class="tab-content" id="bulk-tab">
         <div class="import-section">
             <div class="upload-container">
@@ -213,7 +210,6 @@
 </div>
 
 <script>
-// Tab functionality
 document.addEventListener('DOMContentLoaded', function() {
     const tabButtons = document.querySelectorAll('.tab-button');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -222,11 +218,9 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', () => {
             const targetTab = button.getAttribute('data-tab');
             
-            // Remove active class from all buttons and contents
             tabButtons.forEach(btn => btn.classList.remove('active'));
             tabContents.forEach(content => content.classList.remove('active'));
             
-            // Add active class to clicked button and corresponding content
             button.classList.add('active');
             document.getElementById(targetTab + '-tab').classList.add('active');
         });

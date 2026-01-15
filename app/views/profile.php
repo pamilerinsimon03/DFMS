@@ -43,7 +43,6 @@
                 <img src="/app/src/assets/images/arrow-down.svg" alt="Dropdown Icon">
             </div>
             
-            <!-- Dropdown Menu -->
             <div class="profile-dropdown" id="profile-dropdown-menu">
                 <a href="<?php echo User::isAdmin($_SESSION['user_id'] ?? 0) ? '/app/controllers/student_profile.php' : '/app/controllers/profile.php'; ?>" class="dropdown-item">
                     <img src="/app/src/assets/images/User-Circle.svg" alt="Profile"> Profile
@@ -94,7 +93,6 @@
         <?php endif; ?>
 
     <div class="profile-grid">
-        <!-- Profile Form Section -->
         <div class="profile-card">
             <div class="card-header">
                 <div class="card-icon">
@@ -218,9 +216,7 @@
     </div>
 </div>
 
-<!-- Profile Sidebar Section -->
 <div class="profile-sidebar">
-<!-- Profile Photo Section -->
 <div class="profile-card">
     <div class="card-header">
         <div class="card-icon">
@@ -251,7 +247,6 @@
     </div>
 </div>
 
-<!-- Account Information Section -->
 <div class="profile-card">
             <div class="card-header">
                 <div class="card-icon">
@@ -310,24 +305,21 @@
             </div>
         </div>
     </div>
-</div> <!-- End Profile Sidebar -->
+</div>
     </div>
         </div>
     </div>
 </div>
 
 <script>
-    // Force Binding for Notification Dropdown on Profile Page
     document.addEventListener('DOMContentLoaded', function() {
         const notifBell = document.getElementById('notif-bell');
         const notifDropdown = document.getElementById('notif-dropdown');
         
         if (notifBell && notifDropdown) {
-            // Remove any existing listeners by cloning (optional, but cleaner)
             const newBell = notifBell.cloneNode(true);
             notifBell.parentNode.replaceChild(newBell, notifBell);
             
-            // Re-find the dropdown inside the new bell or via ID
             const newDropdown = document.getElementById('notif-dropdown');
             
             newBell.addEventListener('click', function(e) {
@@ -338,7 +330,6 @@
                 newDropdown.style.display = isVisible ? 'none' : 'block';
             });
             
-            // Close on outside click
             document.addEventListener('click', function(e) {
                 if (!newBell.contains(e.target)) {
                     newDropdown.style.display = 'none';
@@ -346,7 +337,6 @@
             });
         }
         
-        // Force Binding for Profile Dropdown as well
         const userProfile = document.querySelector('.user-profile');
         const profileDropdown = document.getElementById('profile-dropdown-menu'); // targeted by ID
         
@@ -354,12 +344,10 @@
              const newProfile = userProfile.cloneNode(true);
              userProfile.parentNode.replaceChild(newProfile, userProfile);
              
-             // We need to re-find the dropdown inside the cloned element because it's a child
              const reFoundDropdown = newProfile.querySelector('.profile-dropdown');
              
              newProfile.addEventListener('click', function(e) {
                  e.stopPropagation();
-                 // Close notifications if open
                  const notifDD = document.getElementById('notif-dropdown');
                  if(notifDD) notifDD.style.display = 'none';
                  

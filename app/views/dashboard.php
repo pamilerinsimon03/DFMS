@@ -50,7 +50,6 @@
             </div>
             <div class="dropdown-icon"><img src="/app/src/assets/images/arrow-down.svg" alt="Dropdown Icon"></div>
             
-            <!-- Dropdown Menu -->
             <div class="profile-dropdown">
                 <a href="<?php echo User::isAdmin($_SESSION['user_id'] ?? 0) ? '/app/controllers/student_profile.php' : '/app/controllers/profile.php'; ?>" class="dropdown-item">
                     <img src="/app/src/assets/images/User-Circle.svg" alt="Profile">
@@ -173,7 +172,6 @@
                     <label for="file-upload" class="custom-file-upload">Choose File</label>
                     <span id="file-name-display" class="file-name-display"></span>
                     
-                    <!-- Progress Bar -->
                     <div id="upload-progress-container" style="display: none; width: 100%; margin: 10px 0;">
                         <div style="width: 100%; background-color: #f3f3f3; border-radius: 4px;">
                             <div id="upload-progress-bar" style="width: 0%; height: 10px; background-color: #4caf50; border-radius: 4px; transition: width 0.3s;"></div>

@@ -1,9 +1,10 @@
-// Profile page functionality
-document.addEventListener('DOMContentLoaded', function() {
-    // Mobile menu functionality
+const initSettings = () => {
     const burger = document.getElementById('mobile-menu-toggle');
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('mobile-sidebar-overlay');
+
+    if (!burger || burger.dataset.init) return;
+    burger.dataset.init = 'true';
 
     function openSidebar() {
         sidebar.classList.add('open');
@@ -24,12 +25,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // If you click the overlay itself, close the sidebar
     overlay.addEventListener('click', function() {
         closeSidebar();
     });
 
-    // Auto-hide alerts after 5 seconds
     const alerts = document.querySelectorAll('.alert');
     alerts.forEach(alert => {
         setTimeout(() => {
@@ -40,7 +39,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5000);
     });
 
-    // Notifications dropdown support (page-local)
     const notifIcons = document.querySelectorAll('.notification-icon');
     notifIcons.forEach(icon => {
         const dropdown = icon.querySelector('.notifications-dropdown');
@@ -50,9 +48,11 @@ document.addEventListener('DOMContentLoaded', function() {
             dropdown.style.display = dropdown.style.display === 'none' || dropdown.style.display === '' ? 'block' : 'none';
         });
     });
+
     document.addEventListener('click', () => {
         document.querySelectorAll('.notifications-dropdown').forEach(d => d.style.display = 'none');
     });
+
     document.querySelectorAll('.mark-read-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             e.preventDefault();
@@ -68,4 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-});
+};
+
+window.initSettings = initSettings;
+document.addEventListener('DOMContentLoaded', initSettings);
