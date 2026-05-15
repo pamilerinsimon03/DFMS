@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Prepare profile data with validation
             $profile_data = [
-                'full_name' => SecurityUtils::validateInput($_POST['full_name'] ?? '', 'string', 100),
+                'full_name' => SecurityUtils::validateInput($_POST['full_name'], 'string', 100),
                 'email' => SecurityUtils::validateInput($_POST['email'] ?? '', 'email', 255),
                 'phone_number' => SecurityUtils::validateInput($_POST['phone_number'] ?? '', 'string', 20),
                 'date_of_birth' => SecurityUtils::validateInput($_POST['date_of_birth'] ?? '', 'string', 10),

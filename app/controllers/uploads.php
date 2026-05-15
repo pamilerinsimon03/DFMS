@@ -28,7 +28,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reupload_id'])) {
         // --- Quality Validation ---
         $filePath = $file['tmp_name'];
         $debug_messages = [];
-        $isValid = true;
         // define('MIN_BLURRINESS', 15.0);
         // define('MIN_OCR_CONFIDENCE', 60);
 
@@ -48,13 +47,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reupload_id'])) {
         // }
         // QualityCheckService::logDebugMessages($user_id, $debug_messages);
 
-        if ($isValid) {
-            $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-            $generated_filename = FilenameGenerator::generate($user_id, $original_doc['document_name'], $original_doc['semester'], $extension);
-            
-            $result = Document::reupload($doc_id, $file, $generated_filename);
-            $_SESSION['upload_message'] = $result['message'];
-        }
+        $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $generated_filename = FilenameGenerator::generate($user_id, $original_doc['document_name'], $original_doc['semester'], $extension);
+
+        $result = Document::reupload($doc_id, $file, $generated_filename);
+        $_SESSION['upload_message'] = $result['message'];
     } else {
         $_SESSION['upload_message'] = 'Invalid document or permission denied.';
     }

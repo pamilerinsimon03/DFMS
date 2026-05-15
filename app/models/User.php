@@ -302,6 +302,27 @@ class User {
     }
 
     /**
+     * Update a single field for a user
+     * @param int $id User ID
+     * @param string $field Field name
+     * @param string $value New value
+     * @return bool Success status
+     */
+    public static function updateSingleField($id, $field, $value) {
+        global $conn;
+        // Whitelist allowed fields to prevent SQL injection
+        $allowed_fields = ['full_name', 'email', 'phone_number', 'address'];
+        if (!in_array($field, $allowed_fields)) {
+            return false;
+        }
+
+        $sql = "UPDATE users SET `$field` = ? WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("si", $value, $id);
+        return $stmt->execute();
+    }
+
+    /**
      * Update student profile with comprehensive information
      * @param int $id User ID
      * @param array $data Array containing profile data

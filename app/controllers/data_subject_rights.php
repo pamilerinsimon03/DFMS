@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $new_value = $_POST['new_value'] ?? '';
             
             if (in_array($field, ['full_name', 'email', 'phone_number', 'address'])) {
-                $result = User::updateProfile($_SESSION['user_id'], $field, $new_value);
+                $result = User::updateSingleField($_SESSION['user_id'], $field, $new_value);
                 if ($result) {
                     $message = "Your data has been updated successfully.";
                     SecurityUtils::logSecurityEvent('data_rectification', [
