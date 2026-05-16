@@ -393,7 +393,7 @@ class User {
      * Update a single field for a user
      */
     public static function updateSingleField($userId, $field, $value) {
-        $conn = Database::getInstance()->getConnection();
+        $conn = app\core\Database::getInstance()->getConnection();
 
         $allowedFields = ['full_name', 'email', 'phone', 'department_id', 'level', 'session', 'matric_number', 'program_type', 'mode'];
         if (!in_array($field, $allowedFields)) {

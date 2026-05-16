@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (User::updateStudentProfile($user_id, $profile_data)) {
                 $success = "Profile updated successfully!";
                 $user = User::getById($user_id); // Refresh user data
-                if (isset($profile_data['full_name'])) { $_SESSION['full_name'] = $profile_data['full_name']; }
+                $_SESSION['full_name'] = $profile_data['full_name'];
                 
                 // Re-check if profile is now complete
                 $profile_complete = true;

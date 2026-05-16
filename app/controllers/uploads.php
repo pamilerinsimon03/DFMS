@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reupload_id'])) {
         // }
         // QualityCheckService::logDebugMessages($user_id, $debug_messages);
 
-        if (true) {
+        if ($isValid) {
             $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
             $generated_filename = FilenameGenerator::generate($user_id, $original_doc['document_name'], $original_doc['semester'], $extension);
 

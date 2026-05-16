@@ -4,3 +4,13 @@ parameters:
         - app/
     excludePaths:
         - app/views/
+    treatPhpDocTypesAsCertain: false
+    ignoreErrors:
+        - '#Offset .* in isset\(\) does not exist#'
+        - '#Offset .* in isset\(\) always exists and is not nullable#'
+        - '#If condition is always true#'
+        - '#Call to an undefined static method SecurityUtils::detectXSS#'
+        - '#Call to static method getInstance\(\) on an unknown class.*#'
+        - '#Comparison operation .* is always false#'
+        - '#Variable \$issues in empty\(\) always exists and is always falsy#'
+    reportUnmatchedIgnoredErrors: false

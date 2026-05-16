@@ -43,8 +43,7 @@ class QualityCheckService
                     [-1, -1, -1]
                 ];
                 
-                $kernel = \ImagickKernel::fromMatrix($matrix);
-                $image->convolveImage($kernel);
+                $image->convolveImage($matrix);
                 
                 // Calculate standard deviation of the convolved image
                 $stats = $image->getImageChannelStatistics();
@@ -52,10 +51,10 @@ class QualityCheckService
                 // Different Imagick versions return different keys (0 vs user_defined)
                 // We use CHANNEL_DEFAULT which usually covers all active channels (Gray)
                 $stdDev = 0;
-                if (isset($stats[Imagick::CHANNEL_DEFAULT])) {
-                     $stdDev = $stats[Imagick::CHANNEL_DEFAULT]['standardDeviation'];
-                } elseif (isset($stats[0])) {
-                     $stdDev = $stats[0]['standardDeviation'];
+                if (isset($stats[Imagick::CHANNEL_DEFAULT]) && isset($stats[Imagick::CHANNEL_DEFAULT]['standardDeviation'])) {
+                     $stdDev = (float)$stats[Imagick::CHANNEL_DEFAULT]['standardDeviation'];
+                } elseif (isset($stats[0]) && isset($stats[0]['standardDeviation'])) {
+                     $stdDev = (float)$stats[0]['standardDeviation'];
                 }
 
                 $image->clear();
@@ -192,7 +191,7 @@ class QualityCheckService
 
                 // Enhancements for OCR
                 $im->setImageType(Imagick::IMGTYPE_GRAYSCALE);
-                $im->contrastImage(1); // Increase contrast
+                $im->contrastImage(true); // Increase contrast
                 // $im->adaptiveThresholdImage(10, 10, 0); // Local binarization (can be aggressive, optional)
                 $im->despeckleImage(); // Remove noise
 

@@ -82,7 +82,7 @@ jobs:
       run: composer audit --format=json > audit-results.json || true
     
     - name: Upload audit results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: composer-audit-results
         path: audit-results.json
@@ -173,7 +173,7 @@ jobs:
         echo "- Custom Checks: ${{ needs.custom-security-checks.result }}" >> security-summary.md
     
     - name: Upload security report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: security-scan-report
         path: security-summary.md
