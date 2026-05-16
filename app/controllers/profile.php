@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Prepare profile data with validation
             $profile_data = [
-                'full_name' => SecurityUtils::validateInput($_POST['full_name'], 'string', 100),
+                'full_name' => SecurityUtils::validateInput(isset($_POST['full_name']) ? $_POST['full_name'] : '', 'string', 100),
                 'email' => SecurityUtils::validateInput($_POST['email'] ?? '', 'email', 255),
                 'phone_number' => SecurityUtils::validateInput($_POST['phone_number'] ?? '', 'string', 20),
                 'date_of_birth' => SecurityUtils::validateInput($_POST['date_of_birth'] ?? '', 'string', 10),
@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (User::updateStudentProfile($user_id, $profile_data)) {
                 $success = "Profile updated successfully!";
                 $user = User::getById($user_id); // Refresh user data
-                $_SESSION['full_name'] = $profile_data['full_name'];
+                if (isset($profile_data['full_name'])) { $_SESSION['full_name'] = $profile_data['full_name']; }
                 
                 // Re-check if profile is now complete
                 $profile_complete = true;

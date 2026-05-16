@@ -30,7 +30,7 @@ jobs:
       run: composer global require phpstan/phpstan
     
     - name: Run PHPStan
-      run: phpstan analyse app/ --level=5 --no-progress
+      run: phpstan analyse -c phpstan.neon --no-progress
     
     - name: Install Psalm
       run: composer global require vimeo/psalm
@@ -111,7 +111,7 @@ jobs:
     
     - name: Check for SQL injection patterns
       run: |
-        if grep -r "SELECT.*\$" app/models/ --include="*.php" | grep -v "prepare\|bind_param"; then
+        if grep -r -E "SELECT.*\\$.*" app/models/ --include="*.php" | grep -v "prepare\\|bind_param"; then
           echo "❌ Potential SQL injection found!"
           exit 1
         else
