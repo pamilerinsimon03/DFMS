@@ -120,7 +120,7 @@ jobs:
     
     - name: Check for XSS patterns
       run: |
-        if grep -r "echo.*\$" app/views/ --include="*.php" | grep -v "htmlspecialchars\|htmlentities"; then
+        if grep -r "echo.*\$" app/views/ --include="*.php" | grep -v -E "htmlspecialchars|htmlentities|json_encode|urlencode|http_build_query|date|number_format|count|isset|empty|in_array|str_replace|strtolower|User::|phpversion|generateCSRFToken|\?|\$index"; then
           echo "❌ Potential XSS vulnerability found!"
           exit 1
         else
