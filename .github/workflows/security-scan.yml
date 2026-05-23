@@ -36,7 +36,11 @@ jobs:
       run: composer global require vimeo/psalm
     
     - name: Run Psalm
-      run: psalm --init && psalm --show-info=false
+      run: |
+        if [ ! -f psalm.xml ]; then
+          psalm --init app 5
+        fi
+        psalm --show-info=false
 
   secret-scan:
     name: Secret Scanning
@@ -52,8 +56,6 @@ jobs:
       uses: trufflesecurity/trufflehog@main
       with:
         path: ./
-        base: main
-        head: HEAD
         extra_args: --debug --only-verified
     
     - name: Run Gitleaks
@@ -76,10 +78,21 @@ jobs:
         php-version: '8.0'
     
     - name: Install Composer dependencies
-      run: composer install --no-dev --optimize-autoloader
+      run: |
+        if [ -f composer.json ]; then
+          composer install --no-dev --optimize-autoloader
+        else
+          echo "No composer.json found, skipping dependency installation."
+        fi
     
     - name: Run Composer Audit
-      run: composer audit --format=json > audit-results.json || true
+      run: |
+        if [ -f composer.json ]; then
+          composer audit --format=json > audit-results.json
+        else
+          echo "No composer.json found, generating empty audit report."
+          echo '{"advisories":[]}' > audit-results.json
+        fi
     
     - name: Upload audit results
       uses: actions/upload-artifact@v3
