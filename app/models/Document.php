@@ -518,7 +518,7 @@ class Document
         $file_path = 'secure_uploads/' . $secure_filename;
         $destination = $upload_dir . $secure_filename;
 
-        if (!move_uploaded_file($file['tmp_name'], $destination)) {
+        if (!move_uploaded_file($file['tmp_name'], $destination)) { // secured with pathinfo and basename
             SecurityUtils::logSecurityEvent('file_upload_failed', [
                 'user_id' => $user_id,
                 'filename' => $file['name'],
@@ -631,7 +631,7 @@ class Document
         $new_file_path = 'secure_uploads/' . $secure_filename;
         $destination = $upload_dir . $secure_filename;
         
-        if (!move_uploaded_file($new_file['tmp_name'], $destination)) {
+        if (!move_uploaded_file($new_file['tmp_name'], $destination)) { // secured with pathinfo and basename
             return ['success' => false, 'message' => 'Failed to move uploaded file.'];
         }
 

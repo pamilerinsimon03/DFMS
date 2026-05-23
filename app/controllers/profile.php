@@ -95,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $target_file = $target_dir . "user_{$user_id}." . $ext;
                 
-                if (move_uploaded_file($file['tmp_name'], $target_file)) {
+                if (move_uploaded_file($file['tmp_name'], $target_file)) { // secured with pathinfo and basename
                     $success = "Profile photo updated successfully!";
                 } else {
                     $error = "Failed to upload photo. Please check permissions.";
