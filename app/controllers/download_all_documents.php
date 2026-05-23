@@ -15,14 +15,24 @@ if (!isset($_SESSION['user_id']) || !User::isAdmin($_SESSION['user_id'])) {
 $user_id = isset($_GET['user_id']) ? (int)$_GET['user_id'] : 0;
 $status  = $_GET['status'] ?? 'all';
 
+// Enforce administrative access boundaries by department
+$current_user = User::getById($_SESSION['user_id']);
+if ($current_user['matric_number'] !== 'SUPER_ADMIN') {
+    $doc_owner = User::getById($user_id);
+    if (!$doc_owner || $doc_owner['department_id'] !== $current_user['department_id']) {
+        header("HTTP/1.1 403 Forbidden");
+        exit("Access denied: You can only download documents of students from your department.");
+    }
+}
+
 $allDocs = Document::getDocumentsByUserId($user_id);
 
 if ($status === 'all') {
     $docs = $allDocs;
 } else {
     $docs = array_filter(
-    $allDocs,
-    fn($d) => $d['status'] === $status
+        $allDocs,
+        fn($d) => $d['status'] === $status
     );
 }
 
@@ -37,7 +47,8 @@ if ($zip->open($tmpFile, ZipArchive::CREATE) !== true) {
 }
 
 foreach ($docs as $doc) {
-    $path = __DIR__ . '/../../public/' . $doc['file_path'];
+    // Fix: secure_uploads is at the root, not inside public/
+    $path = __DIR__ . '/../../' . $doc['file_path'];
     if (is_file($path)) {
         $zip->addFile($path, basename($doc['file_path']));
     }

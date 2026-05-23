@@ -561,7 +561,7 @@ class Document
             $file_path,
             $classification_data['level'],
             $classification_data['semester'],
-            $classification['program_type'],
+            $classification_data['program_type'],
             $classification_data['mode'],
             $classification_data['department_id']
         );

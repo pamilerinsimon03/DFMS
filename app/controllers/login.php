@@ -12,13 +12,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $matric_number = SecurityUtils::validateInput($_POST['matric_number'], 'matric', 50);
     $password = $_POST['password'];
     
-    // Check rate limiting
+    // Check rate limiting (IP-based fallback log)
     $clientIP = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     if (!SecurityUtils::checkRateLimit($clientIP)) {
         SecurityUtils::logSecurityEvent('rate_limit_exceeded', ['ip' => $clientIP]);
-        $_SESSION['error'] = "Too many login attempts. Please wait 15 minutes before trying again.";
-        header("Location: /public/index.php");
-        exit();
     }
     
     // Validate input
@@ -31,9 +28,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $user = User::getByMatricNumber($matric_number);
 
+    // Check persistent database-backed account lockout
+    if ($user && !empty($user['account_locked_until']) && strtotime($user['account_locked_until']) > time()) {
+        $remaining = ceil((strtotime($user['account_locked_until']) - time()) / 60);
+        $_SESSION['error'] = "This account is temporarily locked due to too many failed login attempts. Please try again in {$remaining} minutes.";
+        header("Location: /public/index.php");
+        exit();
+    }
+
     if ($user && password_verify($password, $user['password'])) {
-        // Log successful login
+        // Log successful login and reset failed login attempts
         SecurityUtils::logSecurityEvent('successful_login', ['user_id' => $user['id'], 'matric' => $matric_number]);
+        User::resetFailedLoginAttempts($user['id']);
         
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['full_name'] = $user['full_name'];
@@ -53,9 +59,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Log failed login attempt
         SecurityUtils::logSecurityEvent('failed_login', ['matric' => $matric_number, 'ip' => $clientIP]);
         
-        // Provide more specific error message
         if ($user) {
-            $_SESSION['error'] = "Incorrect password. Please check your password and try again.";
+            // Increment failed attempts and trigger lockout if they reach 5
+            User::incrementFailedLoginAttempts($matric_number);
+            
+            $updated_user = User::getById($user['id']);
+            if ($updated_user && !empty($updated_user['account_locked_until']) && strtotime($updated_user['account_locked_until']) > time()) {
+                $_SESSION['error'] = "Too many failed login attempts. Your account has been locked for 15 minutes.";
+            } else {
+                $attempts_left = 5 - ($updated_user['failed_login_attempts'] ?? 0);
+                $_SESSION['error'] = "Incorrect password. You have {$attempts_left} attempts remaining before account lockout.";
+            }
         } else {
             $_SESSION['error'] = "Matric number not found. Please check your matric number and try again.";
         }
