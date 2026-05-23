@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<psalm
+    errorLevel="8"
+    resolveFromConfigFile="true"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="https://getpsalm.org/schema/config"
+    xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
+>
+    <projectFiles>
+        <directory name="app" />
+        <ignoreFiles>
+            <directory name="vendor" />
+        </ignoreFiles>
+    </projectFiles>
+    
+    <issueHandlers>
+        <UnusedVariable errorLevel="suppress" />
+        <UndefinedGlobalVariable errorLevel="suppress" />
+        <PossiblyUnusedMethod errorLevel="suppress" />
+        <PossiblyUnusedParam errorLevel="suppress" />
+        <InvalidGlobal errorLevel="suppress" />
+        <UndefinedClass errorLevel="suppress" />
+        <InvalidClass errorLevel="suppress" />
+        <UndefinedFunction errorLevel="suppress" />
+        <PossiblyUnusedProperty errorLevel="suppress" />
+        <PropertyNotSetInConstructor errorLevel="suppress" />
+        <MissingConstructor errorLevel="suppress" />
+    </issueHandlers>
+</psalm>
