@@ -14,6 +14,20 @@ $success = '';
 $total_students = User::countAllStudents('', null, null, null, null, null, null);
 $total_departments = count(User::getAllDepartments());
 
+// Load system preferences and security settings from JSON store
+$settings_file = __DIR__ . '/../config/settings.json';
+$settings = [];
+if (file_exists($settings_file)) {
+    $settings = json_decode(file_get_contents($settings_file), true) ?? [];
+}
+
+$session_year = $settings['session_year'] ?? '2023/2024';
+$max_file_size = $settings['max_file_size'] ?? '5';
+$auto_approve = $settings['auto_approve'] ?? '0';
+$enable_2fa = $settings['enable_2fa'] ?? false;
+$session_timeout = $settings['session_timeout'] ?? true;
+$login_notifications = $settings['login_notifications'] ?? true;
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     requireCSRFToken();
     
@@ -67,11 +81,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             break;
             
         case 'update_preferences':
-            $session_year = $_POST['session_year'] ?? '';
-            $max_file_size = $_POST['max_file_size'] ?? '';
-            $auto_approve = $_POST['auto_approve'] ?? '';
+            $session_year = $_POST['session_year'] ?? '2023/2024';
+            $max_file_size = $_POST['max_file_size'] ?? '5';
+            $auto_approve = $_POST['auto_approve'] ?? '0';
             
-            $success = "System preferences updated successfully.";
+            $settings['session_year'] = $session_year;
+            $settings['max_file_size'] = $max_file_size;
+            $settings['auto_approve'] = $auto_approve;
+            
+            if (file_put_contents($settings_file, json_encode($settings, JSON_PRETTY_PRINT))) {
+                $success = "System preferences updated successfully.";
+            } else {
+                $error = "Failed to save system preferences. Please check file permissions.";
+            }
             break;
             
         case 'update_security':
@@ -79,7 +101,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $session_timeout = isset($_POST['session_timeout']);
             $login_notifications = isset($_POST['login_notifications']);
             
-            $success = "Security settings updated successfully.";
+            $settings['enable_2fa'] = $enable_2fa;
+            $settings['session_timeout'] = $session_timeout;
+            $settings['login_notifications'] = $login_notifications;
+            
+            if (file_put_contents($settings_file, json_encode($settings, JSON_PRETTY_PRINT))) {
+                $success = "Security settings updated successfully.";
+            } else {
+                $error = "Failed to save security settings. Please check file permissions.";
+            }
             break;
     }
 }

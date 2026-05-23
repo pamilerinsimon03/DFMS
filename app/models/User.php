@@ -337,9 +337,6 @@ class User {
         return '/app/src/assets/images/Small Avatar.svg';
     }
 
-    /**
-     * Update a single field for a user
-     */
     public static function updateSingleField($userId, $field, $value) {
         $conn = app\core\Database::getInstance()->getConnection();
 
@@ -357,4 +354,32 @@ class User {
         return $stmt->execute();
     }
 
+    public static function incrementFailedLoginAttempts($matric_number) {
+        global $conn;
+        
+        $user = self::getByMatricNumber($matric_number);
+        if (!$user) return false;
+        
+        $new_attempts = $user['failed_login_attempts'] + 1;
+        
+        if ($new_attempts >= 5) {
+            $sql = "UPDATE users SET failed_login_attempts = ?, account_locked_until = DATE_ADD(NOW(), INTERVAL 15 MINUTE) WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("ii", $new_attempts, $user['id']);
+        } else {
+            $sql = "UPDATE users SET failed_login_attempts = ? WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("ii", $new_attempts, $user['id']);
+        }
+        
+        return $stmt->execute();
+    }
+
+    public static function resetFailedLoginAttempts($id) {
+        global $conn;
+        $sql = "UPDATE users SET failed_login_attempts = 0, account_locked_until = NULL, last_login_at = NOW() WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $id);
+        return $stmt->execute();
+    }
 }
