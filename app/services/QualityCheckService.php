@@ -27,7 +27,8 @@ class QualityCheckService
                     [-1, -1, -1]
                 ];
                 
-                $image->convolveImage($matrix);
+                $kernel = \ImagickKernel::fromMatrix($matrix);
+                $image->convolveImage($kernel);
                 
                 $stats = $image->getImageChannelStatistics();
                 
