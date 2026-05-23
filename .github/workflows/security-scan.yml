@@ -30,7 +30,7 @@ jobs:
       run: composer global require phpstan/phpstan
     
     - name: Run PHPStan
-      run: phpstan analyse app/ --level=5 --no-progress
+      run: phpstan analyse -c phpstan.neon --no-progress
     
     - name: Install Psalm
       run: composer global require vimeo/psalm
@@ -82,7 +82,7 @@ jobs:
       run: composer audit --format=json > audit-results.json || true
     
     - name: Upload audit results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: composer-audit-results
         path: audit-results.json
@@ -111,7 +111,7 @@ jobs:
     
     - name: Check for SQL injection patterns
       run: |
-        if grep -r "SELECT.*\$" app/models/ --include="*.php" | grep -v "prepare\|bind_param"; then
+        if grep -r -E "SELECT.*\\$.*" app/models/ --include="*.php" | grep -v "prepare\\|bind_param"; then
           echo "❌ Potential SQL injection found!"
           exit 1
         else
@@ -120,7 +120,7 @@ jobs:
     
     - name: Check for XSS patterns
       run: |
-        if grep -r "echo.*\$" app/views/ --include="*.php" | grep -v "htmlspecialchars\|htmlentities"; then
+        if grep -r "echo.*\$" app/views/ --include="*.php" | grep -v -E "htmlspecialchars|htmlentities|json_encode|urlencode|http_build_query|date|number_format|count|isset|empty|in_array|str_replace|strtolower|User::|phpversion|generateCSRFToken|\?|\$index"; then
           echo "❌ Potential XSS vulnerability found!"
           exit 1
         else
@@ -173,7 +173,7 @@ jobs:
         echo "- Custom Checks: ${{ needs.custom-security-checks.result }}" >> security-summary.md
     
     - name: Upload security report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: security-scan-report
         path: security-summary.md

@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reupload_id'])) {
         if ($isValid) {
             $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
             $generated_filename = FilenameGenerator::generate($user_id, $original_doc['document_name'], $original_doc['semester'], $extension);
-            
+
             $result = Document::reupload($doc_id, $file, $generated_filename);
             $_SESSION['upload_message'] = $result['message'];
         }

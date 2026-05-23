@@ -27,16 +27,15 @@ class QualityCheckService
                     [-1, -1, -1]
                 ];
                 
-                $kernel = \ImagickKernel::fromMatrix($matrix);
-                $image->convolveImage($kernel);
+                $image->convolveImage($matrix);
                 
                 $stats = $image->getImageChannelStatistics();
                 
                 $stdDev = 0;
-                if (isset($stats[Imagick::CHANNEL_DEFAULT])) {
-                     $stdDev = $stats[Imagick::CHANNEL_DEFAULT]['standardDeviation'];
-                } elseif (isset($stats[0])) {
-                     $stdDev = $stats[0]['standardDeviation'];
+                if (isset($stats[Imagick::CHANNEL_DEFAULT]) && isset($stats[Imagick::CHANNEL_DEFAULT]['standardDeviation'])) {
+                     $stdDev = (float)$stats[Imagick::CHANNEL_DEFAULT]['standardDeviation'];
+                } elseif (isset($stats[0]) && isset($stats[0]['standardDeviation'])) {
+                     $stdDev = (float)$stats[0]['standardDeviation'];
                 }
 
                 $image->clear();
@@ -155,7 +154,7 @@ class QualityCheckService
                 }
 
                 $im->setImageType(Imagick::IMGTYPE_GRAYSCALE);
-                $im->contrastImage(1); // Increase contrast
+                $im->contrastImage(true); // Increase contrast
                 // $im->adaptiveThresholdImage(10, 10, 0); // Local binarization (can be aggressive, optional)
                 $im->despeckleImage(); // Remove noise
 

@@ -336,4 +336,25 @@ class User {
         
         return '/app/src/assets/images/Small Avatar.svg';
     }
+
+    /**
+     * Update a single field for a user
+     */
+    public static function updateSingleField($userId, $field, $value) {
+        $conn = app\core\Database::getInstance()->getConnection();
+
+        $allowedFields = ['full_name', 'email', 'phone', 'department_id', 'level', 'session', 'matric_number', 'program_type', 'mode'];
+        if (!in_array($field, $allowedFields)) {
+            return false;
+        }
+
+        $sql = "UPDATE users SET {$field} = ? WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+
+        $type = is_int($value) ? 'i' : 's';
+
+        $stmt->bind_param("{$type}i", $value, $userId);
+        return $stmt->execute();
+    }
+
 }

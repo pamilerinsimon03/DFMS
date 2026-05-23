@@ -136,7 +136,7 @@ function testInputValidation() {
     // Test XSS detection
     $total++;
     $xss_payload = '<script>alert("xss")</script>';
-    if (SecurityUtils::detectXSS($xss_payload)) {
+    if (method_exists('SecurityUtils', 'detectXSS') && SecurityUtils::detectXSS($xss_payload)) {
         echo "  ✅ XSS detection working\n";
         $passed++;
     } else {
@@ -339,9 +339,13 @@ testEnvironmentSecurity();
 echo "📊 SECURITY VALIDATION SUMMARY\n";
 echo "==============================\n";
 echo "Tests Passed: $passed/$total\n";
-echo "Success Rate: " . round(($passed / $total) * 100, 1) . "%\n\n";
+if ($total > 0) {
+    echo "Success Rate: " . round(($passed / $total) * 100, 1) . "%\n\n";
+} else {
+    echo "Success Rate: 0%\n\n";
+}
 
-if (empty($issues)) {
+if (count($issues) === 0) {
     echo "🎉 ALL SECURITY TESTS PASSED!\n";
     echo "The DFMS system appears to be properly secured.\n";
 } else {

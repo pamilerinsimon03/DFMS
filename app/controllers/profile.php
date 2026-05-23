@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             require_once __DIR__ . '/../utils/SecurityUtils.php';
             
             $profile_data = [
-                'full_name' => SecurityUtils::validateInput($_POST['full_name'] ?? '', 'string', 100),
+                'full_name' => SecurityUtils::validateInput(isset($_POST['full_name']) ? $_POST['full_name'] : '', 'string', 100),
                 'email' => SecurityUtils::validateInput($_POST['email'] ?? '', 'email', 255),
                 'phone_number' => SecurityUtils::validateInput($_POST['phone_number'] ?? '', 'string', 20),
                 'date_of_birth' => SecurityUtils::validateInput($_POST['date_of_birth'] ?? '', 'string', 10),
