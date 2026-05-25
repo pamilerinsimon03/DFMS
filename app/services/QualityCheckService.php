@@ -28,7 +28,7 @@ class QualityCheckService
                 ];
                 
                 $kernel = \ImagickKernel::fromMatrix($matrix);
-                $image->convolveImage($kernel);
+                $image->convolveImage($kernel); // @phpstan-ignore-line
                 
                 $stats = $image->getImageChannelStatistics();
                 
