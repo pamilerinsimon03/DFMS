@@ -114,25 +114,25 @@
 
 .charts-row {
   display: flex;
-  flex-wrap: nowrap;
-  gap: 70px;
+  flex-wrap: wrap;
+  gap: 24px;
   margin: 24px 32px;
 }
 .chart-container {
-  flex: none;
   background: #FFFFFF;
   padding: 16px 16px 40px;
   box-sizing: border-box;
   border-radius: 12px;
   box-shadow: 0px 4px 20px rgba(0,0,0,0.05);
+  min-width: 280px;
+  height: 325px;
+  overflow: hidden;
 }
 .chart-container:first-child {
-  flex: 0 0 900px;
-  height: 325px;
+  flex: 1.8 1 500px;
 }
 .chart-container:last-child {
-  flex: 0 0 400px;
-  height: 325px;
+  flex: 1.2 1 300px;
   padding-bottom: 40px;
 }
 .chart-container canvas {
