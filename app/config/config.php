@@ -60,6 +60,34 @@ $settings_file = __DIR__ . '/settings.json';
 if (file_exists($settings_file)) {
     $settings = json_decode(file_get_contents($settings_file), true);
     if (isset($settings['maintenance_mode']) && $settings['maintenance_mode'] === true) {
+        $bypass_token = 'dfms_secure_bypass_key_2026';
+        $bypass_cookie_name = 'dfms_maintenance_bypass';
+        $salt = 'dfms_salt_secure_2026';
+
+        // 1. Check if bypass token is provided in URL
+        if (isset($_GET['bypass_maintenance']) && $_GET['bypass_maintenance'] === $bypass_token) {
+            if (php_sapi_name() !== 'cli') {
+                $_SESSION['maintenance_bypass'] = true;
+                $cookie_value = hash_hmac('sha256', $bypass_token, $salt);
+                setcookie($bypass_cookie_name, $cookie_value, time() + 86400, '/', '', isset($_SERVER['HTTPS']), true);
+                header("Location: /app/controllers/login.php");
+                exit();
+            }
+        }
+
+        // 2. Verify if current request has a valid session or cookie bypass
+        $has_bypass = false;
+        if (isset($_SESSION['maintenance_bypass']) && $_SESSION['maintenance_bypass'] === true) {
+            $has_bypass = true;
+        } elseif (isset($_COOKIE[$bypass_cookie_name])) {
+            $expected_value = hash_hmac('sha256', $bypass_token, $salt);
+            if (hash_equals($expected_value, $_COOKIE[$bypass_cookie_name])) {
+                $_SESSION['maintenance_bypass'] = true; // Sync back to session
+                $has_bypass = true;
+            }
+        }
+
+        // 3. Determine if current logged-in user is Super Admin
         $is_super_admin = false;
         if (isset($_SESSION['user_id'])) {
             $userId = (int)$_SESSION['user_id'];
@@ -71,10 +99,11 @@ if (file_exists($settings_file)) {
             }
         }
         
-        if (php_sapi_name() !== 'cli' && !$is_super_admin) {
+        // 4. If not Super Admin and no bypass, enforce maintenance redirect
+        if (php_sapi_name() !== 'cli' && !$is_super_admin && !$has_bypass) {
             $request_uri = $_SERVER['REQUEST_URI'] ?? '';
-            // If the URI is not targeting maintenance.php, login.php, or logout.php, redirect to maintenance page
-            $allowed_uris = ['maintenance.php', 'login.php', 'logout.php'];
+            // If the URI is not targeting maintenance.php, redirect to maintenance page
+            $allowed_uris = ['maintenance.php'];
             $is_allowed = false;
             foreach ($allowed_uris as $uri) {
                 if (stripos($request_uri, $uri) !== false) {
