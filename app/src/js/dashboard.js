@@ -91,7 +91,9 @@ const initDashboard = () => {
                                 `;
                                 
                                 newCard.onclick = function() {
-                                    alert(`File: ${docName}\nStatus: Pending\n\nDetailed view will be implemented in Phase 4.`);
+                                    if (window.openDocumentDetailModal) {
+                                        window.openDocumentDetailModal(response.data.id);
+                                    }
                                 };
 
                                 if (grid) grid.insertBefore(newCard, grid.firstChild);
@@ -195,13 +197,98 @@ const initDashboard = () => {
         });
     });
     
+    // --- Document Detail Modal Functionality ---
+    window.closeDocumentDetailModal = function() {
+        const modal = document.getElementById('document-detail-modal');
+        if (modal) modal.style.display = 'none';
+    };
+
+    window.openDocumentDetailModal = function(id) {
+        if (!id) return;
+        
+        fetch(`/app/controllers/get_document_details.php?id=${id}`)
+            .then(res => {
+                if (!res.ok) throw new Error('Failed to fetch details');
+                return res.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    const doc = data.data;
+                    
+                    const nameEl = document.getElementById('modal-doc-name');
+                    if (nameEl) nameEl.textContent = doc.document_name;
+                    
+                    const statusBadge = document.getElementById('modal-status-badge');
+                    const statusText = document.getElementById('modal-status-text');
+                    if (statusBadge && statusText) {
+                        statusText.textContent = doc.status;
+                        statusBadge.className = 'modal-status-badge ' + doc.status.toLowerCase().replace(/ /g, '-');
+                    }
+                    
+                    const levelEl = document.getElementById('modal-doc-level');
+                    if (levelEl) levelEl.textContent = doc.level;
+                    
+                    const semesterEl = document.getElementById('modal-doc-semester');
+                    if (semesterEl) semesterEl.textContent = doc.semester;
+                    
+                    const programEl = document.getElementById('modal-doc-program');
+                    if (programEl) programEl.textContent = doc.program_type;
+                    
+                    const modeEl = document.getElementById('modal-doc-mode');
+                    if (modeEl) modeEl.textContent = doc.mode;
+                    
+                    const dateEl = document.getElementById('modal-doc-date');
+                    if (dateEl) dateEl.textContent = doc.upload_date;
+                    
+                    const scanEl = document.getElementById('modal-scan-status');
+                    if (scanEl) {
+                        scanEl.textContent = doc.file_scan_status.toUpperCase();
+                        scanEl.className = 'scan-badge ' + doc.file_scan_status.toLowerCase();
+                    }
+                    
+                    const rejectionBlock = document.getElementById('modal-rejection-block');
+                    const rejectionReason = document.getElementById('modal-rejection-reason');
+                    if (rejectionBlock && rejectionReason) {
+                        if (doc.status === 'Rejected') {
+                            rejectionBlock.style.display = 'block';
+                            rejectionReason.textContent = doc.rejection_reason || 'No specific rejection reason provided.';
+                        } else {
+                            rejectionBlock.style.display = 'none';
+                        }
+                    }
+                    
+                    const viewLink = document.getElementById('modal-view-link');
+                    if (viewLink) {
+                        viewLink.href = `/app/controllers/secure_file_viewer.php?id=${id}`;
+                    }
+                    
+                    const downloadLink = document.getElementById('modal-download-link');
+                    if (downloadLink) {
+                        downloadLink.href = `/app/controllers/download_document.php?id=${id}`;
+                    }
+                    
+                    const modal = document.getElementById('document-detail-modal');
+                    if (modal) modal.style.display = 'flex';
+                } else {
+                    if (window.toast) window.toast.error(data.message || 'Failed to load details');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                if (window.toast) window.toast.error('An error occurred while loading details');
+            });
+    };
+
     const fileCards = document.querySelectorAll('.file-card');
     fileCards.forEach(card => {
         if(card.hasAttribute('data-init')) return;
         card.setAttribute('data-init', 'true');
         
         card.addEventListener('click', function() {
-            // Placeholder for detailed view
+            const id = this.getAttribute('data-id');
+            if (id) {
+                window.openDocumentDetailModal(id);
+            }
         });
     });
 

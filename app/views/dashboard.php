@@ -104,7 +104,7 @@
                 <div class="no-files">No files uploaded yet.</div>
                 <?php else: ?>
                 <?php foreach ($documents as $doc): ?>
-                <div class="file-card">
+                <div class="file-card" data-id="<?php echo $doc['id']; ?>">
                     <div class="file-image">
                         <?php 
                         $fileExt = strtolower(pathinfo($doc['file_path'], PATHINFO_EXTENSION));
@@ -197,6 +197,71 @@
                 </div>
                 <?php endif; ?>
                 <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Detail Modal -->
+    <div id="document-detail-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-backdrop" onclick="closeDocumentDetailModal()"></div>
+        <div class="modal-card">
+            <button class="modal-close-btn" onclick="closeDocumentDetailModal()" aria-label="Close Modal">&times;</button>
+            <div class="modal-header">
+                <div class="modal-title-container">
+                    <h3 id="modal-doc-name" class="modal-title">Document Details</h3>
+                    <div id="modal-status-badge" class="modal-status-badge pending">
+                        <span class="modal-status-dot"></span>
+                        <span id="modal-status-text">Pending</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="modal-info-grid">
+                    <div class="modal-info-item">
+                        <span class="modal-info-label">Level</span>
+                        <span id="modal-doc-level" class="modal-info-value">N/A</span>
+                    </div>
+                    <div class="modal-info-item">
+                        <span class="modal-info-label">Semester</span>
+                        <span id="modal-doc-semester" class="modal-info-value">N/A</span>
+                    </div>
+                    <div class="modal-info-item">
+                        <span class="modal-info-label">Program Type</span>
+                        <span id="modal-doc-program" class="modal-info-value">N/A</span>
+                    </div>
+                    <div class="modal-info-item">
+                        <span class="modal-info-label">Mode of Study</span>
+                        <span id="modal-doc-mode" class="modal-info-value">N/A</span>
+                    </div>
+                    <div class="modal-info-item">
+                        <span class="modal-info-label">Upload Date</span>
+                        <span id="modal-doc-date" class="modal-info-value">N/A</span>
+                    </div>
+                    <div class="modal-info-item">
+                        <span class="modal-info-label">Quality Scan Status</span>
+                        <div class="scan-status-wrapper">
+                            <span id="modal-scan-status" class="scan-badge pending">Pending</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="modal-rejection-block" class="rejection-box" style="display: none;">
+                    <div class="rejection-title-bar">
+                        <span>Rejection Feedback</span>
+                    </div>
+                    <div id="modal-rejection-reason" class="rejection-reason-text">
+                        This document was rejected.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeDocumentDetailModal()">Close</button>
+                <a id="modal-view-link" href="#" target="_blank" class="btn btn-primary">
+                    View Secure Document
+                </a>
+                <a id="modal-download-link" href="#" class="btn btn-secondary">
+                    Download
+                </a>
             </div>
         </div>
     </div>

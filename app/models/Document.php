@@ -592,7 +592,7 @@ class Document
                 MailService::send($adminEmails, $adminSubject, $adminMessage);
             }
 
-            return ['success' => true, 'message' => 'File uploaded successfully.'];
+            return ['success' => true, 'message' => 'File uploaded successfully.', 'id' => $conn->insert_id];
         } else {
             unlink($destination);
             return ['success' => false, 'message' => 'Database error: ' . $stmt->error];

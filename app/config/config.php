@@ -54,4 +54,51 @@ function requireCSRFToken() {
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
+
+// Intercept requests if Maintenance Mode is active in settings.json
+$settings_file = __DIR__ . '/settings.json';
+if (file_exists($settings_file)) {
+    $settings = json_decode(file_get_contents($settings_file), true);
+    if (isset($settings['maintenance_mode']) && $settings['maintenance_mode'] === true) {
+        $is_super_admin = false;
+        if (isset($_SESSION['user_id'])) {
+            $userId = (int)$_SESSION['user_id'];
+            $db_res = $conn->query("SELECT matric_number FROM users WHERE id = $userId");
+            if ($db_res && $db_row = $db_res->fetch_assoc()) {
+                if ($db_row['matric_number'] === 'SUPER_ADMIN') {
+                    $is_super_admin = true;
+                }
+            }
+        }
+        
+        if (php_sapi_name() !== 'cli' && !$is_super_admin) {
+            $request_uri = $_SERVER['REQUEST_URI'] ?? '';
+            // If the URI is not targeting maintenance.php, login.php, or logout.php, redirect to maintenance page
+            $allowed_uris = ['maintenance.php', 'login.php', 'logout.php'];
+            $is_allowed = false;
+            foreach ($allowed_uris as $uri) {
+                if (stripos($request_uri, $uri) !== false) {
+                    $is_allowed = true;
+                    break;
+                }
+            }
+            // Allow css and images assets so the maintenance screen renders beautifully
+            if (stripos($request_uri, '/app/src/') !== false || stripos($request_uri, '/assets/') !== false) {
+                $is_allowed = true;
+            }
+            
+            if (!$is_allowed) {
+                if (isset($_SERVER['HTTP_X_SPA_REQUEST'])) {
+                    header('Content-Type: application/json');
+                    echo json_encode([
+                        'redirect' => '/app/views/maintenance.php'
+                    ]);
+                    exit();
+                }
+                header("Location: /app/views/maintenance.php");
+                exit();
+            }
+        }
+    }
+}
 ?>

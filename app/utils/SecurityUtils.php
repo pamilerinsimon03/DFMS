@@ -84,9 +84,19 @@ class SecurityUtils {
             return $errors;
         }
         
+        // Load administrator-configured max_file_size (in MB) from settings.json
+        $max_size_mb = 5; // Default fallback
+        $settings_file = __DIR__ . '/../config/settings.json';
+        if (file_exists($settings_file)) {
+            $settings = json_decode(file_get_contents($settings_file), true);
+            if (isset($settings['max_file_size'])) {
+                $max_size_mb = (int)$settings['max_file_size'];
+            }
+        }
+        $max_size_bytes = $max_size_mb * 1024 * 1024;
         
-        if ($file['size'] > 5242880) {
-            $errors[] = 'File size exceeds 5MB limit';
+        if ($file['size'] > $max_size_bytes) {
+            $errors[] = 'File size exceeds ' . $max_size_mb . 'MB limit';
         }
         
         
