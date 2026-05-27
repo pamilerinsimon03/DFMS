@@ -123,49 +123,64 @@
     </div>
 </div>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const barChartCtx = document.getElementById('uploads-by-month').getContext('2d');
-    new Chart(barChartCtx, {
-        type: 'bar',
-        data: {
-            labels: <?php echo json_encode($months ?? []); ?>,
-            datasets: [{
-                label: 'Document Uploads',
-                data: <?php echo json_encode($upload_counts ?? []); ?>,
-                backgroundColor: '#01017A',
-                borderRadius: 4,
-                barThickness: 10
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true
+(function() {
+    function initDashboardCharts() {
+        const barCanvas = document.getElementById('uploads-by-month');
+        if (barCanvas) {
+            const barChartCtx = barCanvas.getContext('2d');
+            new Chart(barChartCtx, {
+                type: 'bar',
+                data: {
+                    labels: <?php echo json_encode($months ?? []); ?>,
+                    datasets: [{
+                        label: 'Document Uploads',
+                        data: <?php echo json_encode($upload_counts ?? []); ?>,
+                        backgroundColor: '#01017A',
+                        borderRadius: 4,
+                        barThickness: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
                 }
-            }
+            });
         }
-    });
-    const pieChartCtx = document.getElementById('uploads-by-status').getContext('2d');
-    new Chart(pieChartCtx, {
-        type: 'pie',
-        data: {
-            labels: <?php echo json_encode($breakdown_labels ?? []); ?>,
-            datasets: [{
-                data: <?php echo json_encode($breakdown_counts ?? []); ?>,
-                backgroundColor: ['#FAA62C', '#009A49', '#FF3B30'],
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom'
+        
+        const pieCanvas = document.getElementById('uploads-by-status');
+        if (pieCanvas) {
+            const pieChartCtx = pieCanvas.getContext('2d');
+            new Chart(pieChartCtx, {
+                type: 'pie',
+                data: {
+                    labels: <?php echo json_encode($breakdown_labels ?? []); ?>,
+                    datasets: [{
+                        data: <?php echo json_encode($breakdown_counts ?? []); ?>,
+                        backgroundColor: ['#FAA62C', '#009A49', '#FF3B30'],
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
                 }
-            }
+            });
         }
-    });
-});
+    }
+
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        setTimeout(initDashboardCharts, 100);
+    } else {
+        document.addEventListener('DOMContentLoaded', initDashboardCharts);
+    }
+})();
 </script>

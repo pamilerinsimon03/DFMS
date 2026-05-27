@@ -111,6 +111,20 @@ $active_page = 'file_management';
 $css_files = ['admin.css', 'file_management.css'];
 $js_files = ['file_management.js'];
 
+if (isset($_SERVER['HTTP_X_SPA_REQUEST'])) {
+    ob_start();
+    require_once __DIR__ . '/../views/file_management.php';
+    $html = ob_get_clean();
+    header('Content-Type: application/json');
+    echo json_encode([
+        'html' => $html, 
+        'title' => $page_title,
+        'css_files' => $css_files,
+        'js_files' => $js_files
+    ]);
+    exit();
+}
+
 include_once('../views/partials/header.php');
 include_once('../views/partials/admin_sidebar.php');
 include_once('../views/file_management.php');

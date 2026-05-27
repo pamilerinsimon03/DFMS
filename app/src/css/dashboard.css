@@ -1004,7 +1004,7 @@ html, body {
 @media (min-width: 1025px) {
     #sidebar {
         transform: translateX(0) !important;
-        overflow: hidden;
+        overflow-y: auto;
     }
     .main-content {
         margin-left: 300px;
@@ -1024,7 +1024,7 @@ html, body {
     }
 
     #sidebar {
-        overflow: hidden !important; /* No scrolling allowed */
+        overflow-y: auto !important; /* Allow vertical scrolling on small screens */
         position: fixed !important;
         left: 0 !important;
         top: 0 !important;
