@@ -76,6 +76,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (data.html) {
                 mainContent.innerHTML = data.html;
+                
+                // Extract and run scripts in the fetched HTML to initialize charts, event listeners, etc.
+                const scripts = mainContent.querySelectorAll('script');
+                scripts.forEach(oldScript => {
+                    const newScript = document.createElement('script');
+                    Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                    newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
+
                 mainContent.appendChild(loader);
                 loader.style.display = 'flex';
             }
@@ -186,7 +196,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const link = e.target.closest('a');
         if (!link) return;
         if (link.getAttribute('data-no-spa')) return;
-        if (link.href.includes('admin.php') || link.href.includes('verifications.php') || link.href.includes('students.php') || link.href.includes('add_student.php')) return;
 
         const isMenuItem = link.classList.contains('menu-item') && !link.classList.contains('logout');
         const isSeeMore = link.classList.contains('see-more');

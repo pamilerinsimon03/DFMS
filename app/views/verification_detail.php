@@ -9,10 +9,36 @@
         <div class="notification-icon"><img src="/app/src/assets/images/notification-bing.svg" alt="Notification Icon">
         </div>
         <div class="user-profile">
-            <img class="avatar" src="/app/src/assets/images/admin-avatar.png" alt="Admin Avatar">
+            <img src="<?php echo User::getProfilePicture($user['id']); ?>" alt="User Profile" class="avatar" style="object-fit:cover;">
             <div class="user-info">
                 <div class="user-name"><?php echo htmlspecialchars($user['full_name']); ?></div>
-                <div class="user-id"><?php echo htmlspecialchars($user['full_name']); ?></div>
+                <div class="user-id">
+                    <?php if ($user['is_admin'] == 1): ?>
+                        <?php if ($user['matric_number'] === 'SUPER_ADMIN'): ?>
+                            Role: Super Admin
+                        <?php else: ?>
+                            Role: <?php echo htmlspecialchars($user['department_name'] ?? 'Psychology'); ?> Admin
+                        <?php endif; ?>
+                    <?php else: ?>
+                        Matric No: <?php echo htmlspecialchars($user['matric_number']); ?>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <div class="dropdown-icon">
+                <img src="/app/src/assets/images/arrow-down.svg" alt="Dropdown Icon">
+            </div>
+            
+            <div class="profile-dropdown">
+                <a href="<?php echo User::isAdmin($_SESSION['user_id'] ?? 0) ? '/app/controllers/student_profile.php' : '/app/controllers/profile.php'; ?>" class="dropdown-item">
+                    <img src="/app/src/assets/images/User-Circle.svg" alt="Profile"> Profile
+                </a>
+                <a href="<?php echo User::isAdmin($_SESSION['user_id'] ?? 0) ? '/app/controllers/settings.php' : '/app/controllers/student_settings.php'; ?>" class="dropdown-item">
+                    <img src="/app/src/assets/images/settings.svg" alt="Settings"> Settings
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="/app/controllers/logout.php" class="dropdown-item logout">
+                    <img src="/app/src/assets/images/log-out.svg" alt="Logout"> Log out
+                </a>
             </div>
         </div>
     </div>

@@ -4,6 +4,7 @@ const initUploads = () => {
     const searchContainer = document.getElementById('search-container');
     const searchIconBtn = document.getElementById('search-icon-btn');
     const searchInput = document.querySelector('.search-input');
+    const searchForm = document.querySelector('.search-form');
     const debounce = (func, wait) => {
         let timeout;
         return function(...args) {

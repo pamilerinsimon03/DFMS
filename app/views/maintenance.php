@@ -190,7 +190,6 @@
         <div class="meta-footer">
             Estimated completion: <strong>Under 15 minutes</strong>
         </div>
-        <a href="/app/controllers/login.php" class="btn-home">Super Admin Login</a>
     </div>
 </body>
 </html>

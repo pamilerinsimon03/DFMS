@@ -46,7 +46,17 @@
             <img src="<?php echo User::getProfilePicture($user['id']); ?>" alt="User Profile" class="avatar" style="object-fit:cover;">
             <div class="user-info">
                 <div class="user-name"><?php echo htmlspecialchars($user['full_name']); ?></div>
-                <div class="user-id">Matric No: <?php echo htmlspecialchars($user['matric_number']); ?></div>
+                <div class="user-id">
+                    <?php if ($user['is_admin'] == 1): ?>
+                        <?php if ($user['matric_number'] === 'SUPER_ADMIN'): ?>
+                            Role: Super Admin
+                        <?php else: ?>
+                            Role: <?php echo htmlspecialchars($user['department_name'] ?? 'Psychology'); ?> Admin
+                        <?php endif; ?>
+                    <?php else: ?>
+                        Matric No: <?php echo htmlspecialchars($user['matric_number']); ?>
+                    <?php endif; ?>
+                </div>
             </div>
             <div class="dropdown-icon"><img src="/app/src/assets/images/arrow-down.svg" alt="Dropdown Icon"></div>
             
