@@ -106,6 +106,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $result = Document::upload($user_id, $document_name, $generatedFilename, $file, $classificationData);
             
+            if ($result['success'] && isset($result['id'])) {
+                $settings_file = __DIR__ . '/../config/settings.json';
+                $auto_approve = false;
+                if (file_exists($settings_file)) {
+                    $settings = json_decode(file_get_contents($settings_file), true);
+                    if (isset($settings['auto_approve']) && $settings['auto_approve'] == '1') {
+                        $auto_approve = true;
+                    }
+                }
+                
+                if ($auto_approve) {
+                    Document::updateStatus($result['id'], 'verify');
+                    $result['message'] = 'File uploaded and automatically approved by system policy clearance.';
+                }
+            }
+            
             sendUploadResponse($result['success'], $result['message'], $debug_messages, $user_id, ['document_name' => $document_name]);
             
         } else {

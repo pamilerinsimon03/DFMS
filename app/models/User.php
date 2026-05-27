@@ -310,6 +310,20 @@ class User {
         return $stmt->execute();
     }
 
+    public static function updateSingleField($id, $field, $value) {
+        global $conn;
+        if (!in_array($field, ['full_name', 'email', 'phone_number', 'address'])) {
+            return false;
+        }
+        $sql = "UPDATE users SET `$field` = ? WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return false;
+        }
+        $stmt->bind_param("si", $value, $id);
+        return $stmt->execute();
+    }
+
     public static function getAdmins() {
         global $conn;
         $sql = "SELECT email FROM users WHERE is_admin = 1 AND email IS NOT NULL AND email != ''";

@@ -162,6 +162,7 @@
             </div>
         </div>
 
+        <?php if ($user['matric_number'] === 'SUPER_ADMIN'): ?>
         <div class="settings-card">
             <div class="card-header">
                 <h3>System Preferences</h3>
@@ -181,18 +182,18 @@
                         <input type="number" name="max_file_size" id="max_file_size" 
                                value="<?php echo htmlspecialchars($max_file_size ?? '5'); ?>" 
                                min="1" max="50">
-            </div>
+                    </div>
                     <div class="form-group">
                         <label for="auto_approve">Auto-approve Documents</label>
                         <select name="auto_approve" id="auto_approve">
                             <option value="0" <?php echo ($auto_approve ?? '0') == '0' ? 'selected' : ''; ?>>Disabled</option>
                             <option value="1" <?php echo ($auto_approve ?? '0') == '1' ? 'selected' : ''; ?>>Enabled</option>
                         </select>
-            </div>
+                    </div>
                     <button type="submit" name="action" value="update_preferences" class="btn btn-primary">
                         Save Preferences
                     </button>
-        </form>
+                </form>
             </div>
         </div>
 
@@ -202,19 +203,35 @@
                 <div class="card-icon"><i data-lucide="wrench"></i></div>
             </div>
             <div class="card-content">
-                <div class="action-buttons">
-                    <button type="button" class="btn btn-secondary" onclick="alert('Backup feature coming soon!')">
-                        <span class="btn-icon"><i data-lucide="save"></i></span>
-                        Create Backup
-                    </button>
-                    <button type="button" class="btn btn-secondary" onclick="alert('Maintenance mode coming soon!')">
-                        <span class="btn-icon"><i data-lucide="alert-triangle"></i></span>
-                        Maintenance Mode
-                    </button>
-                </div>
-                <div class="info-box">
-                    <p><strong>Last Backup:</strong> Never</p>
-                    <p><strong>System Status:</strong> <span class="status-ok">Operational</span></p>
+                <form method="POST" class="maintenance-form">
+                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="maintenance_mode" <?php echo ($maintenance_mode ?? false) ? 'checked' : ''; ?>>
+                            <span class="checkmark"></span>
+                            Enable System Maintenance Mode
+                        </label>
+                    </div>
+                    <div class="action-buttons" style="display: flex; gap: 12px; margin-top: 16px;">
+                        <a href="/app/controllers/backup.php" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+                            <span class="btn-icon"><i data-lucide="save"></i></span>
+                            Create Backup
+                        </a>
+                        <button type="submit" name="action" value="update_maintenance" class="btn btn-warning" style="display: inline-flex; align-items: center; gap: 8px;">
+                            <span class="btn-icon"><i data-lucide="alert-triangle"></i></span>
+                            Update Status
+                        </button>
+                    </div>
+                </form>
+                <div class="info-box" style="margin-top: 20px; padding: 12px; background: rgba(1, 1, 122, 0.03); border-radius: 6px;">
+                    <p style="margin: 0 0 8px 0;"><strong>Last Backup:</strong> <?php echo htmlspecialchars($last_backup_date ?? 'Never'); ?></p>
+                    <p style="margin: 0;"><strong>System Status:</strong> 
+                        <?php if ($maintenance_mode ?? false): ?>
+                            <span class="status-error" style="color: #F21B3F; font-weight: 600;">Maintenance Mode Active</span>
+                        <?php else: ?>
+                            <span class="status-ok" style="color: #54C242; font-weight: 600;">Operational</span>
+                        <?php endif; ?>
+                    </p>
                 </div>
             </div>
         </div>
@@ -225,31 +242,35 @@
                 <div class="card-icon"><i data-lucide="shield-check"></i></div>
             </div>
             <div class="card-content">
-                <div class="form-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" name="enable_2fa" <?php echo ($enable_2fa ?? false) ? 'checked' : ''; ?>>
-                        <span class="checkmark"></span>
-                        Enable Two-Factor Authentication
-                    </label>
-                </div>
-                <div class="form-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" name="session_timeout" <?php echo ($session_timeout ?? true) ? 'checked' : ''; ?>>
-                        <span class="checkmark"></span>
-                        Enable Session Timeout (30 minutes)
-                    </label>
-                </div>
-                <div class="form-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" name="login_notifications" <?php echo ($login_notifications ?? false) ? 'checked' : ''; ?>>
-                        <span class="checkmark"></span>
-                        Email Login Notifications
-                    </label>
-                </div>
-                <button type="submit" name="action" value="update_security" class="btn btn-primary">
-                    Update Security Settings
-                </button>
+                <form method="POST" class="security-form">
+                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="enable_2fa" <?php echo ($enable_2fa ?? false) ? 'checked' : ''; ?>>
+                            <span class="checkmark"></span>
+                            Enable Two-Factor Authentication
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="session_timeout" <?php echo ($session_timeout ?? true) ? 'checked' : ''; ?>>
+                            <span class="checkmark"></span>
+                            Enable Session Timeout (30 minutes)
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="login_notifications" <?php echo ($login_notifications ?? false) ? 'checked' : ''; ?>>
+                            <span class="checkmark"></span>
+                            Email Login Notifications
+                        </label>
+                    </div>
+                    <button type="submit" name="action" value="update_security" class="btn btn-primary">
+                        Update Security Settings
+                    </button>
+                </form>
             </div>
         </div>
+        <?php endif; ?>
     </div>
 </div>
