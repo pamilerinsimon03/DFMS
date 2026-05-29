@@ -172,6 +172,9 @@ class AccessControlMiddleware {
             'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown'
         ]);
 
+        require_once __DIR__ . '/../models/User.php';
+        $dashboard_url = User::isAdmin($userId) ? '/app/controllers/admin.php' : '/app/controllers/dashboard.php';
+
         http_response_code(403);
         
         $tracking_code = 'SEC-' . strtoupper(bin2hex(random_bytes(4)));
@@ -186,7 +189,7 @@ class AccessControlMiddleware {
                         <h1 style="color:#FF3B30;font-size:24px;margin-bottom:10px;font-family:\'Poppins\',sans-serif;font-weight:700;">Access Denied</h1>
                         <p style="color:#4a5568;line-height:1.6;margin-bottom:12px;font-family:\'Poppins\',sans-serif;font-size:14px;">You do not have the required privileges to access this department or resource. This event has been logged for security review.</p>
                         <p style="color:#718096;font-size:0.85rem;margin-bottom:24px;font-family:monospace;">Tracking Code: ' . $tracking_code . '</p>
-                        <a href="/app/controllers/dashboard.php" data-no-spa="true" style="background:#01017A;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:500;display:inline-block;transition:all 0.2s;font-family:\'Poppins\',sans-serif;box-shadow:0 4px 10px rgba(1,1,122,0.25);">Return Dashboard</a>
+                        <a href="' . $dashboard_url . '" data-no-spa="true" style="background:#01017A;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:500;display:inline-block;transition:all 0.2s;font-family:\'Poppins\',sans-serif;box-shadow:0 4px 10px rgba(1,1,122,0.25);">Return Dashboard</a>
                     </div>
                 </div>',
                 'title' => 'Forbidden Access'
@@ -359,7 +362,7 @@ class AccessControlMiddleware {
             Tracking Code: <span>' . $tracking_code . '</span>
         </div>
         <div>
-            <a href="/app/controllers/dashboard.php" class="btn-home">Return Dashboard</a>
+            <a href="' . $dashboard_url . '" class="btn-home">Return Dashboard</a>
         </div>
     </div>
 </body>
