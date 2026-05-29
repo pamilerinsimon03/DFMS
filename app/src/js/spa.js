@@ -251,5 +251,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 dropdown.style.display = 'none';
             });
         }
+
+        // C. Mark All Notifications as Read Event Delegation
+        const markReadBtn = e.target.closest('.mark-read-btn');
+        if (markReadBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            fetch('/app/controllers/notifications_mark_read.php', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        document.querySelectorAll('.notif-item').forEach(n => n.classList.remove('unread'));
+                        document.querySelectorAll('.notification-icon .notification-dot').forEach(dot => dot.remove());
+                    }
+                })
+                .catch(err => console.error('Failed to mark notifications as read:', err));
+        }
     });
 });

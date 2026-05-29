@@ -126,8 +126,12 @@ if (file_exists($settings_file)) {
                 }
                 header("Location: /app/views/maintenance.php");
                 exit();
-            }
         }
     }
 }
+}
+
+// Centralized Access Control Layer (ACL) Route Protection
+require_once __DIR__ . '/../utils/AccessControlMiddleware.php';
+AccessControlMiddleware::checkAccess();
 ?>

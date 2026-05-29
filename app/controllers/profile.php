@@ -3,10 +3,6 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Notification.php';
 
-if (!isset($_SESSION['user_id'])) {
-    header("Location: /public/index.php");
-    exit();
-}
 
 $user_id = $_SESSION['user_id'];
 $user = User::getById($user_id);
@@ -109,8 +105,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $page_title = 'Profile';
 $active_page = 'profile';
-$css_files = ['profile.css', 'dashboard.css'];
-$js_files = ['profile.js', 'dashboard.js'];
+$css_files = ['dashboard.css', 'profile.css'];
+$js_files = ['dashboard.js', 'profile.js'];
 
 $notifications = Notification::getForUser($user_id, 15);
 $unread_count = Notification::countUnread($user_id);

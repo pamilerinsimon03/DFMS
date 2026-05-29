@@ -527,11 +527,14 @@ class Document
             return ['success' => false, 'message' => 'Failed to move uploaded file.'];
         }
         
+        $file_hash = hash_file('sha256', $destination);
+
         SecurityUtils::logSecurityEvent('file_upload_success', [
             'user_id' => $user_id,
             'original_filename' => $file['name'],
             'secure_filename' => $secure_filename,
-            'file_size' => $file['size']
+            'file_size' => $file['size'],
+            'file_hash' => $file_hash
         ]);
 
         $sql = "
@@ -539,6 +542,7 @@ class Document
               (user_id,
                document_name,
                file_path,
+               file_hash,
                status,
                level,
                semester,
@@ -547,7 +551,7 @@ class Document
                department_id,
                created_at)
             VALUES
-              (?, ?, ?, 'Pending Approval', ?, ?, ?, ?, ?, NOW())
+              (?, ?, ?, ?, 'Pending Approval', ?, ?, ?, ?, ?, NOW())
         ";
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
@@ -555,10 +559,11 @@ class Document
             return ['success' => false, 'message' => 'DB prepare failed: ' . $conn->error];
         }
         $stmt->bind_param(
-            'ississsi',
+            'isssisssi',
             $user_id,
             $document_name,
             $file_path,
+            $file_hash,
             $classification_data['level'],
             $classification_data['semester'],
             $classification_data['program_type'],
