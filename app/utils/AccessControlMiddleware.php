@@ -180,13 +180,13 @@ class AccessControlMiddleware {
             header('Content-Type: application/json');
             echo json_encode([
                 'html' => '
-                <div style="display:flex;align-items:center;justify-content:center;height:80vh;">
-                    <div class="glass-card" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);padding:40px;border-radius:16px;text-align:center;max-width:500px;backdrop-filter:blur(20px);">
+                <div style="display:flex;align-items:center;justify-content:center;height:80vh;width:100%;">
+                    <div class="glass-card" style="background:rgba(255,255,255,0.85);border:1px solid rgba(0,0,0,0.08);padding:40px;border-radius:16px;text-align:center;max-width:500px;box-shadow:0 10px 30px rgba(0,0,0,0.06);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);">
                         <div style="font-size:4rem;margin-bottom:20px;">🛡️</div>
-                        <h1 style="color:#FF3B30;font-size:24px;margin-bottom:10px;">Access Denied</h1>
-                        <p style="color:#a0aec0;line-height:1.6;margin-bottom:12px;">You do not have the required privileges to access this department or resource. This event has been logged for security review.</p>
+                        <h1 style="color:#FF3B30;font-size:24px;margin-bottom:10px;font-family:\'Poppins\',sans-serif;font-weight:700;">Access Denied</h1>
+                        <p style="color:#4a5568;line-height:1.6;margin-bottom:12px;font-family:\'Poppins\',sans-serif;font-size:14px;">You do not have the required privileges to access this department or resource. This event has been logged for security review.</p>
                         <p style="color:#718096;font-size:0.85rem;margin-bottom:24px;font-family:monospace;">Tracking Code: ' . $tracking_code . '</p>
-                        <a href="/app/controllers/login.php" style="background:#01017A;color:#fff;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:500;display:inline-block;transition:background 0.2s;">Return Dashboard</a>
+                        <a href="/app/controllers/dashboard.php" data-no-spa="true" style="background:#01017A;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:500;display:inline-block;transition:all 0.2s;font-family:\'Poppins\',sans-serif;box-shadow:0 4px 10px rgba(1,1,122,0.25);">Return Dashboard</a>
                     </div>
                 </div>',
                 'title' => 'Forbidden Access'
@@ -194,18 +194,176 @@ class AccessControlMiddleware {
             exit();
         }
         
-        // Load custom elegant glassmorphic 403 view
-        require_once __DIR__ . '/../views/partials/header.php';
-        echo '<div class="main-content" style="display:flex;align-items:center;justify-content:center;height:80vh;">
-                <div class="glass-card" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);padding:40px;border-radius:16px;text-align:center;max-width:500px;backdrop-filter:blur(20px);">
-                    <div style="font-size:4rem;margin-bottom:20px;">🛡️</div>
-                    <h1 style="color:#FF3B30;font-size:24px;margin-bottom:10px;">Access Denied</h1>
-                    <p style="color:#a0aec0;line-height:1.6;margin-bottom:12px;">You do not have the required privileges to access this department or resource. This event has been logged for security review.</p>
-                    <p style="color:#718096;font-size:0.85rem;margin-bottom:24px;font-family:monospace;">Tracking Code: ' . $tracking_code . '</p>
-                    <a href="/app/controllers/login.php" style="background:#01017A;color:#fff;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:500;display:inline-block;transition:background 0.2s;">Return Dashboard</a>
-                </div>
-              </div>';
-        require_once __DIR__ . '/../views/partials/footer.php';
+        // Serve a beautiful, standalone premium glassmorphic 403 page
+        echo '<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Denied - DFMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #01017A;
+            --accent: #FF3B30;
+            --text-light: #f3f4f6;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: \'Poppins\', sans-serif;
+            background: radial-gradient(circle at center, #180d1b 0%, #05020c 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            color: var(--text-light);
+        }
+
+        .error-container {
+            position: relative;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+            padding: 48px 40px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            box-sizing: border-box;
+            z-index: 10;
+            animation: containerFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes containerFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .icon-wrapper {
+            position: relative;
+            width: 90px;
+            height: 90px;
+            margin: 0 auto 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 59, 48, 0.08);
+            border-radius: 50%;
+            border: 1px solid rgba(255, 59, 48, 0.2);
+            box-shadow: 0 0 20px rgba(255, 59, 48, 0.1);
+        }
+
+        .security-icon {
+            font-size: 40px;
+            filter: drop-shadow(0 0 10px rgba(255, 59, 48, 0.3));
+        }
+
+        h1 {
+            color: #ffffff;
+            font-size: 26px;
+            font-weight: 700;
+            margin: 0 0 12px 0;
+            letter-spacing: -0.5px;
+        }
+
+        p {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #a0aec0;
+            margin: 0 0 20px 0;
+        }
+
+        .tracking-box {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: monospace;
+            color: #718096;
+            margin-bottom: 32px;
+            display: inline-block;
+        }
+
+        .tracking-box span {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .btn-home {
+            display: inline-block;
+            background: linear-gradient(135deg, #01017A 0%, #0a0a9c 100%);
+            color: #ffffff;
+            padding: 12px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            border: none;
+            box-shadow: 0 4px 14px rgba(1, 1, 122, 0.4);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .btn-home:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(1, 1, 122, 0.6);
+            background: linear-gradient(135deg, #020296 0%, #1212bd 100%);
+        }
+
+        .btn-home:active {
+            transform: translateY(0);
+        }
+
+        /* Ambient glows */
+        .glow {
+            position: absolute;
+            border-radius: 50%;
+            z-index: 1;
+            filter: blur(60px);
+            opacity: 0.15;
+        }
+
+        .glow-1 { width: 350px; height: 350px; top: -100px; left: -100px; background: #FF3B30; }
+        .glow-2 { width: 300px; height: 300px; bottom: -80px; right: -50px; background: #01017A; }
+    </style>
+</head>
+<body>
+    <div class="glow glow-1"></div>
+    <div class="glow glow-2"></div>
+
+    <div class="error-container">
+        <div class="icon-wrapper">
+            <span class="security-icon">🛡️</span>
+        </div>
+        <h1>Access Denied</h1>
+        <p>
+            You do not have the required privileges to access this department or resource. 
+            This unauthorized access attempt has been logged for security review.
+        </p>
+        <div class="tracking-box">
+            Tracking Code: <span>' . $tracking_code . '</span>
+        </div>
+        <div>
+            <a href="/app/controllers/dashboard.php" class="btn-home">Return Dashboard</a>
+        </div>
+    </div>
+</body>
+</html>';
         exit();
     }
 }
