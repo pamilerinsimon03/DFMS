@@ -2,13 +2,12 @@
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Document.php';
+require_once __DIR__ . '/../models/Notification.php';
 
-if (!isset($_SESSION['user_id']) || !User::isAdmin($_SESSION['user_id'])) {
-    header("Location: /public/index.php");
-    exit();
-}
 
 $user = User::getById($_SESSION['user_id']);
+$notifications = Notification::getForUser($_SESSION['user_id'], 15);
+$unread_count = Notification::countUnread($_SESSION['user_id']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_POST['doc_id'])) {
     // Validate CSRF token

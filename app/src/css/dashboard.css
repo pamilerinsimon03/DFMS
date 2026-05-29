@@ -44,9 +44,10 @@ html, body {
     display: flex;
     flex-direction: column;
     align-items: start;
-    height: 100%;
+    height: calc(100% - 17px);
     margin-top: 17px;
     margin-left: 40px;
+    box-sizing: border-box;
 }
 
 #sidebar {
@@ -60,6 +61,20 @@ html, body {
     transition: transform 0.3s ease;
     z-index: 100;
     overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+#sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+#sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+#sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
 }
 
 #mobile-sidebar-overlay {
@@ -99,14 +114,7 @@ html, body {
     border: none;
 }
 
-.sidebar-content {
-    display: flex;
-    flex-direction: column;
-    align-items: start;
-    height: 100%;
-    margin-top: 17px;
-    margin-left: 40px;
-}
+
 
 .logo {
     margin-bottom: 40px;
@@ -1005,6 +1013,7 @@ html, body {
     #sidebar {
         transform: translateX(0) !important;
         overflow-y: auto;
+        overflow-x: hidden;
     }
     .main-content {
         margin-left: 300px;
@@ -1025,6 +1034,7 @@ html, body {
 
     #sidebar {
         overflow-y: auto !important; /* Allow vertical scrolling on small screens */
+        overflow-x: hidden !important;
         position: fixed !important;
         left: 0 !important;
         top: 0 !important;

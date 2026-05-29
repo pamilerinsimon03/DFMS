@@ -5,8 +5,9 @@
             <span>Student Profiles</span>
         </a>
     </div>
+    <?php include __DIR__ . '/partials/notification_bell.php'; ?>
     <div class="user-profile">
-        <img class="avatar" src="/app/src/assets/images/admin-avatar.png" alt="Admin Avatar">
+        <img class="avatar" src="<?php echo User::getProfilePicture($user['id']); ?>" alt="Admin Avatar">
         <div class="user-info">
             <div class="user-name"><?php echo htmlspecialchars($user['full_name']); ?></div>
             <div class="user-id"><?php echo htmlspecialchars($user['matric_number']); ?></div>

@@ -6,8 +6,7 @@
         <h1>Dashboard</h1>
     </div>
     <div class="header-right">
-        <div class="notification-icon"><img src="/app/src/assets/images/notification-bing.svg" alt="Notification Icon">
-        </div>
+        <?php include __DIR__ . '/partials/notification_bell.php'; ?>
         <div class="user-profile">
             <img src="<?php echo User::getProfilePicture($user['id']); ?>" alt="User Profile" class="avatar" style="object-fit:cover;">
             <div class="user-info">

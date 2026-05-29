@@ -5,15 +5,13 @@ require_once __DIR__ . '/../models/Document.php';
 require_once __DIR__ . '/../models/Notification.php';
 require_once __DIR__ . '/../models/FileRequirement.php';
 
-if (!isset($_SESSION['user_id'])) {
-    header("Location: /public/index.php");
-    exit();
-}
 
 $user_id = $_SESSION['user_id'];
 $user = User::getById($user_id);
 
 if (User::isAdmin($user_id)) {
+    $notifications = Notification::getForUser($user_id, 15);
+    $unread_count = Notification::countUnread($user_id);
     $department_id = $user['department_id'] ?? null;
     $start_date = $_GET['start_date'] ?? date('Y-m-d', strtotime('-30 days'));
     $end_date = $_GET['end_date'] ?? date('Y-m-d');

@@ -6,10 +6,6 @@ require_once __DIR__ . '/../models/Notification.php';
 require_once __DIR__ . '/../services/FilenameGenerator.php';
 require_once __DIR__ . '/../services/QualityCheckService.php';
 
-if (!isset($_SESSION['user_id'])) {
-    header("Location: /public/index.php");
-    exit();
-}
 
 $user_id = $_SESSION['user_id'];
 $user = User::getById($user_id);
