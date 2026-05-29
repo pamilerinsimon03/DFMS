@@ -311,6 +311,18 @@ const initAdmin = () => {
                     openMenus.forEach(menu => menu.classList.remove('active'));
                 }
             }
+
+            // Datepicker calendar icon click delegation
+            const calendarImg = e.target.closest('.date-input img');
+            if (calendarImg) {
+                const input = calendarImg.previousElementSibling;
+                if (input) {
+                    input.focus();
+                    if (input._flatpickr) {
+                        input._flatpickr.open();
+                    }
+                }
+            }
         });
         window.adminActionLogicAtttached = true;
     }
