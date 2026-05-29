@@ -1,8 +1,9 @@
 {
-    "session_year": "2023/2024",
+    "session_year": "2024\/2025",
     "max_file_size": "5",
     "auto_approve": "0",
     "enable_2fa": false,
     "session_timeout": true,
-    "login_notifications": true
+    "login_notifications": true,
+    "maintenance_mode": false
 }
