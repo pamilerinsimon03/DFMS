@@ -210,20 +210,33 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const tabButtons = document.querySelectorAll('.tab-button');
-    const tabContents = document.querySelectorAll('.tab-content');
+(function() {
+    function initAddStudentTabs() {
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
 
-    tabButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const targetTab = button.getAttribute('data-tab');
-            
-            tabButtons.forEach(btn => btn.classList.remove('active'));
-            tabContents.forEach(content => content.classList.remove('active'));
-            
-            button.classList.add('active');
-            document.getElementById(targetTab + '-tab').classList.add('active');
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const targetTab = button.getAttribute('data-tab');
+                
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                
+                button.classList.add('active');
+                const targetContent = document.getElementById(targetTab + '-tab');
+                if (targetContent) {
+                    targetContent.classList.add('active');
+                }
+            });
         });
-    });
-});
+    }
+
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        initAddStudentTabs();
+    } else {
+        document.addEventListener('DOMContentLoaded', initAddStudentTabs);
+    }
+    
+    window.initAddStudentTabs = initAddStudentTabs;
+})();
 </script>
