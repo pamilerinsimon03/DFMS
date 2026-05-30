@@ -60,9 +60,9 @@ $settings_file = __DIR__ . '/settings.json';
 if (file_exists($settings_file)) {
     $settings = json_decode(file_get_contents($settings_file), true);
     if (isset($settings['maintenance_mode']) && $settings['maintenance_mode'] === true) {
-        $bypass_token = 'dfms_secure_bypass_key_2026';
-        $bypass_cookie_name = 'dfms_maintenance_bypass';
-        $salt = 'dfms_salt_secure_2026';
+        $bypass_token = getenv('MAINTENANCE_BYPASS_TOKEN') ?: 'dfms_secure_bypass_key_2026';
+        $bypass_cookie_name = getenv('MAINTENANCE_BYPASS_COOKIE') ?: 'dfms_maintenance_bypass';
+        $salt = getenv('MAINTENANCE_BYPASS_SALT') ?: 'dfms_salt_secure_2026';
 
         // 1. Check if bypass token is provided in URL
         if (isset($_GET['bypass_maintenance']) && $_GET['bypass_maintenance'] === $bypass_token) {

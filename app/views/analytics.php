@@ -15,6 +15,7 @@
                 </div>
                 <input type="text" placeholder="Search" class="search-input" disabled>
             </div>
+        </div>
         <?php include __DIR__ . '/partials/notification_bell.php'; ?>
         <div class="user-profile">
             <img src="<?php echo User::getProfilePicture($user['id']); ?>" alt="User Profile" class="avatar" style="object-fit:cover;">
