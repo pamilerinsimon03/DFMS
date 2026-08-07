@@ -7,7 +7,8 @@ class User {
         $sql = "
             SELECT 
                 u.*, 
-                d.name as department_name 
+                d.name as department_name,
+                d.code as department_code
             FROM users u
             LEFT JOIN departments d ON u.department_id = d.id
             WHERE u.id = ?
@@ -15,9 +16,7 @@ class User {
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("i", $id);
         $stmt->execute();
-        $user = $stmt->get_result()->fetch_assoc();
-
-        return $user;
+        return $stmt->get_result()->fetch_assoc();
     }
 
     public static function getByMatricNumber($matric_number) {
@@ -37,13 +36,10 @@ class User {
     public static function generatePassword($full_name) {
         $name_parts = explode(' ', trim($full_name));
         $surname = end($name_parts);
-        
         $surname = strtolower(preg_replace('/[^a-zA-Z]/', '', $surname));
-        
         if (empty($surname)) {
             $surname = 'student';
         }
-        
         return $surname . '12345';
     }
 
@@ -55,20 +51,21 @@ class User {
             return ['success' => false, 'message' => 'Matric number already exists.'];
         }
         
-        $password = self::generatePassword($student_data['full_name']);
-        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        $activation_token = bin2hex(random_bytes(32));
+        $is_activated = 0;
+        $placeholder_password = '*ACTIVATION_REQUIRED*';
         
-        $sql = "INSERT INTO users (matric_number, password, full_name, level, session, programme, program_type, mode, department_id, email, role, is_admin) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'student', 0)";
+        $sql = "INSERT INTO users (matric_number, password, full_name, level, session, programme, program_type, mode, department_id, email, role, is_admin, activation_token, is_activated) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'student', 0, ?, ?)";
         
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
             return ['success' => false, 'message' => 'Database prepare failed: ' . $conn->error];
         }
         
-        $stmt->bind_param("ssssssssss", 
+        $stmt->bind_param("ssssssssissi", 
             $student_data['matric_number'],
-            $hashed_password,
+            $placeholder_password,
             $student_data['full_name'],
             $student_data['level'],
             $student_data['session'],
@@ -76,17 +73,89 @@ class User {
             $student_data['program_type'],
             $student_data['mode'],
             $student_data['department_id'],
-            $student_data['email']
+            $student_data['email'],
+            $activation_token,
+            $is_activated
         );
         
         if ($stmt->execute()) {
             return [
                 'success' => true, 
-                'message' => 'Student created successfully. Password: ' . $password,
-                'password' => $password
+                'message' => 'Student account created. Activation token generated.',
+                'activation_token' => $activation_token
             ];
         } else {
             return ['success' => false, 'message' => 'Database error: ' . $stmt->error];
+        }
+    }
+
+    public static function bulkCreateStudents(array $students) {
+        global $conn;
+        if (empty($students)) return ['success' => true, 'count' => 0];
+
+        $values = [];
+        $params = [];
+        $types = '';
+
+        foreach ($students as $s) {
+            $values[] = "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'student', 0, ?, 0)";
+            $types .= "ssssssssiss";
+            $params[] = $s['matric_number'];
+            $params[] = '*ACTIVATION_REQUIRED*';
+            $params[] = $s['full_name'];
+            $params[] = $s['level'];
+            $params[] = $s['session'];
+            $params[] = $s['programme'];
+            $params[] = $s['program_type'] ?? 'Undergraduate';
+            $params[] = $s['mode'] ?? 'Regular';
+            $params[] = $s['department_id'];
+            $params[] = $s['email'] ?? '';
+            $params[] = bin2hex(random_bytes(16));
+        }
+
+        $sql = "INSERT INTO users (matric_number, password, full_name, level, session, programme, program_type, mode, department_id, email, role, is_admin, activation_token, is_activated) VALUES " . implode(', ', $values);
+        
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return ['success' => false, 'message' => 'Bulk prepare failed: ' . $conn->error];
+        }
+        $stmt->bind_param($types, ...$params);
+
+        if ($stmt->execute()) {
+            return ['success' => true, 'count' => count($students)];
+        } else {
+            return ['success' => false, 'message' => 'Bulk insert failed: ' . $stmt->error];
+        }
+    }
+
+    public static function activateAccountByToken($token, $dobInput, $newPassword) {
+        global $conn;
+        $stmt = $conn->prepare("SELECT * FROM users WHERE activation_token = ? AND is_activated = 0");
+        $stmt->bind_param("s", $token);
+        $stmt->execute();
+        $user = $stmt->get_result()->fetch_assoc();
+
+        if (!$user) {
+            return ['success' => false, 'message' => 'Invalid or expired activation token.'];
+        }
+
+        if (!empty($user['date_of_birth']) && $user['date_of_birth'] !== $dobInput) {
+            return ['success' => false, 'message' => 'Date of Birth does not match portal records.'];
+        }
+
+        if (strlen($newPassword) < 8) {
+            return ['success' => false, 'message' => 'Password must be at least 8 characters long.'];
+        }
+
+        $hashed = password_hash($newPassword, PASSWORD_DEFAULT);
+
+        $update = $conn->prepare("UPDATE users SET password = ?, is_activated = 1, activation_token = NULL WHERE id = ?");
+        $update->bind_param("si", $hashed, $user['id']);
+
+        if ($update->execute()) {
+            return ['success' => true, 'message' => 'Account activated successfully. You can now login.'];
+        } else {
+            return ['success' => false, 'message' => 'Failed to activate account: ' . $conn->error];
         }
     }
 
@@ -94,7 +163,15 @@ class User {
         global $conn;
         $sql = "SELECT * FROM departments ORDER BY name";
         $result = $conn->query($sql);
-        return $result->fetch_all(MYSQLI_ASSOC);
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+
+    public static function getFacultyDepartments($faculty_id) {
+        global $conn;
+        $stmt = $conn->prepare("SELECT d.* FROM departments d JOIN faculty_departments fd ON d.id = fd.department_id WHERE fd.faculty_id = ?");
+        $stmt->bind_param("i", $faculty_id);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
 
     public static function updateAllStudentPasswords() {
@@ -102,7 +179,7 @@ class User {
         
         $sql = "SELECT id, full_name FROM users WHERE is_admin = 0";
         $result = $conn->query($sql);
-        $students = $result->fetch_all(MYSQLI_ASSOC);
+        $students = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
         
         $updated_count = 0;
         $errors = [];

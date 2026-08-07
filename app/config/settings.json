@@ -5,5 +5,7 @@
     "enable_2fa": false,
     "session_timeout": true,
     "login_notifications": true,
-    "maintenance_mode": false
+    "maintenance_mode": false,
+    "disable_rate_limiting": "1",
+    "current_session": "2025\/2026"
 }

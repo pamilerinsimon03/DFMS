@@ -12,10 +12,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $matric_number = SecurityUtils::validateInput($_POST['matric_number'], 'matric', 50);
     $password = $_POST['password'];
     
-    // Check rate limiting (IP-based fallback log)
+    // Check rate limiting
     $clientIP = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     if (!SecurityUtils::checkRateLimit($clientIP)) {
         SecurityUtils::logSecurityEvent('rate_limit_exceeded', ['ip' => $clientIP]);
+        $_SESSION['error'] = "Too many login attempts from your network. Please wait 15 minutes and try again.";
+        header("Location: /public/index.php");
+        exit();
     }
     
     // Validate input
@@ -49,7 +52,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Regenerate session ID for security
         session_regenerate_id(true);
 
-        if ($user['is_admin'] == 1) {
+        // Robust Admin check (is_admin flag, admin/super_admin role, or SUPER_ADMIN matric)
+        $isAdmin = ($user['is_admin'] == 1) 
+            || in_array($user['role'], ['admin', 'super_admin', 'faculty_admin', 'department_admin']) 
+            || ($user['matric_number'] === 'SUPER_ADMIN');
+
+        if ($isAdmin) {
             header("Location: /app/controllers/admin.php");
         } else {
             header("Location: /app/controllers/dashboard.php");

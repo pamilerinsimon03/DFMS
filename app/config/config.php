@@ -12,7 +12,11 @@ if (php_sapi_name() !== 'cli') {
     session_start();
 }
 
-if (php_sapi_name() === 'cli' || (isset($_SERVER['SERVER_NAME']) && $_SERVER['SERVER_NAME'] === 'localhost')) {
+if (
+    php_sapi_name() === 'cli'
+    || (isset($_SERVER['SERVER_NAME']) && in_array($_SERVER['SERVER_NAME'], ['localhost', '127.0.0.1', '::1'], true))
+    || (isset($_SERVER['HTTP_HOST']) && in_array(preg_replace('/:\d+$/', '', $_SERVER['HTTP_HOST']), ['localhost', '127.0.0.1', '::1'], true))
+) {
     // Local machine
     $db_host = 'localhost';
     $db_user = 'root';
@@ -60,12 +64,12 @@ $settings_file = __DIR__ . '/settings.json';
 if (file_exists($settings_file)) {
     $settings = json_decode(file_get_contents($settings_file), true);
     if (isset($settings['maintenance_mode']) && $settings['maintenance_mode'] === true) {
-        $bypass_token = getenv('MAINTENANCE_BYPASS_TOKEN') ?: 'dfms_secure_bypass_key_2026';
+        $bypass_token = getenv('MAINTENANCE_BYPASS_TOKEN') ?: null;
         $bypass_cookie_name = getenv('MAINTENANCE_BYPASS_COOKIE') ?: 'dfms_maintenance_bypass';
-        $salt = getenv('MAINTENANCE_BYPASS_SALT') ?: 'dfms_salt_secure_2026';
+        $salt = getenv('MAINTENANCE_BYPASS_SALT') ?: null;
 
         // 1. Check if bypass token is provided in URL
-        if (isset($_GET['bypass_maintenance']) && $_GET['bypass_maintenance'] === $bypass_token) {
+        if ($bypass_token && $salt && isset($_GET['bypass_maintenance']) && hash_equals($bypass_token, $_GET['bypass_maintenance'])) {
             if (php_sapi_name() !== 'cli') {
                 $_SESSION['maintenance_bypass'] = true;
                 $cookie_value = hash_hmac('sha256', $bypass_token, $salt);
@@ -79,7 +83,7 @@ if (file_exists($settings_file)) {
         $has_bypass = false;
         if (isset($_SESSION['maintenance_bypass']) && $_SESSION['maintenance_bypass'] === true) {
             $has_bypass = true;
-        } elseif (isset($_COOKIE[$bypass_cookie_name])) {
+        } elseif ($bypass_token && $salt && isset($_COOKIE[$bypass_cookie_name])) {
             $expected_value = hash_hmac('sha256', $bypass_token, $salt);
             if (hash_equals($expected_value, $_COOKIE[$bypass_cookie_name])) {
                 $_SESSION['maintenance_bypass'] = true; // Sync back to session

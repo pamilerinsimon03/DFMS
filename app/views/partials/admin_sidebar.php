@@ -53,7 +53,7 @@
                     </div>
                     <div class="menu-text <?php echo $active_page === 'analytics' ? 'active-text' : ''; ?>">Analytics</div>
                 </a>
-                <?php if ($user['matric_number'] !== 'SUPER_ADMIN'): ?>
+                <?php if (isset($user['matric_number']) && $user['matric_number'] !== 'SUPER_ADMIN'): ?>
                 <a href="/app/controllers/file_management.php"
                     class="menu-item <?php echo $active_page === 'file_management' ? 'active' : ''; ?>">
                     <div class="menu-icon">
@@ -62,6 +62,24 @@
                     </div>
                     <div class="menu-text <?php echo $active_page === 'file_management' ? 'active-text' : ''; ?>">
                         File Management</div>
+                </a>
+                <?php endif; ?>
+                <?php if (isset($user['matric_number']) && $user['matric_number'] === 'SUPER_ADMIN'): ?>
+                <a href="/app/controllers/session_rollover.php"
+                    class="menu-item <?php echo $active_page === 'session_rollover' ? 'active' : ''; ?>">
+                    <div class="menu-icon">
+                        <img src="/app/src/assets/images/folder-outline.svg" alt="Session Roll-Over Icon">
+                    </div>
+                    <div class="menu-text <?php echo $active_page === 'session_rollover' ? 'active-text' : ''; ?>">
+                        Session Roll-Over</div>
+                </a>
+                <a href="/app/controllers/audit_log_viewer.php"
+                    class="menu-item <?php echo $active_page === 'audit_log_viewer' ? 'active' : ''; ?>">
+                    <div class="menu-icon">
+                        <img src="/app/src/assets/images/verification.svg" alt="Audit Logs Icon">
+                    </div>
+                    <div class="menu-text <?php echo $active_page === 'audit_log_viewer' ? 'active-text' : ''; ?>">
+                        Audit Logs</div>
                 </a>
                 <?php endif; ?>
                 <a href="/app/controllers/settings.php"

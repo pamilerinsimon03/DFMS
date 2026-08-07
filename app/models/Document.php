@@ -21,6 +21,7 @@ class Document
     }
 
     public static function getDocumentsByUserId($user_id) {
+        self::processPendingQueue();
         global $conn;
         $sql = "SELECT d.id, d.document_name, d.file_path, d.status, d.level, u.session, d.semester, d.rejection_reason 
                 FROM documents d 
@@ -328,8 +329,26 @@ class Document
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
 
+    public static function processPendingQueue() {
+        global $conn;
+        if (!$conn) return;
+        try {
+            $res = $conn->query("SELECT id FROM document_processing_queue WHERE status = 'pending' LIMIT 1");
+            if ($res && $res->num_rows > 0) {
+                // Auto process pending items inline via queue worker CLI runner
+                $cmd = "php " . escapeshellarg(__DIR__ . '/../scripts/queue_worker.php') . " --once";
+                if (str_contains(strtoupper(PHP_OS), 'WIN')) {
+                    pclose(popen("start /B " . $cmd, "r"));
+                } else {
+                    exec($cmd . " > /dev/null 2>&1 &");
+                }
+            }
+        } catch (Throwable $e) {}
+    }
+
     public static function getAllDocuments($status_filter, $start_date, $end_date, $search, $page, $per_page, $department_id, $level, $mode, $program_type, $sort_by, $sort_order)
     {
+        self::processPendingQueue();
         global $conn;
         $offset = ($page - 1) * $per_page;
         $params = [];
@@ -498,6 +517,7 @@ class Document
         global $conn;
         
         require_once __DIR__ . '/../utils/SecurityUtils.php';
+        require_once __DIR__ . '/../utils/StoragePathResolver.php';
 
         $validationErrors = SecurityUtils::validateFileUpload($file);
         if (!empty($validationErrors)) {
@@ -509,16 +529,20 @@ class Document
             return ['success' => false, 'message' => 'File validation failed: ' . implode(', ', $validationErrors)];
         }
 
-        $upload_dir = __DIR__ . '/../../secure_uploads/';
-        if (!is_dir($upload_dir)) {
-            mkdir($upload_dir, 0755, true);
-        }
+        $user = User::getById($user_id);
+        $deptCode = $user['department_code'] ?? 'CS';
+
+        $paths = StoragePathResolver::resolveUploadDirectory(
+            $classification_data['semester'] ?? '2024_2025',
+            $deptCode,
+            $classification_data['level']
+        );
         
         $secure_filename = SecurityUtils::generateSecureFilename($file['name'], $user_id);
-        $file_path = 'secure_uploads/' . $secure_filename;
-        $destination = $upload_dir . $secure_filename;
+        $file_path = $paths['relative'] . $secure_filename;
+        $destination = $paths['absolute'] . $secure_filename;
 
-        if (!move_uploaded_file($file['tmp_name'], $destination)) { // secured with pathinfo and basename
+        if (!move_uploaded_file($file['tmp_name'], $destination)) {
             SecurityUtils::logSecurityEvent('file_upload_failed', [
                 'user_id' => $user_id,
                 'filename' => $file['name'],
@@ -529,78 +553,68 @@ class Document
         
         $file_hash = hash_file('sha256', $destination);
 
-        SecurityUtils::logSecurityEvent('file_upload_success', [
-            'user_id' => $user_id,
-            'original_filename' => $file['name'],
-            'secure_filename' => $secure_filename,
-            'file_size' => $file['size'],
-            'file_hash' => $file_hash
-        ]);
+        $conn->begin_transaction();
 
-        $sql = "
-            INSERT INTO documents
-              (user_id,
-               document_name,
-               file_path,
-               file_hash,
-               status,
-               level,
-               semester,
-               program_type,
-               mode,
-               department_id,
-               created_at)
-            VALUES
-              (?, ?, ?, ?, 'Pending Approval', ?, ?, ?, ?, ?, NOW())
-        ";
-        $stmt = $conn->prepare($sql);
-        if (!$stmt) {
-            unlink($destination);
-            return ['success' => false, 'message' => 'DB prepare failed: ' . $conn->error];
-        }
-        $stmt->bind_param(
-            'isssisssi',
-            $user_id,
-            $document_name,
-            $file_path,
-            $file_hash,
-            $classification_data['level'],
-            $classification_data['semester'],
-            $classification_data['program_type'],
-            $classification_data['mode'],
-            $classification_data['department_id']
-        );
+        try {
+            $sql = "
+                INSERT INTO documents
+                  (user_id, document_name, file_path, file_hash, status, level, semester, program_type, mode, department_id, created_at)
+                VALUES
+                  (?, ?, ?, ?, 'Pending Quality Check', ?, ?, ?, ?, ?, NOW())
+            ";
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) {
+                throw new Exception("DB prepare failed: " . $conn->error);
+            }
 
-        if ($stmt->execute()) {
-            $docTitle = $document_name;
+            $stmt->bind_param(
+                'isssisssi',
+                $user_id,
+                $document_name,
+                $file_path,
+                $file_hash,
+                $classification_data['level'],
+                $classification_data['semester'],
+                $classification_data['program_type'],
+                $classification_data['mode'],
+                $classification_data['department_id']
+            );
+
+            $stmt->execute();
+            $doc_id = $conn->insert_id;
+
+            // Push to background processing queue
+            $queueStmt = $conn->prepare("INSERT INTO document_processing_queue (document_id, user_id, file_path, status) VALUES (?, ?, ?, 'pending')");
+            if ($queueStmt) {
+                $queueStmt->bind_param("iis", $doc_id, $user_id, $file_path);
+                $queueStmt->execute();
+            }
+
+            // Create notification record
             Notification::create(
                 $user_id,
-                'Upload successful',
-                "Your document '" . $docTitle . "' was uploaded and is awaiting verification."
+                'Upload received',
+                "Your document '" . $document_name . "' was uploaded and is queued for quality verification."
             );
-            $user = User::getById($user_id);
-            if ($user && !empty($user['email'])) {
-                $subject = "Upload Received: " . $docTitle;
-                $message = "<p>Dear " . htmlspecialchars($user['full_name']) . ",</p>" .
-                           "<p>Your document '<strong>" . htmlspecialchars($docTitle) . "</strong>' has been successfully uploaded and is pending verification.</p>" .
-                           "<p>Login to your dashboard to check the status.</p>";
-                MailService::send($user['email'], $subject, $message);
-            }
 
-            // Notify Admins
-            $adminEmails = User::getAdmins();
-            if (!empty($adminEmails)) {
-                $adminSubject = "New Document Uploaded";
-                $adminMessage = "<p>A new document has been uploaded by <strong>" . htmlspecialchars($user['full_name']) . "</strong> (" . htmlspecialchars($user['matric_number']) . ").</p>" .
-                                "<p><strong>Document:</strong> " . htmlspecialchars($docTitle) . "</p>" .
-                                "<p>Please login to the admin dashboard to verify it.</p>";
-                MailService::send($adminEmails, $adminSubject, $adminMessage);
-            }
+            $conn->commit();
 
-            return ['success' => true, 'message' => 'File uploaded successfully.', 'id' => $conn->insert_id];
-        } else {
-            unlink($destination);
-            return ['success' => false, 'message' => 'Database error: ' . $stmt->error];
+            SecurityUtils::logSecurityEvent('file_upload_success', [
+                'user_id' => $user_id,
+                'original_filename' => $file['name'],
+                'secure_filename' => $secure_filename,
+                'file_size' => $file['size'],
+                'file_hash' => $file_hash
+            ]);
+
+            return ['success' => true, 'message' => 'File uploaded successfully.', 'id' => $doc_id];
+
+        } catch (Exception $e) {
+            $conn->rollback();
+            if (file_exists($destination)) {
+                @unlink($destination);
+            }
+            return ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
         }
     }
 
@@ -609,6 +623,7 @@ class Document
         global $conn;
         
         require_once __DIR__ . '/../utils/SecurityUtils.php';
+        require_once __DIR__ . '/../utils/StoragePathResolver.php';
 
         $doc = self::getById($doc_id);
         if (!$doc) {
@@ -626,30 +641,49 @@ class Document
             return ['success' => false, 'message' => 'File validation failed: ' . implode(', ', $validationErrors)];
         }
 
-        $upload_dir = __DIR__ . '/../../secure_uploads/';
-        if (!is_dir($upload_dir)) {
-            mkdir($upload_dir, 0755, true);
-        }
+        $user = User::getById($doc['user_id']);
+        $deptCode = $user['department_code'] ?? 'CS';
+
+        $paths = StoragePathResolver::resolveUploadDirectory(
+            $doc['semester'] ?? '2024_2025',
+            $deptCode,
+            $doc['level']
+        );
         
-        // Generate secure filename for reupload
         $secure_filename = SecurityUtils::generateSecureFilename($new_file['name'], $doc['user_id']);
-        $new_file_path = 'secure_uploads/' . $secure_filename;
-        $destination = $upload_dir . $secure_filename;
+        $new_file_path = $paths['relative'] . $secure_filename;
+        $destination = $paths['absolute'] . $secure_filename;
         
-        if (!move_uploaded_file($new_file['tmp_name'], $destination)) { // secured with pathinfo and basename
+        if (!move_uploaded_file($new_file['tmp_name'], $destination)) {
             return ['success' => false, 'message' => 'Failed to move uploaded file.'];
         }
 
-        $sql = "UPDATE documents SET file_path = ?, status = 'Pending Approval', created_at = NOW() WHERE id = ?";
-        $stmt = $conn->prepare($sql);
-        if (!$stmt) {
-            unlink($destination); // Clean up uploaded file
-            return ['success' => false, 'message' => 'DB prepare failed: ' . $conn->error];
-        }
-        $stmt->bind_param('si', $new_file_path, $doc_id);
+        $conn->begin_transaction();
 
-        if ($stmt->execute()) {
-            // Log successful file reupload
+        try {
+            $sql = "UPDATE documents SET file_path = ?, status = 'Pending Quality Check', created_at = NOW() WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) {
+                throw new Exception("DB prepare failed: " . $conn->error);
+            }
+            $stmt->bind_param('si', $new_file_path, $doc_id);
+            $stmt->execute();
+
+            // Push to background processing queue
+            $queueStmt = $conn->prepare("INSERT INTO document_processing_queue (document_id, user_id, file_path, status) VALUES (?, ?, ?, 'pending')");
+            if ($queueStmt) {
+                $queueStmt->bind_param("iis", $doc_id, $doc['user_id'], $new_file_path);
+                $queueStmt->execute();
+            }
+
+            Notification::create(
+                (int)$doc['user_id'],
+                'Reupload received',
+                "Your document '" . $doc['document_name'] . "' was reuploaded and is queued for quality verification."
+            );
+
+            $conn->commit();
+
             SecurityUtils::logSecurityEvent('file_reupload_success', [
                 'user_id' => $doc['user_id'],
                 'doc_id' => $doc_id,
@@ -657,35 +691,15 @@ class Document
                 'secure_filename' => $secure_filename,
                 'file_size' => $new_file['size']
             ]);
-            
-            $doc = self::getById($doc_id);
-            Notification::create(
-                (int)$doc['user_id'],
-                'Reupload received',
-                "Your document '" . $doc['document_name'] . "' was reuploaded and is awaiting verification."
-            );
-
-            $user = User::getById($doc['user_id']);
-            if ($user && !empty($user['email'])) {
-                $subject = "Re-upload Received: " . $doc['document_name'];
-                $message = "<p>Dear " . htmlspecialchars($user['full_name']) . ",</p>" .
-                           "<p>Your re-uploaded document '<strong>" . htmlspecialchars($doc['document_name']) . "</strong>' has been received and is pending verification.</p>";
-                MailService::send($user['email'], $subject, $message);
-            }
-
-            $adminEmails = User::getAdmins();
-            if (!empty($adminEmails)) {
-                $adminSubject = "Document Re-uploaded";
-                $adminMessage = "<p>A document has been re-uploaded by <strong>" . htmlspecialchars($user['full_name']) . "</strong> (" . htmlspecialchars($user['matric_number']) . ").</p>" .
-                                "<p><strong>Document:</strong> " . htmlspecialchars($doc['document_name']) . "</p>" .
-                                "<p>Please login to the admin dashboard to verify it.</p>";
-                MailService::send($adminEmails, $adminSubject, $adminMessage);
-            }
 
             return ['success' => true, 'message' => 'File re-uploaded successfully.'];
-        } else {
-            unlink($destination);
-            return ['success' => false, 'message' => 'Database error: ' . $stmt->error];
+
+        } catch (Exception $e) {
+            $conn->rollback();
+            if (file_exists($destination)) {
+                @unlink($destination);
+            }
+            return ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
         }
     }
-}
+}

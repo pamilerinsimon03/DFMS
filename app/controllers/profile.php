@@ -67,15 +67,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($action === 'upload_photo') {
         if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
             $file = $_FILES['profile_photo'];
-            $allowed_types = ['image/jpeg', 'image/png', 'image/jpg'];
+            $allowed_types = ['image/jpeg', 'image/png'];
+            $allowed_extensions = ['jpg', 'jpeg', 'png'];
             $max_size = 2 * 1024 * 1024; // 2MB
+            $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+            $finfo = new finfo(FILEINFO_MIME_TYPE);
+            $detected_mime = $finfo->file($file['tmp_name']);
             
-            if (!in_array($file['type'], $allowed_types)) {
+            if (!in_array($ext, $allowed_extensions) || !in_array($detected_mime, $allowed_types, true)) {
                 $error = "Invalid file type. Only JPG, JPEG, and PNG are allowed.";
             } elseif ($file['size'] > $max_size) {
                 $error = "File size too large. Maximum size is 2MB.";
             } else {
-                $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
                 $target_dir = __DIR__ . '/../src/assets/uploads/profile_pictures/';
                 
                 if (!file_exists($target_dir)) {

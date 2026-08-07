@@ -298,17 +298,26 @@ const initAdmin = () => {
                 e.preventDefault(); // Prevent any default link behavior
                 const menuContent = actionButton.nextElementSibling;
                 
-                // If the clicked menu is already open, close it. Otherwise, close all other menus and open this one.
-                if (menuContent.classList.contains('active')) {
-                    menuContent.classList.remove('active');
-                } else {
-                    openMenus.forEach(menu => menu.classList.remove('active'));
-                    menuContent.classList.add('active');
+                if (menuContent) {
+                    if (menuContent.classList.contains('active') || menuContent.style.display === 'block') {
+                        menuContent.classList.remove('active');
+                        menuContent.style.display = 'none';
+                    } else {
+                        openMenus.forEach(menu => {
+                            menu.classList.remove('active');
+                            menu.style.display = 'none';
+                        });
+                        menuContent.classList.add('active');
+                        menuContent.style.display = 'block';
+                    }
                 }
             } else {
                 // If the click is outside an action button and its menu, close all open menus.
                 if (!e.target.closest('.action-menu-content')) {
-                    openMenus.forEach(menu => menu.classList.remove('active'));
+                    document.querySelectorAll('.action-menu-content').forEach(menu => {
+                        menu.classList.remove('active');
+                        menu.style.display = 'none';
+                    });
                 }
             }
 
