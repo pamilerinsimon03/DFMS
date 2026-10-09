@@ -772,6 +772,20 @@ class Document
 
         require_once __DIR__ . '/../utils/SecurityUtils.php';
         require_once __DIR__ . '/../utils/StoragePathResolver.php';
+        require_once __DIR__ . '/User.php';
+
+        // NDPA 2023 s.37: Restriction of processing check
+        if (User::isProcessingRestricted((int)$user_id)) {
+            SecurityUtils::logSecurityEvent('restricted_account_upload_attempt', [
+                'user_id'          => $user_id,
+                'statutory_clause' => 'NDPA 2023 s.37'
+            ]);
+            return [
+                'success'   => false,
+                'http_code' => 403,
+                'message'   => 'Upload rejected: Account processing is restricted under NDPA 2023 Section 37.'
+            ];
+        }
 
         // 1. Synchronous validation checks: size, MIME, magic bytes
         if (empty($file) || !isset($file['error']) || $file['error'] !== UPLOAD_ERR_OK) {

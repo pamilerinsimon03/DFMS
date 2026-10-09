@@ -5,6 +5,18 @@ require_once __DIR__ . '/../../app/models/Document.php';
 
 class DocumentTest extends TestCase {
 
+    private $originalConn;
+
+    protected function setUp(): void {
+        $this->originalConn = $GLOBALS['conn'] ?? null;
+    }
+
+    protected function tearDown(): void {
+        if ($this->originalConn !== null) {
+            $GLOBALS['conn'] = $this->originalConn;
+        }
+    }
+
     public function testGetById() {
         // Mock Result
         $mockResult = $this->createMock(mysqli_result::class);

@@ -209,6 +209,14 @@ class StoragePathResolver
     }
 
     /**
+     * Alias for resolveAbsolutePath
+     */
+    public static function resolvePhysicalPath(string $relativePath): string
+    {
+        return self::resolveAbsolutePath($relativePath);
+    }
+
+    /**
      * Resolve staging directory path (mode 0700 outside web root)
      */
     public static function resolveStagingPath(string $filename = ''): string

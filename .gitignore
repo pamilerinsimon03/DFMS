@@ -30,4 +30,5 @@ Thumbs.db
 tools/
 *.phar
 scratch/
+.phpunit.result.cache
 docs/DFMS Final Year Project.txt

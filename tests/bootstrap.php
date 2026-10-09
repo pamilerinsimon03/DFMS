@@ -12,6 +12,11 @@ $db_user = $_SERVER['DB_USER'];
 $db_pass = $_SERVER['DB_PASS'];
 $db_name = $_SERVER['DB_NAME']; // Force test database
 
+putenv("DB_HOST=$db_host");
+putenv("DB_USER=$db_user");
+putenv("DB_PASS=$db_pass");
+putenv("DB_NAME=$db_name");
+
 // Connect to MySQL server (without selecting DB yet to ensure it exists)
 define('TEST_MODE', true);
 
@@ -35,6 +40,7 @@ try {
 
 // Function to reset database (can be called in setup)
 function resetDatabase() {
+    global $conn;
     // Use GLOBALS to ensure access if variable scope is lost
     if (!isset($GLOBALS['conn']) || !$GLOBALS['conn'] instanceof mysqli) {
         $GLOBALS['conn'] = new mysqli($GLOBALS['db_host'] ?? 'localhost', $GLOBALS['db_user'] ?? 'root', $GLOBALS['db_pass'] ?? '', $GLOBALS['db_name'] ?? 'dfms_test');
@@ -49,6 +55,16 @@ function resetDatabase() {
     
     // Disable foreign key checks
     $conn->query("SET FOREIGN_KEY_CHECKS = 0");
+
+    $targetDb = $GLOBALS['db_name'] ?? 'dfms_test';
+    
+    // Drop all routines (stored procedures & functions)
+    $routines = $conn->query("SELECT ROUTINE_TYPE, ROUTINE_NAME FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = '" . $conn->real_escape_string($targetDb) . "'");
+    if ($routines) {
+        while ($r = $routines->fetch_assoc()) {
+            $conn->query("DROP " . $r['ROUTINE_TYPE'] . " IF EXISTS `" . $r['ROUTINE_NAME'] . "`");
+        }
+    }
     
     // Get all tables
     $result = $conn->query("SHOW TABLES");
@@ -92,6 +108,7 @@ function resetDatabase() {
         // Reconnect to ensure fresh state
         $conn->close();
         $GLOBALS['conn'] = new mysqli($h, $u, $p, $d);
+        $conn = $GLOBALS['conn'];
         if ($GLOBALS['conn']->connect_error) {
              die("Reconnection failed: " . $GLOBALS['conn']->connect_error);
         }

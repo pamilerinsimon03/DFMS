@@ -5,6 +5,18 @@ require_once __DIR__ . '/../../app/models/User.php';
 
 class UserTest extends TestCase {
     
+    private $originalConn;
+
+    protected function setUp(): void {
+        $this->originalConn = $GLOBALS['conn'] ?? null;
+    }
+
+    protected function tearDown(): void {
+        if ($this->originalConn !== null) {
+            $GLOBALS['conn'] = $this->originalConn;
+        }
+    }
+
     // Test pure logic
     public function testGeneratePassword() {
         $fullName = "John Doe";

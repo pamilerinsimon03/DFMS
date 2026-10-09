@@ -46,6 +46,7 @@ CREATE TABLE `users` (
   `department_id` int(11) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `is_admin` tinyint(1) DEFAULT 0,
+  `processing_restricted` tinyint(1) NOT NULL DEFAULT 0,
   `email` varchar(255) DEFAULT NULL,
   `phone_number` varchar(20) DEFAULT NULL,
   `date_of_birth` date DEFAULT NULL,
@@ -78,10 +79,12 @@ CREATE TABLE `documents` (
   `user_id` int(11) NOT NULL,
   `document_name` varchar(100) NOT NULL,
   `file_name` varchar(255) NOT NULL,
-  `file_path` varchar(255) NOT NULL,
+  `file_path` varchar(255) DEFAULT NULL,
   `upload_date` date NOT NULL,
-  `status` enum('Pending Quality Check','Pending Approval','Approved','Rejected') NOT NULL DEFAULT 'Pending Quality Check',
+  `status` enum('Pending Quality Check','Pending Approval','Approved','Rejected','Purged') NOT NULL DEFAULT 'Pending Quality Check',
   `rejection_reason` TEXT DEFAULT NULL,
+  `purged_at` timestamp NULL DEFAULT NULL,
+  `purge_reason` varchar(255) DEFAULT NULL,
   `due_date` date DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `department_id` int(11) DEFAULT NULL,
@@ -300,12 +303,13 @@ CREATE TABLE IF NOT EXISTS audit_logs_archive (
     INDEX idx_archive_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Create consent tracking table for NDPR compliance
+-- Create consent tracking table for NDPA 2023 / GAID 2025 compliance
 CREATE TABLE IF NOT EXISTS consent_records (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     consent_type VARCHAR(100) NOT NULL,
     consent_given BOOLEAN NOT NULL,
+    policy_version VARCHAR(20) NOT NULL DEFAULT '2025.1',
     consent_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     consent_withdrawn_at TIMESTAMP NULL,
     ip_address VARCHAR(45),
@@ -314,6 +318,31 @@ CREATE TABLE IF NOT EXISTS consent_records (
     INDEX idx_user_consent (user_id, consent_type),
     INDEX idx_consent_date (consent_date)
 );
+
+-- Create retention rules table for core vs non-core document retention (NDPA s.24(1)(f))
+CREATE TABLE IF NOT EXISTS retention_rules (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    document_type VARCHAR(100) NOT NULL UNIQUE,
+    retention_days INT NULL, -- NULL indicates permanent retention
+    is_core_academic TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_retention_core (is_core_academic),
+    INDEX idx_retention_type (document_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO retention_rules (document_type, retention_days, is_core_academic) VALUES
+('JAMB Admission Letter', NULL, 1),
+('University Admission Letter', NULL, 1),
+('O\'Level Result (WAEC/NECO/NABTEB)', NULL, 1),
+('Degree Certificate', NULL, 1),
+('Official Academic Transcript', NULL, 1),
+('Final Year Project', NULL, 1),
+('Graduation Clearance Form', NULL, 1),
+('Birth Certificate', 2555, 0),
+('Local Government Identification', 1825, 0),
+('Medical Fitness Certificate', 1095, 0),
+('Reference Letter', 1095, 0),
+('Passport Photograph', 1825, 0);
 
 -- Add security-related columns to users table
 ALTER TABLE users 
@@ -356,8 +385,9 @@ GROUP BY DATE(created_at)
 ORDER BY date DESC;
 
 -- Create stored procedure for cleaning up old audit logs (deprecated under append-only policy)
+DROP PROCEDURE IF EXISTS CleanupOldAuditLogs;
 DELIMITER //
-CREATE PROCEDURE IF NOT EXISTS CleanupOldAuditLogs()
+CREATE PROCEDURE CleanupOldAuditLogs()
 BEGIN
     SIGNAL SQLSTATE '45000'
     SET MESSAGE_TEXT = 'Security Violation: CleanupOldAuditLogs is deprecated. Deletion of audit logs violates the tamper-evident append-only policy.';
@@ -365,8 +395,10 @@ END //
 DELIMITER ;
 
 -- Append-only triggers to block UPDATE and DELETE on audit_logs
+DROP TRIGGER IF EXISTS trg_audit_logs_no_update;
+DROP TRIGGER IF EXISTS trg_audit_logs_no_delete;
 DELIMITER //
-CREATE TRIGGER IF NOT EXISTS trg_audit_logs_no_update
+CREATE TRIGGER trg_audit_logs_no_update
 BEFORE UPDATE ON audit_logs
 FOR EACH ROW
 BEGIN
@@ -376,7 +408,7 @@ BEGIN
     END IF;
 END //
 
-CREATE TRIGGER IF NOT EXISTS trg_audit_logs_no_delete
+CREATE TRIGGER trg_audit_logs_no_delete
 BEFORE DELETE ON audit_logs
 FOR EACH ROW
 BEGIN
@@ -387,9 +419,10 @@ BEGIN
 END //
 DELIMITER ;
 
--- Create stored procedure for user data export (NDPR compliance)
+-- Create stored procedure for user data export (NDPA 2023 s.34 & s.38 Data Portability)
+DROP PROCEDURE IF EXISTS ExportUserData;
 DELIMITER //
-CREATE PROCEDURE IF NOT EXISTS ExportUserData(IN user_id INT)
+CREATE PROCEDURE ExportUserData(IN user_id INT)
 BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
@@ -399,13 +432,10 @@ BEGIN
     
     START TRANSACTION;
     
-    -- Log the data export request
-    INSERT INTO audit_logs (user_id, event_type, event_description, created_at)
-    VALUES (user_id, 'data_export', 'User data export requested', NOW());
-    
-    -- Return user data
+    -- Return user profile data
     SELECT 
         u.id,
+        u.public_id,
         u.matric_number,
         u.full_name,
         u.email,
@@ -417,20 +447,27 @@ BEGIN
         u.address,
         u.emergency_contact_name,
         u.emergency_contact_phone,
+        u.emergency_contact_relationship,
         u.level,
         u.programme,
         u.session,
+        u.processing_restricted,
         u.created_at,
         u.last_login_at
     FROM users u 
     WHERE u.id = user_id;
     
-    -- Return user documents
+    -- Return user documents (reconciled with actual schema)
     SELECT 
         d.id,
+        d.public_id,
         d.document_name,
-        d.file_path,
+        d.file_name,
+        d.upload_date,
         d.status,
+        d.rejection_reason,
+        d.level,
+        d.semester,
         d.created_at
     FROM documents d 
     WHERE d.user_id = user_id;
@@ -440,7 +477,8 @@ BEGIN
         c.consent_type,
         c.consent_given,
         c.consent_date,
-        c.consent_withdrawn_at
+        c.consent_withdrawn_at,
+        c.policy_version
     FROM consent_records c 
     WHERE c.user_id = user_id;
     
@@ -463,28 +501,8 @@ UPDATE users
 SET data_retention_consent = TRUE 
 WHERE data_retention_consent = FALSE;
 
--- Create trigger to log user data changes
-DELIMITER //
-CREATE TRIGGER IF NOT EXISTS log_user_changes
-AFTER UPDATE ON users
-FOR EACH ROW
-BEGIN
-    IF OLD.full_name != NEW.full_name THEN
-        INSERT INTO audit_logs (user_id, event_type, event_description, created_at)
-        VALUES (NEW.id, 'profile_update', CONCAT('Full name changed from "', OLD.full_name, '" to "', NEW.full_name, '"'), NOW());
-    END IF;
-    
-    IF OLD.email != NEW.email THEN
-        INSERT INTO audit_logs (user_id, event_type, event_description, created_at)
-        VALUES (NEW.id, 'profile_update', CONCAT('Email changed from "', OLD.email, '" to "', NEW.email, '"'), NOW());
-    END IF;
-    
-    IF OLD.phone_number != NEW.phone_number THEN
-        INSERT INTO audit_logs (user_id, event_type, event_description, created_at)
-        VALUES (NEW.id, 'profile_update', CONCAT('Phone number changed from "', OLD.phone_number, '" to "', NEW.phone_number, '"'), NOW());
-    END IF;
-END //
-DELIMITER ;
+-- Remove legacy unchained user update trigger (audit logging is handled cryptographically via AuditService in User model)
+DROP TRIGGER IF EXISTS log_user_changes;
 
 -- Create a view for NDPR compliance reporting
 CREATE OR REPLACE VIEW ndpr_compliance_summary AS
@@ -713,7 +731,8 @@ INSERT IGNORE INTO `schema_migrations` (`version`) VALUES
   ('2026_08_11_000000_performance_indexes.sql'),
   ('2026_10_09_000001_add_public_id.sql'),
   ('2026_10_09_000002_add_ocr_pipeline_fields.sql'),
-  ('2026_10_09_000003_tamper_evident_audit_log.sql');
+  ('2026_10_09_000003_tamper_evident_audit_log.sql'),
+  ('2026_10_09_000004_ndpa_compliance.sql');
 
 COMMIT;
 

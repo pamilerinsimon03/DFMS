@@ -21,7 +21,7 @@ if (
     $db_host = 'localhost';
     $db_user = 'root';
     $db_pass = '';
-    $db_name = 'dfms_local';
+    $db_name = $_SERVER['DB_NAME'] ?? (getenv('DB_NAME') ?: 'dfms_local');
 } else {
     // Live server - use environment variables
     $db_host = $_ENV['DB_HOST'] ?? 'localhost';

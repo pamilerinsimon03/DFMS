@@ -4,6 +4,7 @@ use PHPUnit\Framework\TestCase;
 require_once __DIR__ . '/../../app/utils/SecurityUtils.php';
 
 class SecurityUtilsTest extends TestCase {
+    protected $backupGlobals = false;
 
     public function testValidateInput() {
         $this->assertEquals('test', SecurityUtils::validateInput('test  '));
@@ -17,8 +18,6 @@ class SecurityUtilsTest extends TestCase {
     }
     
     public function testCheckRateLimit() {
-        // Since rate limit uses static store and time(), we might test simply that it allows N attempts
-        // Resetting state isn't easy without reflection or method, but since it's per identifier:
         $id = 'test_ip_' . uniqid();
         
         for ($i = 0; $i < 5; $i++) {
