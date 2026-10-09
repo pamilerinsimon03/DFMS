@@ -178,9 +178,33 @@ class StoragePathResolver
             throw new InvalidArgumentException("Path traversal sequence detected in file path.");
         }
 
+        // Check if file exists directly under storageRoot
         $fullPath = $storageRoot . '/' . $normalizedRelative;
-        self::assertContainedInRoot($fullPath, $storageRoot);
+        if (file_exists($fullPath)) {
+            self::assertContainedInRoot($fullPath, $storageRoot);
+            return $fullPath;
+        }
 
+        // If path begins with secure_uploads/ and storageRoot ends with secure_uploads
+        if (str_starts_with($normalizedRelative, 'secure_uploads/')) {
+            $stripped = substr($normalizedRelative, strlen('secure_uploads/'));
+            $strippedPath = $storageRoot . '/' . $stripped;
+            if (file_exists($strippedPath)) {
+                self::assertContainedInRoot($strippedPath, $storageRoot);
+                return $strippedPath;
+            }
+        }
+
+        // Fallback for legacy paths relative to repo root during migration
+        $repoRoot = realpath(__DIR__ . '/../..');
+        if ($repoRoot) {
+            $repoPath = $repoRoot . '/' . $normalizedRelative;
+            if (file_exists($repoPath)) {
+                return $repoPath;
+            }
+        }
+
+        self::assertContainedInRoot($fullPath, $storageRoot);
         return $fullPath;
     }
 

@@ -51,11 +51,19 @@ if ($zip->open($tmpFile, ZipArchive::CREATE) !== true) {
     exit("Could not create ZIP archive.");
 }
 
+require_once __DIR__ . '/../utils/StoragePathResolver.php';
+
 foreach ($docs as $doc) {
-    // Fix: secure_uploads is at the root, not inside public/
-    $path = __DIR__ . '/../../' . $doc['file_path'];
-    if (is_file($path)) {
-        $zip->addFile($path, basename($doc['file_path']));
+    if (($doc['file_scan_status'] ?? '') !== 'clean' || str_contains($doc['file_path'], '_staging')) {
+        continue;
+    }
+    try {
+        $path = StoragePathResolver::resolveAbsolutePath($doc['file_path']);
+        if (is_file($path)) {
+            $zip->addFile($path, basename($doc['file_name'] ?? $doc['file_path']));
+        }
+    } catch (Throwable $e) {
+        continue;
     }
 }
 
