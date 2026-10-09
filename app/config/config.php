@@ -30,10 +30,47 @@ if (
     $db_name = $_ENV['DB_NAME'] ?? 'dfms_prod';
 }
 
-define('DB_HOST', $db_host);
-define('DB_USER', $db_user);
-define('DB_PASS', $db_pass);
-define('DB_NAME', $db_name);
+if (!defined('DB_HOST')) define('DB_HOST', $db_host);
+if (!defined('DB_USER')) define('DB_USER', $db_user);
+if (!defined('DB_PASS')) define('DB_PASS', $db_pass);
+if (!defined('DB_NAME')) define('DB_NAME', $db_name);
+
+// Storage and Log Isolation Configuration
+require_once __DIR__ . '/../utils/StoragePathResolver.php';
+
+if (!defined('STORAGE_ROOT')) {
+    define('STORAGE_ROOT', StoragePathResolver::getStorageRoot());
+}
+
+if (!defined('LOG_ROOT')) {
+    define('LOG_ROOT', StoragePathResolver::getLogRoot());
+}
+
+if (!defined('STORAGE_SALT')) {
+    define('STORAGE_SALT', StoragePathResolver::getStorageSalt());
+}
+
+// Storage isolation enforcement: STORAGE_ROOT must not be inside document root
+$docRoot = !empty($_SERVER['DOCUMENT_ROOT']) ? realpath($_SERVER['DOCUMENT_ROOT']) : null;
+if (!$docRoot && php_sapi_name() !== 'cli') {
+    $docRoot = realpath(__DIR__ . '/../..');
+}
+if ($docRoot) {
+    $normDocRoot = rtrim(str_replace('\\', '/', $docRoot), '/');
+    $storageRealPath = realpath(STORAGE_ROOT) ?: STORAGE_ROOT;
+    $normStorageRoot = rtrim(str_replace('\\', '/', $storageRealPath), '/');
+
+    if (str_starts_with($normStorageRoot, $normDocRoot . '/') || $normStorageRoot === $normDocRoot) {
+        $appEnv = getenv('APP_ENV') ?: ($_ENV['APP_ENV'] ?? 'development');
+        $alert = "CRITICAL SECURITY WARNING: STORAGE_ROOT resolves inside web document root ({$docRoot}).";
+        if ($appEnv === 'development' || php_sapi_name() === 'cli') {
+            error_log($alert);
+        } else {
+            http_response_code(500);
+            die("Critical Security Configuration Error: Storage root must reside outside web document root.");
+        }
+    }
+}
 
 $conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
 
@@ -91,22 +128,27 @@ if (file_exists($settings_file)) {
             }
         }
 
-        // 3. Determine if current logged-in user is Super Admin
+        // 3. Determine if current logged-in user is Super Admin (Prepared Statement)
         $is_super_admin = false;
         if (isset($_SESSION['user_id'])) {
             $userId = (int)$_SESSION['user_id'];
-            $db_res = $conn->query("SELECT matric_number FROM users WHERE id = $userId");
-            if ($db_res && $db_row = $db_res->fetch_assoc()) {
-                if ($db_row['matric_number'] === 'SUPER_ADMIN') {
-                    $is_super_admin = true;
+            $stmt = $conn->prepare("SELECT matric_number FROM users WHERE id = ?");
+            if ($stmt) {
+                $stmt->bind_param("i", $userId);
+                $stmt->execute();
+                $db_res = $stmt->get_result();
+                if ($db_res && $db_row = $db_res->fetch_assoc()) {
+                    if ($db_row['matric_number'] === 'SUPER_ADMIN') {
+                        $is_super_admin = true;
+                    }
                 }
+                $stmt->close();
             }
         }
-        
+
         // 4. If not Super Admin and no bypass, enforce maintenance redirect
         if (php_sapi_name() !== 'cli' && !$is_super_admin && !$has_bypass) {
             $request_uri = $_SERVER['REQUEST_URI'] ?? '';
-            // If the URI is not targeting maintenance.php, redirect to maintenance page
             $allowed_uris = ['maintenance.php'];
             $is_allowed = false;
             foreach ($allowed_uris as $uri) {
@@ -115,11 +157,10 @@ if (file_exists($settings_file)) {
                     break;
                 }
             }
-            // Allow css and images assets so the maintenance screen renders beautifully
             if (stripos($request_uri, '/app/src/') !== false || stripos($request_uri, '/assets/') !== false) {
                 $is_allowed = true;
             }
-            
+
             if (!$is_allowed) {
                 if (isset($_SERVER['HTTP_X_SPA_REQUEST'])) {
                     header('Content-Type: application/json');
@@ -130,9 +171,9 @@ if (file_exists($settings_file)) {
                 }
                 header("Location: /app/views/maintenance.php");
                 exit();
+            }
         }
     }
-}
 }
 
 // Centralized Access Control Layer (ACL) Route Protection

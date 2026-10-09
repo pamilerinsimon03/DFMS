@@ -188,14 +188,17 @@ class SecurityUtils {
             'details' => $details
         ];
         
-        $logFile = __DIR__ . '/../logs/security.log';
-        $logDir = dirname($logFile);
+        require_once __DIR__ . '/StoragePathResolver.php';
+        $logDir = StoragePathResolver::getLogRoot();
+        $logFile = $logDir . '/security.log';
         
         if (!is_dir($logDir)) {
-            mkdir($logDir, 0755, true);
+            @mkdir($logDir, 0750, true);
+            @chmod($logDir, 0750);
         }
         
         file_put_contents($logFile, json_encode($logEntry) . "\n", FILE_APPEND | LOCK_EX);
+        @chmod($logFile, 0640);
 
         // Write to audit_logs database table if available
         global $conn;
