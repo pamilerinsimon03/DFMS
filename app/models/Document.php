@@ -550,7 +550,14 @@ class Document
     }
 
     public static function processPendingQueue() {
-        // Queue processing is handled by dedicated CLI background worker (app/scripts/queue_worker.php)
+        // Background queue processing is handled by dedicated CLI worker (app/scripts/queue_worker.php)
+        // Inline execution is strictly gated behind a development environment flag (SYNC_QUEUE_PROCESSING=1)
+        if (getenv('APP_ENV') === 'development' && getenv('SYNC_QUEUE_PROCESSING') === '1') {
+            $workerScript = __DIR__ . '/../scripts/queue_worker.php';
+            if (file_exists($workerScript)) {
+                @exec("php " . escapeshellarg($workerScript) . " --once > /dev/null 2>&1 &");
+            }
+        }
         return true;
     }
 
@@ -761,53 +768,91 @@ class Document
     public static function upload($user_id, $document_name, $generated_filename, $file, $classification_data)
     {
         global $conn;
-        
+        if (!$conn) return ['success' => false, 'message' => 'Database unavailable'];
+
         require_once __DIR__ . '/../utils/SecurityUtils.php';
         require_once __DIR__ . '/../utils/StoragePathResolver.php';
 
-        $validationErrors = SecurityUtils::validateFileUpload($file);
-        if (!empty($validationErrors)) {
-            SecurityUtils::logSecurityEvent('file_upload_validation_failed', [
-                'user_id' => $user_id,
-                'errors' => $validationErrors,
-                'filename' => $file['name']
-            ]);
-            return ['success' => false, 'message' => 'File validation failed: ' . implode(', ', $validationErrors)];
+        // 1. Synchronous validation checks: size, MIME, magic bytes
+        if (empty($file) || !isset($file['error']) || $file['error'] !== UPLOAD_ERR_OK) {
+            return ['success' => false, 'http_code' => 422, 'message' => 'No valid upload file received.'];
         }
 
-        $user = User::getById($user_id);
-        $deptCode = $user['department_code'] ?? 'CS';
-
-        $paths = StoragePathResolver::resolveUploadDirectory(
-            $classification_data['semester'] ?? '2024_2025',
-            $deptCode,
-            $classification_data['level']
-        );
-        
-        $secure_filename = SecurityUtils::generateSecureFilename($file['name'], $user_id);
-        $file_path = $paths['relative'] . $secure_filename;
-        $destination = $paths['absolute'] . $secure_filename;
-
-        if (!move_uploaded_file($file['tmp_name'], $destination)) {
-            SecurityUtils::logSecurityEvent('file_upload_failed', [
-                'user_id' => $user_id,
-                'filename' => $file['name'],
-                'error' => 'Failed to move uploaded file'
-            ]);
-            return ['success' => false, 'message' => 'Failed to move uploaded file.'];
+        $tmpPath = $file['tmp_name'] ?? '';
+        if (!file_exists($tmpPath) || !is_readable($tmpPath)) {
+            return ['success' => false, 'http_code' => 422, 'message' => 'Uploaded temporary file is unreadable.'];
         }
-        
-        $file_hash = hash_file('sha256', $destination);
+
+        // Maximum size: 10MB
+        $maxSize = 10 * 1024 * 1024;
+        $fileSize = (int)($file['size'] ?? filesize($tmpPath));
+        if ($fileSize > $maxSize || $fileSize <= 0) {
+            return ['success' => false, 'http_code' => 422, 'message' => 'File size exceeds maximum permitted limit (10MB).'];
+        }
+
+        // Magic bytes validation strictly determining extension
+        $ext = StoragePathResolver::determineExtension($tmpPath);
+        if (!$ext || !in_array($ext, ['pdf', 'jpg', 'jpeg', 'png'], true)) {
+            SecurityUtils::logSecurityEvent('file_upload_invalid_magic_bytes', [
+                'user_id' => $user_id,
+                'filename' => $file['name'] ?? ''
+            ]);
+            return ['success' => false, 'http_code' => 422, 'message' => 'Invalid file format: Only PDF, JPEG, and PNG files are accepted.'];
+        }
+
+        // 2. Buffer to Staging Directory (STORAGE_ROOT/_staging, mode 0700)
+        $stageFilename = 'stage_' . bin2hex(random_bytes(16)) . '.' . $ext;
+        $stageFull = StoragePathResolver::resolveStagingPath($stageFilename);
+        $stageRel = '_staging/' . $stageFilename;
+
+        $buffered = false;
+        if (is_uploaded_file($tmpPath)) {
+            $buffered = move_uploaded_file($tmpPath, $stageFull);
+        } else {
+            $buffered = copy($tmpPath, $stageFull);
+        }
+
+        if (!$buffered || !file_exists($stageFull)) {
+            return ['success' => false, 'http_code' => 500, 'message' => 'Failed to buffer upload into secure staging storage.'];
+        }
+
+        @chmod($stageFull, 0600);
+
+        // 3. Compute SHA-256 for integrity and duplicate detection
+        $file_hash = hash_file('sha256', $stageFull);
+
+        $dupStmt = $conn->prepare("SELECT id FROM documents WHERE user_id = ? AND file_hash = ? AND status != 'Rejected' LIMIT 1");
+        if ($dupStmt) {
+            $dupStmt->bind_param("is", $user_id, $file_hash);
+            $dupStmt->execute();
+            $dupRes = $dupStmt->get_result()->fetch_assoc();
+            $dupStmt->close();
+            if ($dupRes) {
+                @unlink($stageFull);
+                SecurityUtils::logSecurityEvent('duplicate_file_submission', [
+                    'user_id' => $user_id,
+                    'file_hash' => $file_hash,
+                    'existing_doc_id' => $dupRes['id']
+                ]);
+                return [
+                    'success'   => false,
+                    'http_code' => 422,
+                    'message'   => 'Duplicate submission detected: You have already uploaded this exact file.'
+                ];
+            }
+        }
+
         $public_id = self::generateUUID();
+        $storedFilename = basename($file['name'] ?? 'document.' . $ext);
 
         $conn->begin_transaction();
 
         try {
             $sql = "
                 INSERT INTO documents
-                  (public_id, user_id, document_name, file_path, file_hash, status, level, semester, program_type, mode, department_id, created_at)
+                  (public_id, user_id, document_name, file_name, file_path, file_hash, status, file_scan_status, level, semester, program_type, mode, department_id, created_at)
                 VALUES
-                  (?, ?, ?, ?, ?, 'Pending Quality Check', ?, ?, ?, ?, ?, NOW())
+                  (?, ?, ?, ?, ?, ?, 'Pending Quality Check', 'pending', ?, ?, ?, ?, ?, NOW())
             ";
             $stmt = $conn->prepare($sql);
             if (!$stmt) {
@@ -815,11 +860,12 @@ class Document
             }
 
             $stmt->bind_param(
-                'sisssisssi',
+                'sissssisssi',
                 $public_id,
                 $user_id,
                 $document_name,
-                $file_path,
+                $storedFilename,
+                $stageRel,
                 $file_hash,
                 $classification_data['level'],
                 $classification_data['semester'],
@@ -830,41 +876,41 @@ class Document
 
             $stmt->execute();
             $doc_id = $conn->insert_id;
+            $stmt->close();
 
             // Push to background processing queue
-            $queueStmt = $conn->prepare("INSERT INTO document_processing_queue (document_id, user_id, file_path, status) VALUES (?, ?, ?, 'pending')");
+            $queueStmt = $conn->prepare("INSERT INTO document_processing_queue (document_id, user_id, file_path, status, attempts) VALUES (?, ?, ?, 'pending', 0)");
             if ($queueStmt) {
-                $queueStmt->bind_param("iis", $doc_id, $user_id, $file_path);
+                $queueStmt->bind_param("iis", $doc_id, $user_id, $stageRel);
                 $queueStmt->execute();
+                $queueStmt->close();
             }
 
-            // Create notification record
+            // Notification to user
             Notification::create(
                 $user_id,
                 'Upload received',
-                "Your document '" . $document_name . "' was uploaded and is queued for quality verification."
+                "Your document '" . $document_name . "' was received and is queued for automated quality and malware verification."
             );
 
             $conn->commit();
 
-            SecurityUtils::logSecurityEvent('file_upload_success', [
-                'user_id' => $user_id,
-                'doc_id' => $doc_id,
+            SecurityUtils::logSecurityEvent('file_upload_staged', [
+                'user_id'   => $user_id,
+                'doc_id'    => $doc_id,
                 'public_id' => $public_id,
-                'original_filename' => $file['name'],
-                'secure_filename' => $secure_filename,
-                'file_size' => $file['size'],
-                'file_hash' => $file_hash
+                'file_hash' => $file_hash,
+                'staged_at' => $stageRel
             ]);
 
-            return ['success' => true, 'message' => 'File uploaded successfully.', 'id' => $doc_id, 'public_id' => $public_id];
+            return ['success' => true, 'message' => 'File uploaded successfully and queued for verification.', 'id' => $doc_id, 'public_id' => $public_id];
 
         } catch (Exception $e) {
             $conn->rollback();
-            if (file_exists($destination)) {
-                @unlink($destination);
+            if (file_exists($stageFull)) {
+                @unlink($stageFull);
             }
-            return ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
+            return ['success' => false, 'http_code' => 500, 'message' => 'Database error: ' . $e->getMessage()];
         }
     }
 
@@ -879,11 +925,13 @@ class Document
     public static function reupload($doc_id, $new_file, $generated_filename)
     {
         global $conn;
-        
+        if (!$conn) return ['success' => false, 'message' => 'Database unavailable'];
+
         require_once __DIR__ . '/../utils/SecurityUtils.php';
         require_once __DIR__ . '/../utils/StoragePathResolver.php';
 
-        $doc = self::getById($doc_id);
+        $numericId = self::resolveId($doc_id);
+        $doc = $numericId ? self::getById($numericId) : null;
         if (!$doc) {
             return ['success' => false, 'message' => 'Document not found.'];
         }
@@ -897,76 +945,81 @@ class Document
             return ['success' => false, 'message' => 'Only rejected documents can be re-uploaded.'];
         }
 
-        $validationErrors = SecurityUtils::validateFileUpload($new_file);
-        if (!empty($validationErrors)) {
-            SecurityUtils::logSecurityEvent('file_reupload_validation_failed', [
-                'user_id' => $doc['user_id'],
-                'doc_id' => $doc_id,
-                'errors' => $validationErrors,
-                'filename' => $new_file['name']
-            ]);
-            return ['success' => false, 'message' => 'File validation failed: ' . implode(', ', $validationErrors)];
+        if (empty($new_file) || !isset($new_file['error']) || $new_file['error'] !== UPLOAD_ERR_OK) {
+            return ['success' => false, 'http_code' => 422, 'message' => 'No valid re-upload file received.'];
         }
 
-        $user = User::getById($doc['user_id']);
-        $deptCode = $user['department_code'] ?? 'CS';
-
-        $paths = StoragePathResolver::resolveUploadDirectory(
-            $doc['semester'] ?? '2024_2025',
-            $deptCode,
-            $doc['level']
-        );
-        
-        $secure_filename = SecurityUtils::generateSecureFilename($new_file['name'], $doc['user_id']);
-        $new_file_path = $paths['relative'] . $secure_filename;
-        $destination = $paths['absolute'] . $secure_filename;
-        
-        if (!move_uploaded_file($new_file['tmp_name'], $destination)) {
-            return ['success' => false, 'message' => 'Failed to move uploaded file.'];
+        $tmpPath = $new_file['tmp_name'] ?? '';
+        if (!file_exists($tmpPath) || !is_readable($tmpPath)) {
+            return ['success' => false, 'http_code' => 422, 'message' => 'Uploaded temporary file is unreadable.'];
         }
+
+        $ext = StoragePathResolver::determineExtension($tmpPath);
+        if (!$ext || !in_array($ext, ['pdf', 'jpg', 'jpeg', 'png'], true)) {
+            return ['success' => false, 'http_code' => 422, 'message' => 'Invalid file format: Only PDF, JPEG, and PNG files are accepted.'];
+        }
+
+        // Stage file in STORAGE_ROOT/_staging
+        $stageFilename = 'stage_' . bin2hex(random_bytes(16)) . '.' . $ext;
+        $stageFull = StoragePathResolver::resolveStagingPath($stageFilename);
+        $stageRel = '_staging/' . $stageFilename;
+
+        $buffered = false;
+        if (is_uploaded_file($tmpPath)) {
+            $buffered = move_uploaded_file($tmpPath, $stageFull);
+        } else {
+            $buffered = copy($tmpPath, $stageFull);
+        }
+
+        if (!$buffered || !file_exists($stageFull)) {
+            return ['success' => false, 'http_code' => 500, 'message' => 'Failed to buffer re-upload into staging storage.'];
+        }
+
+        @chmod($stageFull, 0600);
+        $file_hash = hash_file('sha256', $stageFull);
 
         $conn->begin_transaction();
 
         try {
-            $sql = "UPDATE documents SET file_path = ?, status = 'Pending Quality Check', created_at = NOW() WHERE id = ?";
+            $sql = "UPDATE documents SET file_path = ?, file_hash = ?, status = 'Pending Quality Check', rejection_reason = NULL, file_scan_status = 'pending', ocr_match_status = 'pending', created_at = NOW() WHERE id = ?";
             $stmt = $conn->prepare($sql);
             if (!$stmt) {
                 throw new Exception("DB prepare failed: " . $conn->error);
             }
-            $stmt->bind_param('si', $new_file_path, $doc_id);
+            $stmt->bind_param('ssi', $stageRel, $file_hash, $doc['id']);
             $stmt->execute();
+            $stmt->close();
 
             // Push to background processing queue
-            $queueStmt = $conn->prepare("INSERT INTO document_processing_queue (document_id, user_id, file_path, status) VALUES (?, ?, ?, 'pending')");
+            $queueStmt = $conn->prepare("INSERT INTO document_processing_queue (document_id, user_id, file_path, status, attempts) VALUES (?, ?, ?, 'pending', 0)");
             if ($queueStmt) {
-                $queueStmt->bind_param("iis", $doc_id, $doc['user_id'], $new_file_path);
+                $queueStmt->bind_param("iis", $doc['id'], $doc['user_id'], $stageRel);
                 $queueStmt->execute();
+                $queueStmt->close();
             }
 
             Notification::create(
                 (int)$doc['user_id'],
                 'Reupload received',
-                "Your document '" . $doc['document_name'] . "' was reuploaded and is queued for quality verification."
+                "Your document '" . $doc['document_name'] . "' was reuploaded and is queued for verification."
             );
 
             $conn->commit();
 
-            SecurityUtils::logSecurityEvent('file_reupload_success', [
+            SecurityUtils::logSecurityEvent('file_reupload_staged', [
                 'user_id' => $doc['user_id'],
-                'doc_id' => $doc_id,
-                'original_filename' => $new_file['name'],
-                'secure_filename' => $secure_filename,
-                'file_size' => $new_file['size']
+                'doc_id'  => $doc['id'],
+                'staged_at' => $stageRel
             ]);
 
-            return ['success' => true, 'message' => 'File re-uploaded successfully.'];
+            return ['success' => true, 'message' => 'File re-uploaded successfully and queued for verification.'];
 
         } catch (Exception $e) {
             $conn->rollback();
-            if (file_exists($destination)) {
-                @unlink($destination);
+            if (file_exists($stageFull)) {
+                @unlink($stageFull);
             }
-            return ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
+            return ['success' => false, 'http_code' => 500, 'message' => 'Database error: ' . $e->getMessage()];
         }
     }
 }

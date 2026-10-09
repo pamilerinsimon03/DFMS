@@ -291,13 +291,18 @@ ALTER TABLE documents
 ADD COLUMN IF NOT EXISTS file_hash VARCHAR(64),
 ADD COLUMN IF NOT EXISTS upload_ip VARCHAR(45),
 ADD COLUMN IF NOT EXISTS file_scan_status ENUM('pending', 'clean', 'infected', 'error') DEFAULT 'pending',
-ADD COLUMN IF NOT EXISTS file_scan_date TIMESTAMP NULL;
+ADD COLUMN IF NOT EXISTS file_scan_date TIMESTAMP NULL,
+ADD COLUMN IF NOT EXISTS ocr_match_status ENUM('matched', 'mismatch', 'unreadable', 'pending') NOT NULL DEFAULT 'pending',
+ADD COLUMN IF NOT EXISTS ocr_extracted JSON NULL,
+ADD COLUMN IF NOT EXISTS ocr_confidence DECIMAL(5,2) NULL,
+ADD COLUMN IF NOT EXISTS blur_variance DECIMAL(8,2) NULL;
 
 -- Create indexes for better performance and security
 CREATE INDEX IF NOT EXISTS idx_users_last_login ON users(last_login_at);
 CREATE INDEX IF NOT EXISTS idx_users_failed_logins ON users(failed_login_attempts);
 CREATE INDEX IF NOT EXISTS idx_documents_file_hash ON documents(file_hash);
 CREATE INDEX IF NOT EXISTS idx_documents_scan_status ON documents(file_scan_status);
+CREATE INDEX IF NOT EXISTS idx_documents_ocr_status ON documents(ocr_match_status);
 
 -- Create view for security monitoring
 CREATE OR REPLACE VIEW security_summary AS
@@ -653,7 +658,8 @@ CREATE TABLE IF NOT EXISTS `schema_migrations` (
 INSERT IGNORE INTO `schema_migrations` (`version`) VALUES
   ('2026_08_10_000000_enterprise_upgrades.sql'),
   ('2026_08_11_000000_performance_indexes.sql'),
-  ('2026_10_09_000001_add_public_id.sql');
+  ('2026_10_09_000001_add_public_id.sql'),
+  ('2026_10_09_000002_add_ocr_pipeline_fields.sql');
 
 COMMIT;
 
