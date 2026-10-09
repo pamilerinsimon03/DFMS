@@ -179,13 +179,17 @@ class SecurityUtils {
         return true;
     }
     
-    public static function logSecurityEvent($event, $details = []) {
+    public static function logSecurityEvent($event, $details = [], $role = null, $target = null, $route = null, $outcome = 'success', $userId = null) {
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+        $ua = $_SERVER['HTTP_USER_AGENT'] ?? 'CLI/System';
+        $now = date('Y-m-d H:i:s');
+
         $logEntry = [
-            'timestamp' => date('Y-m-d H:i:s'),
-            'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
-            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
-            'event' => $event,
-            'details' => $details
+            'timestamp'  => $now,
+            'ip'         => $ip,
+            'user_agent' => $ua,
+            'event'      => $event,
+            'details'    => $details
         ];
         
         require_once __DIR__ . '/StoragePathResolver.php';
@@ -197,23 +201,22 @@ class SecurityUtils {
             @chmod($logDir, 0750);
         }
         
-        file_put_contents($logFile, json_encode($logEntry) . "\n", FILE_APPEND | LOCK_EX);
+        @file_put_contents($logFile, json_encode($logEntry) . "\n", FILE_APPEND | LOCK_EX);
         @chmod($logFile, 0640);
 
-        // Write to audit_logs database table if available
-        global $conn;
-        if ($conn) {
-            $userId = $_SESSION['user_id'] ?? null;
-            $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-            $ua = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
-            $desc = json_encode($details);
-
-            $stmt = $conn->prepare("INSERT INTO audit_logs (user_id, event_type, event_description, ip_address, user_agent) VALUES (?, ?, ?, ?, ?)");
-            if ($stmt) {
-                $stmt->bind_param("issss", $userId, $event, $desc, $ip, $ua);
-                $stmt->execute();
-            }
-        }
+        // Write to tamper-evident hash-chained audit_logs database table
+        require_once __DIR__ . '/../services/AuditService.php';
+        return AuditService::log(
+            (string)$event,
+            $details,
+            $role,
+            $target,
+            $route,
+            $outcome,
+            $userId,
+            $ip,
+            $ua
+        );
     }
     
     public static function validateFileUpload($file, $allowedTypes = ['pdf', 'jpg', 'jpeg', 'png']) {

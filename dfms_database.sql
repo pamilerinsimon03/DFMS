@@ -247,20 +247,58 @@ CREATE TABLE IF NOT EXISTS data_deletion_schedule (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Create audit log table for security events
+-- Create audit log table for security events (tamper-evident append-only hash chain)
 CREATE TABLE IF NOT EXISTS audit_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NULL,
+    action VARCHAR(100) NULL,
     event_type VARCHAR(100) NOT NULL,
+    details TEXT NULL,
     event_description TEXT,
+    role VARCHAR(50) NULL,
+    target VARCHAR(255) NULL,
+    route VARCHAR(255) NULL,
+    outcome VARCHAR(50) NOT NULL DEFAULT 'success',
     ip_address VARCHAR(45),
     user_agent TEXT,
+    prev_hash CHAR(64) NULL,
+    entry_hash CHAR(64) NULL,
+    `timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_event_type (event_type),
+    INDEX idx_action (action),
     INDEX idx_created_at (created_at),
-    INDEX idx_user_id (user_id)
+    INDEX idx_user_id (user_id),
+    INDEX idx_entry_hash (entry_hash),
+    INDEX idx_prev_hash (prev_hash),
+    INDEX idx_route (route),
+    INDEX idx_target (target)
 );
+
+-- Create audit logs archive table to preserve chain continuity
+CREATE TABLE IF NOT EXISTS audit_logs_archive (
+    id INT NOT NULL PRIMARY KEY,
+    user_id INT NULL,
+    action VARCHAR(100) NULL,
+    event_type VARCHAR(100) NULL,
+    details TEXT NULL,
+    event_description TEXT NULL,
+    role VARCHAR(50) NULL,
+    target VARCHAR(255) NULL,
+    route VARCHAR(255) NULL,
+    outcome VARCHAR(50) NOT NULL DEFAULT 'success',
+    ip_address VARCHAR(45) NULL,
+    user_agent TEXT NULL,
+    prev_hash CHAR(64) NULL,
+    entry_hash CHAR(64) NULL,
+    `timestamp` TIMESTAMP NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    archived_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_archive_entry_hash (entry_hash),
+    INDEX idx_archive_prev_hash (prev_hash),
+    INDEX idx_archive_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Create consent tracking table for NDPR compliance
 CREATE TABLE IF NOT EXISTS consent_records (
@@ -317,20 +355,35 @@ WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
 GROUP BY DATE(created_at)
 ORDER BY date DESC;
 
--- Create stored procedure for cleaning up old audit logs
+-- Create stored procedure for cleaning up old audit logs (deprecated under append-only policy)
 DELIMITER //
 CREATE PROCEDURE IF NOT EXISTS CleanupOldAuditLogs()
 BEGIN
-    -- Delete audit logs older than 1 year
-    DELETE FROM audit_logs WHERE created_at < DATE_SUB(NOW(), INTERVAL 1 YEAR);
-    
-    -- Delete completed data deletion records older than 6 months
-    DELETE FROM data_deletion_schedule 
-    WHERE status = 'completed' AND completed_at < DATE_SUB(NOW(), INTERVAL 6 MONTH);
-    
-    -- Log the cleanup
-    INSERT INTO audit_logs (event_type, event_description, created_at)
-    VALUES ('maintenance', 'Old audit logs and deletion records cleaned up', NOW());
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'Security Violation: CleanupOldAuditLogs is deprecated. Deletion of audit logs violates the tamper-evident append-only policy.';
+END //
+DELIMITER ;
+
+-- Append-only triggers to block UPDATE and DELETE on audit_logs
+DELIMITER //
+CREATE TRIGGER IF NOT EXISTS trg_audit_logs_no_update
+BEFORE UPDATE ON audit_logs
+FOR EACH ROW
+BEGIN
+    IF @ALLOW_AUDIT_LOG_MUTATION IS NULL OR @ALLOW_AUDIT_LOG_MUTATION != 1 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Security Violation: DFMS audit_logs table is append-only. UPDATE operations are prohibited.';
+    END IF;
+END //
+
+CREATE TRIGGER IF NOT EXISTS trg_audit_logs_no_delete
+BEFORE DELETE ON audit_logs
+FOR EACH ROW
+BEGIN
+    IF @ALLOW_AUDIT_LOG_MUTATION IS NULL OR @ALLOW_AUDIT_LOG_MUTATION != 1 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Security Violation: DFMS audit_logs table is append-only. DELETE operations are prohibited.';
+    END IF;
 END //
 DELIMITER ;
 
@@ -659,7 +712,8 @@ INSERT IGNORE INTO `schema_migrations` (`version`) VALUES
   ('2026_08_10_000000_enterprise_upgrades.sql'),
   ('2026_08_11_000000_performance_indexes.sql'),
   ('2026_10_09_000001_add_public_id.sql'),
-  ('2026_10_09_000002_add_ocr_pipeline_fields.sql');
+  ('2026_10_09_000002_add_ocr_pipeline_fields.sql'),
+  ('2026_10_09_000003_tamper_evident_audit_log.sql');
 
 COMMIT;
 
