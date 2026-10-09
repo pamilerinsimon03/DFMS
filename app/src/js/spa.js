@@ -1,3 +1,30 @@
+// Automatically attach X-CSRF-TOKEN header to state-changing fetch requests
+(function() {
+    const origFetch = window.fetch;
+    window.fetch = function(url, options = {}) {
+        options = options || {};
+        const method = (options.method || 'GET').toUpperCase();
+        if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+            options.headers = options.headers || {};
+            const token = window.DFMS_CSRF_TOKEN || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            if (token) {
+                if (typeof Headers !== 'undefined' && options.headers instanceof Headers) {
+                    if (!options.headers.has('X-CSRF-TOKEN')) {
+                        options.headers.set('X-CSRF-TOKEN', token);
+                    }
+                } else if (Array.isArray(options.headers)) {
+                    options.headers.push(['X-CSRF-TOKEN', token]);
+                } else {
+                    if (!options.headers['X-CSRF-TOKEN']) {
+                        options.headers['X-CSRF-TOKEN'] = token;
+                    }
+                }
+            }
+        }
+        return origFetch.call(this, url, options);
+    };
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
     const reinitializeScripts = (url) => {
         const path = new URL(url, window.location.origin).pathname;
@@ -196,6 +223,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const link = e.target.closest('a');
         if (!link) return;
         if (link.getAttribute('data-no-spa')) return;
+
+        // Secure Logout: submit via POST with CSRF token
+        if (link.classList.contains('logout') || link.href.includes('/app/controllers/logout.php')) {
+            e.preventDefault();
+            const token = window.DFMS_CSRF_TOKEN || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/app/controllers/logout.php';
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'csrf_token';
+            input.value = token;
+            form.appendChild(input);
+            document.body.appendChild(form);
+            form.submit();
+            return;
+        }
 
         const isMenuItem = link.classList.contains('menu-item') && !link.classList.contains('logout');
         const isSeeMore = link.classList.contains('see-more');
