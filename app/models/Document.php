@@ -7,23 +7,88 @@ require_once __DIR__ . '/../services/MailService.php';
 
 class Document
 {
+    public static function resolveId($idOrPublicId): ?int
+    {
+        if (empty($idOrPublicId)) {
+            return null;
+        }
+        if (is_numeric($idOrPublicId)) {
+            return (int)$idOrPublicId;
+        }
+        global $conn;
+        if (!$conn) return null;
+        $stmt = $conn->prepare("SELECT id FROM documents WHERE public_id = ?");
+        if (!$stmt) return null;
+        $stmt->bind_param("s", $idOrPublicId);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        return $row ? (int)$row['id'] : null;
+    }
+
+    public static function findByPublicId(string $publicId): ?array
+    {
+        global $conn;
+        if (!$conn) return null;
+        $sql = "SELECT d.*, u.full_name, u.matric_number, u.programme, u.level, u.session, u.department_id
+                FROM documents d
+                JOIN users u ON d.user_id = u.id
+                WHERE d.public_id = ?";
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) return null;
+        $stmt->bind_param("s", $publicId);
+        $stmt->execute();
+        $res = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        return $res ?: null;
+    }
+
+    public static function getByIdScoped($idOrPublicId, $user = null): ?array
+    {
+        $id = self::resolveId($idOrPublicId);
+        if (!$id) {
+            return null;
+        }
+        $doc = self::getById($id);
+        if (!$doc) {
+            return null;
+        }
+        if ($user === null && isset($_SESSION['user_id'])) {
+            require_once __DIR__ . '/User.php';
+            $user = User::getById((int)$_SESSION['user_id']);
+        }
+        if ($user !== null) {
+            require_once __DIR__ . '/../utils/AccessScope.php';
+            if (!AccessScope::isDocumentInScope($user, $doc)) {
+                return null;
+            }
+        }
+        return $doc;
+    }
+
     public static function getById($id)
     {
         global $conn;
-        $sql = "SELECT d.*, u.full_name, u.matric_number, u.programme, u.level, u.session
+        if (!$conn) return null;
+        $numericId = self::resolveId($id);
+        if (!$numericId) return null;
+        $sql = "SELECT d.*, u.full_name, u.matric_number, u.programme, u.level, u.session, u.department_id
                 FROM documents d
                 JOIN users u ON d.user_id = u.id
                 WHERE d.id = ?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $id);
+        if (!$stmt) return null;
+        $stmt->bind_param("i", $numericId);
         $stmt->execute();
-        return $stmt->get_result()->fetch_assoc();
+        $res = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        return $res;
     }
 
     public static function getDocumentsByUserId($user_id) {
         self::processPendingQueue();
         global $conn;
-        $sql = "SELECT d.id, d.document_name, d.file_path, d.status, d.level, u.session, d.semester, d.rejection_reason 
+        $sql = "SELECT d.id, d.public_id, d.document_name, d.file_path, d.status, d.level, u.session, d.semester, d.rejection_reason 
                 FROM documents d 
                 JOIN users u ON d.user_id = u.id
                 WHERE d.user_id = ?";
@@ -101,9 +166,18 @@ class Document
         return $stmt->get_result()->fetch_assoc()['count'];
     }
 
-    public static function getUploadsByMonth($start_date, $end_date, $department_id = null)
+    public static function getUploadsByMonth($start_date, $end_date, $department_id = null, $actor = null)
     {
         global $conn;
+        if (!$conn) return [];
+
+        if ($actor === null && isset($_SESSION['user_id'])) {
+            require_once __DIR__ . '/User.php';
+            $actor = User::getById((int)$_SESSION['user_id']);
+        }
+
+        require_once __DIR__ . '/../utils/AccessScope.php';
+
         $sql = "SELECT DATE_FORMAT(d.created_at, '%Y-%m') as month, COUNT(d.id) as count
                 FROM documents d
                 JOIN users u ON d.user_id = u.id
@@ -115,15 +189,24 @@ class Document
         $params = [$start_datetime, $end_datetime];
         $types = "ss";
 
-        if ($department_id) {
+        if ($actor !== null) {
+            $scope = AccessScope::buildDocumentScopeFilter($actor, $department_id ? (int)$department_id : null, 'u.');
+            $sql .= " AND " . $scope['sql'];
+            $types .= $scope['types'];
+            foreach ($scope['params'] as $p) {
+                $params[] = $p;
+            }
+        } elseif ($department_id) {
             $sql .= " AND u.department_id = ?";
-            $params[] = $department_id;
+            $params[] = (int)$department_id;
             $types .= "i";
         }
 
         $sql .= " GROUP BY month ORDER BY month";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param($types, ...$params);
+        if ($types) {
+            $stmt->bind_param($types, ...$params);
+        }
         $stmt->execute();
         $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         $uploads = [];
@@ -134,9 +217,18 @@ class Document
     }
 
 
-    public static function getVerificationBreakdown($start_date, $end_date, $department_id = null)
+    public static function getVerificationBreakdown($start_date, $end_date, $department_id = null, $actor = null)
     {
         global $conn;
+        if (!$conn) return [];
+
+        if ($actor === null && isset($_SESSION['user_id'])) {
+            require_once __DIR__ . '/User.php';
+            $actor = User::getById((int)$_SESSION['user_id']);
+        }
+
+        require_once __DIR__ . '/../utils/AccessScope.php';
+
         $sql = "SELECT d.status, COUNT(d.id) as count
                   FROM documents d
                   JOIN users u ON d.user_id = u.id
@@ -148,15 +240,24 @@ class Document
         $params = [$start_datetime, $end_datetime];
         $types = "ss";
 
-        if ($department_id) {
+        if ($actor !== null) {
+            $scope = AccessScope::buildDocumentScopeFilter($actor, $department_id ? (int)$department_id : null, 'u.');
+            $sql .= " AND " . $scope['sql'];
+            $types .= $scope['types'];
+            foreach ($scope['params'] as $p) {
+                $params[] = $p;
+            }
+        } elseif ($department_id) {
             $sql .= " AND u.department_id = ?";
-            $params[] = $department_id;
+            $params[] = (int)$department_id;
             $types .= "i";
         }
         
         $sql .= " GROUP BY d.status";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param($types, ...$params);
+        if ($types) {
+            $stmt->bind_param($types, ...$params);
+        }
         $stmt->execute();
         $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         $breakdown = [];
@@ -166,75 +267,194 @@ class Document
         return $breakdown;
     }
 
-    public static function getPendingDocuments($start_date, $end_date, $limit, $department_id = null)
+    public static function getPendingDocuments($start_date, $end_date, $limit, $department_id = null, $actor = null)
     {
         global $conn;
-        $sql = "SELECT d.id, d.document_name, d.file_path, d.created_at as upload_date, u.full_name, u.programme as department, u.level, u.session
+        if (!$conn) return [];
+
+        if ($actor === null && isset($_SESSION['user_id'])) {
+            require_once __DIR__ . '/User.php';
+            $actor = User::getById((int)$_SESSION['user_id']);
+        }
+
+        require_once __DIR__ . '/../utils/AccessScope.php';
+
+        $sql = "SELECT d.id, d.public_id, d.document_name, d.file_path, d.created_at as upload_date, 
+                       u.full_name, u.public_id as student_public_id, u.programme as department, u.level, u.session
              FROM documents d
              JOIN users u ON d.user_id = u.id
              WHERE d.status = 'Pending Approval' AND d.created_at BETWEEN ? AND ?";
 
-        if ($department_id) {
-            $sql .= " AND u.department_id = ?";
-        }
-
-        $sql .= " ORDER BY d.created_at DESC LIMIT ?";
-        $stmt = $conn->prepare($sql);
-
         $start_datetime = $start_date . ' 00:00:00';
         $end_datetime = $end_date . ' 23:59:59';
 
-        if ($department_id) {
-            $stmt->bind_param("ssii", $start_datetime, $end_datetime, $department_id, $limit);
-        } else {
-            $stmt->bind_param("ssi", $start_datetime, $end_datetime, $limit);
+        $params = [$start_datetime, $end_datetime];
+        $types = "ss";
+
+        if ($actor !== null) {
+            $scope = AccessScope::buildDocumentScopeFilter($actor, $department_id ? (int)$department_id : null, 'u.');
+            $sql .= " AND " . $scope['sql'];
+            $types .= $scope['types'];
+            foreach ($scope['params'] as $p) {
+                $params[] = $p;
+            }
+        } elseif ($department_id) {
+            $sql .= " AND u.department_id = ?";
+            $params[] = (int)$department_id;
+            $types .= "i";
         }
 
+        $sql .= " ORDER BY d.created_at DESC LIMIT ?";
+        $params[] = (int)$limit;
+        $types .= "i";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param($types, ...$params);
         $stmt->execute();
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
-    public static function updateStatus($doc_id, $action, $rejection_reason = null)
+
+    public static function updateStatus($doc_id, $action, $rejection_reason = null, $actor = null)
     {
         global $conn;
-        $status = $action === 'verify' || $action === 'approve' ? 'Approved' : 'Rejected';
-        
-        $sql = "UPDATE documents SET status = ?, rejection_reason = ? WHERE id = ?";
-        $stmt = $conn->prepare($sql);
-        $reason = ($status === 'Rejected') ? $rejection_reason : null;
-        $stmt->bind_param("ssi", $status, $reason, $doc_id);
-        $ok = $stmt->execute();
+        if (!$conn) return false;
 
-        if ($ok) {
-            $doc = self::getById($doc_id);
-            if ($doc && isset($doc['user_id'])) {
-                $title = $status === 'Approved' ? 'Document approved' : 'Document rejected';
-                $message = $status === 'Approved'
-                    ? "Your document '" . $doc['document_name'] . "' has been approved."
-                    : "Your document '" . $doc['document_name'] . "' was rejected." . ($reason ? " Reason: " . $reason : " Please review and reupload.");
-                Notification::create((int)$doc['user_id'], $title, $message);
+        $numericId = self::resolveId($doc_id);
+        if (!$numericId) {
+            return false;
+        }
 
-                $user = User::getById($doc['user_id']);
-                if ($user && !empty($user['email'])) {
-                    $emailSubject = "Document Status: " . $status;
-                    $emailMessage = "<p>Dear " . htmlspecialchars($user['full_name']) . ",</p>";
-                    
-                    if ($status === 'Approved') {
-                        $emailMessage .= "<p>Your document '<strong>" . htmlspecialchars($doc['document_name']) . "</strong>' has been <strong>APPROVED</strong>.</p>";
-                        $emailMessage .= "<p>No further action is required for this document.</p>";
-                    } else {
-                        $emailMessage .= "<p>Your document '<strong>" . htmlspecialchars($doc['document_name']) . "</strong>' has been <strong>REJECTED</strong>.</p>";
-                        if ($reason) {
-                            $emailMessage .= "<p><strong>Reason for rejection:</strong> " . htmlspecialchars($reason) . "</p>";
-                        }
-                        $emailMessage .= "<p>Please review the feedback and re-upload the document via your dashboard.</p>";
-                    }
-                    
-                    MailService::send($user['email'], $emailSubject, $emailMessage);
-                }
+        $doc = self::getById($numericId);
+        if (!$doc) {
+            return false;
+        }
+
+        require_once __DIR__ . '/../utils/AccessScope.php';
+        require_once __DIR__ . '/../utils/SecurityUtils.php';
+
+        if ($actor === null && isset($_SESSION['user_id'])) {
+            require_once __DIR__ . '/User.php';
+            $actor = User::getById((int)$_SESSION['user_id']);
+        }
+
+        if ($actor !== null) {
+            if (!AccessScope::isDocumentInScope($actor, $doc)) {
+                SecurityUtils::logSecurityEvent('unauthorized_status_change_attempt', [
+                    'doc_id' => $numericId,
+                    'user_id' => $actor['id'] ?? null,
+                    'action' => $action
+                ]);
+                return false;
             }
         }
 
-        return $ok;
+        // Map action to target status
+        $targetStatus = null;
+        if ($action === 'verify' || $action === 'approve' || $action === 'Approved') {
+            $targetStatus = 'Approved';
+        } elseif ($action === 'reject' || $action === 'Rejected') {
+            $targetStatus = 'Rejected';
+        } elseif ($action === 'pipeline_pass' || $action === 'Pending Approval') {
+            $targetStatus = 'Pending Approval';
+        } elseif ($action === 'pipeline_fail') {
+            $targetStatus = 'Rejected';
+        } elseif ($action === 'reupload' || $action === 'Pending Quality Check') {
+            $targetStatus = 'Pending Quality Check';
+        } else {
+            SecurityUtils::logSecurityEvent('invalid_status_action', [
+                'doc_id' => $numericId,
+                'action' => $action
+            ]);
+            return false;
+        }
+
+        $currentStatus = $doc['status'];
+
+        // Enforce explicit state machine transitions:
+        // 1. Pending Quality Check -> Pending Approval OR Rejected (pipeline)
+        // 2. Pending Approval -> Approved OR Rejected (reviewer)
+        // 3. Rejected -> Pending Quality Check (student re-upload)
+        $isValidTransition = false;
+        if ($currentStatus === 'Pending Quality Check' && ($targetStatus === 'Pending Approval' || $targetStatus === 'Rejected')) {
+            $isValidTransition = true;
+        } elseif ($currentStatus === 'Pending Approval' && ($targetStatus === 'Approved' || $targetStatus === 'Rejected')) {
+            $isValidTransition = true;
+        } elseif ($currentStatus === 'Rejected' && $targetStatus === 'Pending Quality Check') {
+            $isValidTransition = true;
+        }
+
+        if (!$isValidTransition) {
+            SecurityUtils::logSecurityEvent('invalid_status_transition', [
+                'doc_id' => $numericId,
+                'from_status' => $currentStatus,
+                'to_status' => $targetStatus
+            ]);
+            return false;
+        }
+
+        // Rejections strictly require a non-empty reason
+        $reason = null;
+        if ($targetStatus === 'Rejected') {
+            $cleanReason = trim((string)$rejection_reason);
+            if ($cleanReason === '') {
+                SecurityUtils::logSecurityEvent('rejection_missing_reason', [
+                    'doc_id' => $numericId
+                ]);
+                return false;
+            }
+            $reason = $cleanReason;
+        }
+
+        $conn->begin_transaction();
+
+        try {
+            $sql = "UPDATE documents SET status = ?, rejection_reason = ? WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("ssi", $targetStatus, $reason, $numericId);
+            if (!$stmt->execute()) {
+                throw new Exception("Failed to update status: " . $stmt->error);
+            }
+            $stmt->close();
+
+            if (isset($doc['user_id'])) {
+                $title = ($targetStatus === 'Approved') ? 'Document approved' : (($targetStatus === 'Rejected') ? 'Document rejected' : 'Document status updated');
+                $message = ($targetStatus === 'Approved')
+                    ? "Your document '" . $doc['document_name'] . "' has been approved."
+                    : (($targetStatus === 'Rejected')
+                        ? "Your document '" . $doc['document_name'] . "' was rejected. Reason: " . $reason
+                        : "Your document '" . $doc['document_name'] . "' is now pending review.");
+                Notification::create((int)$doc['user_id'], $title, $message);
+            }
+
+            $conn->commit();
+
+            // Dispatch Email outside transaction block
+            if (isset($doc['user_id'])) {
+                $user = User::getById($doc['user_id']);
+                if ($user && !empty($user['email'])) {
+                    $emailSubject = "Document Status: " . $targetStatus;
+                    $emailMessage = "<p>Dear " . htmlspecialchars($user['full_name']) . ",</p>";
+                    if ($targetStatus === 'Approved') {
+                        $emailMessage .= "<p>Your document '<strong>" . htmlspecialchars($doc['document_name']) . "</strong>' has been <strong>APPROVED</strong>.</p>";
+                        $emailMessage .= "<p>No further action is required for this document.</p>";
+                    } elseif ($targetStatus === 'Rejected') {
+                        $emailMessage .= "<p>Your document '<strong>" . htmlspecialchars($doc['document_name']) . "</strong>' has been <strong>REJECTED</strong>.</p>";
+                        $emailMessage .= "<p><strong>Reason for rejection:</strong> " . htmlspecialchars($reason) . "</p>";
+                        $emailMessage .= "<p>Please review the feedback and re-upload the document via your dashboard.</p>";
+                    }
+                    MailService::send($user['email'], $emailSubject, $emailMessage);
+                }
+            }
+
+            return true;
+        } catch (Exception $e) {
+            $conn->rollback();
+            SecurityUtils::logSecurityEvent('update_status_transaction_failed', [
+                'doc_id' => $numericId,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
     }
 
 
@@ -330,37 +550,47 @@ class Document
     }
 
     public static function processPendingQueue() {
-        global $conn;
-        if (!$conn) return;
-        try {
-            $res = $conn->query("SELECT id FROM document_processing_queue WHERE status = 'pending' LIMIT 1");
-            if ($res && $res->num_rows > 0) {
-                // Auto process pending items inline via queue worker CLI runner
-                $cmd = "php " . escapeshellarg(__DIR__ . '/../scripts/queue_worker.php') . " --once";
-                if (str_contains(strtoupper(PHP_OS), 'WIN')) {
-                    pclose(popen("start /B " . $cmd, "r"));
-                } else {
-                    exec($cmd . " > /dev/null 2>&1 &");
-                }
-            }
-        } catch (Throwable $e) {}
+        // Queue processing is handled by dedicated CLI background worker (app/scripts/queue_worker.php)
+        return true;
     }
 
-    public static function getAllDocuments($status_filter, $start_date, $end_date, $search, $page, $per_page, $department_id, $level, $mode, $program_type, $sort_by, $sort_order)
+    public static function getAllDocuments($status_filter, $start_date, $end_date, $search, $page, $per_page, $department_id, $level, $mode, $program_type, $sort_by, $sort_order, $actor = null)
     {
         self::processPendingQueue();
         global $conn;
+        if (!$conn) return [];
         $offset = ($page - 1) * $per_page;
         $params = [];
         $types = '';
 
-        $sql = "SELECT d.id, d.document_name, d.file_path, d.status, d.created_at as upload_date, u.full_name, u.programme as department, u.level, u.session, u.matric_number, u.mode, u.program_type
+        if ($actor === null && isset($_SESSION['user_id'])) {
+            require_once __DIR__ . '/User.php';
+            $actor = User::getById((int)$_SESSION['user_id']);
+        }
+
+        require_once __DIR__ . '/../utils/AccessScope.php';
+
+        $sql = "SELECT d.id, d.public_id, d.document_name, d.file_path, d.status, d.created_at as upload_date, 
+                       u.full_name, u.public_id as student_public_id, u.programme as department, u.level, u.session, u.matric_number, u.mode, u.program_type
                 FROM documents d
                 JOIN users u ON d.user_id = u.id
                 WHERE DATE(d.created_at) BETWEEN ? AND ?";
         $params[] = $start_date;
         $params[] = $end_date;
         $types .= 'ss';
+
+        if ($actor !== null) {
+            $scope = AccessScope::buildDocumentScopeFilter($actor, $department_id ? (int)$department_id : null, 'u.');
+            $sql .= " AND " . $scope['sql'];
+            $types .= $scope['types'];
+            foreach ($scope['params'] as $p) {
+                $params[] = $p;
+            }
+        } elseif ($department_id) {
+            $sql .= " AND u.department_id = ?";
+            $params[] = (int)$department_id;
+            $types .= 'i';
+        }
 
         if ($status_filter) {
             $sql .= " AND d.status = ?";
@@ -397,14 +627,9 @@ class Document
             }
         }
 
-        if ($department_id) {
-            $sql .= " AND u.department_id = ?";
-            $params[] = $department_id;
-            $types .= 'i';
-        }
         if ($level) {
             $sql .= " AND u.level = ?";
-            $params[] = $level;
+            $params[] = (int)$level;
             $types .= 'i';
         }
         if ($mode) {
@@ -424,24 +649,34 @@ class Document
         $sql .= " ORDER BY $order_by $sort_direction";
 
         $sql .= " LIMIT ? OFFSET ?";
-        $params[] = $per_page;
-        $params[] = $offset;
+        $params[] = (int)$per_page;
+        $params[] = (int)$offset;
         $types .= 'ii';
 
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param($types, ...$params);
+        if ($types) {
+            $stmt->bind_param($types, ...$params);
+        }
         $stmt->execute();
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
 
-    public static function countAllDocuments($status_filter, $start_date, $end_date, $search, $department_id, $level, $mode, $program_type)
+    public static function countAllDocuments($status_filter, $start_date, $end_date, $search, $department_id, $level, $mode, $program_type, $actor = null)
     {
         global $conn;
+        if (!$conn) return 0;
         $params = [];
         $types = '';
 
         $start_datetime = $start_date . ' 00:00:00';
         $end_datetime = $end_date . ' 23:59:59';
+
+        if ($actor === null && isset($_SESSION['user_id'])) {
+            require_once __DIR__ . '/User.php';
+            $actor = User::getById((int)$_SESSION['user_id']);
+        }
+
+        require_once __DIR__ . '/../utils/AccessScope.php';
 
         $sql = "SELECT COUNT(d.id) as total
                 FROM documents d
@@ -450,6 +685,19 @@ class Document
         $params[] = $start_datetime;
         $params[] = $end_datetime;
         $types .= 'ss';
+
+        if ($actor !== null) {
+            $scope = AccessScope::buildDocumentScopeFilter($actor, $department_id ? (int)$department_id : null, 'u.');
+            $sql .= " AND " . $scope['sql'];
+            $types .= $scope['types'];
+            foreach ($scope['params'] as $p) {
+                $params[] = $p;
+            }
+        } elseif ($department_id) {
+            $sql .= " AND u.department_id = ?";
+            $params[] = (int)$department_id;
+            $types .= 'i';
+        }
 
         if ($status_filter) {
             $sql .= " AND d.status = ?";
@@ -486,14 +734,9 @@ class Document
             }
         }
 
-        if ($department_id) {
-            $sql .= " AND u.department_id = ?";
-            $params[] = $department_id;
-            $types .= 'i';
-        }
         if ($level) {
             $sql .= " AND u.level = ?";
-            $params[] = $level;
+            $params[] = (int)$level;
             $types .= 'i';
         }
         if ($mode) {
@@ -508,9 +751,12 @@ class Document
         }
 
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param($types, ...$params);
+        if ($types) {
+            $stmt->bind_param($types, ...$params);
+        }
         $stmt->execute();
-        return $stmt->get_result()->fetch_assoc()['total'];
+        $res = $stmt->get_result()->fetch_assoc();
+        return $res ? (int)$res['total'] : 0;
     }
     public static function upload($user_id, $document_name, $generated_filename, $file, $classification_data)
     {
@@ -552,15 +798,16 @@ class Document
         }
         
         $file_hash = hash_file('sha256', $destination);
+        $public_id = self::generateUUID();
 
         $conn->begin_transaction();
 
         try {
             $sql = "
                 INSERT INTO documents
-                  (user_id, document_name, file_path, file_hash, status, level, semester, program_type, mode, department_id, created_at)
+                  (public_id, user_id, document_name, file_path, file_hash, status, level, semester, program_type, mode, department_id, created_at)
                 VALUES
-                  (?, ?, ?, ?, 'Pending Quality Check', ?, ?, ?, ?, ?, NOW())
+                  (?, ?, ?, ?, ?, 'Pending Quality Check', ?, ?, ?, ?, ?, NOW())
             ";
             $stmt = $conn->prepare($sql);
             if (!$stmt) {
@@ -568,7 +815,8 @@ class Document
             }
 
             $stmt->bind_param(
-                'isssisssi',
+                'sisssisssi',
+                $public_id,
                 $user_id,
                 $document_name,
                 $file_path,
@@ -601,13 +849,15 @@ class Document
 
             SecurityUtils::logSecurityEvent('file_upload_success', [
                 'user_id' => $user_id,
+                'doc_id' => $doc_id,
+                'public_id' => $public_id,
                 'original_filename' => $file['name'],
                 'secure_filename' => $secure_filename,
                 'file_size' => $file['size'],
                 'file_hash' => $file_hash
             ]);
 
-            return ['success' => true, 'message' => 'File uploaded successfully.', 'id' => $doc_id];
+            return ['success' => true, 'message' => 'File uploaded successfully.', 'id' => $doc_id, 'public_id' => $public_id];
 
         } catch (Exception $e) {
             $conn->rollback();
@@ -616,6 +866,14 @@ class Document
             }
             return ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
         }
+    }
+
+    public static function generateUUID(): string
+    {
+        $data = random_bytes(16);
+        $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
+        $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
     }
 
     public static function reupload($doc_id, $new_file, $generated_filename)
@@ -628,6 +886,15 @@ class Document
         $doc = self::getById($doc_id);
         if (!$doc) {
             return ['success' => false, 'message' => 'Document not found.'];
+        }
+
+        // State machine: Only rejected documents can transition to Pending Quality Check on reupload
+        if ($doc['status'] !== 'Rejected') {
+            SecurityUtils::logSecurityEvent('invalid_reupload_transition', [
+                'doc_id' => $doc['id'],
+                'current_status' => $doc['status']
+            ]);
+            return ['success' => false, 'message' => 'Only rejected documents can be re-uploaded.'];
         }
 
         $validationErrors = SecurityUtils::validateFileUpload($new_file);

@@ -8,18 +8,27 @@ require_once __DIR__ . '/../models/Notification.php';
 $user = User::getById($_SESSION['user_id']);
 $notifications = Notification::getForUser($_SESSION['user_id'], 15);
 $unread_count = Notification::countUnread($_SESSION['user_id']);
-$doc_id = (int)$_GET['doc_id'];
-$doc = Document::getById($doc_id);
+
+$rawDocId = $_GET['doc_id'] ?? $_GET['id'] ?? null;
+if (!$rawDocId) {
+    header("Location: /app/controllers/verifications.php");
+    exit();
+}
+
+$doc = Document::getByIdScoped($rawDocId, $user);
 
 if (!$doc) {
     header("Location: /app/controllers/verifications.php");
     exit();
 }
 
+$doc_id = $doc['public_id'] ?? $doc['id'];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     requireCSRFToken();
     
-    Document::updateStatus($doc_id, $_POST['action'], $_POST['rejection_reason'] ?? null);
+    $postDocId = $_POST['doc_id'] ?? $rawDocId;
+    Document::updateStatus($postDocId, $_POST['action'], $_POST['rejection_reason'] ?? null, $user);
     header("Location: /app/controllers/verifications.php");
     exit();
 }

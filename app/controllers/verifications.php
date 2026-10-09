@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
     // Validate CSRF token
     requireCSRFToken();
     
-    Document::updateStatus($_POST['doc_id'], $_POST['action'], $_POST['rejection_reason'] ?? null);
+    Document::updateStatus($_POST['doc_id'], $_POST['action'], $_POST['rejection_reason'] ?? null, $user);
     $url = "/app/controllers/verifications.php?" . http_build_query($_GET);
     header("Location: $url");
     exit();
@@ -26,7 +26,7 @@ $search = $_GET['search'] ?? '';
 $page = (int)($_GET['page'] ?? 1);
 $per_page = 50;
 $level = $_GET['level'] ?? null;
-$department_id = $user['department_id'] ?? ($_GET['department'] ?? null); // Use user's dept or query param
+$requested_dept = isset($_GET['department']) ? (int)$_GET['department'] : null;
 $mode = $_GET['mode'] ?? null;
 $program_type = $_GET['program_type'] ?? null;
 $sort_by = $_GET['sort_by'] ?? 'upload_date';
@@ -56,8 +56,8 @@ foreach ($columns_to_sort as $column) {
     }
 }
 
-$documents = Document::getAllDocuments($status_filter, $start_date, $end_date, $search, $page, $per_page, $department_id, $level, $mode, $program_type, $sort_by, $sort_order);
-$total = Document::countAllDocuments($status_filter, $start_date, $end_date, $search, $department_id, $level, $mode, $program_type);
+$documents = Document::getAllDocuments($status_filter, $start_date, $end_date, $search, $page, $per_page, $requested_dept, $level, $mode, $program_type, $sort_by, $sort_order, $user);
+$total = Document::countAllDocuments($status_filter, $start_date, $end_date, $search, $requested_dept, $level, $mode, $program_type, $user);
 
 $total_pages = ceil($total / $per_page);
 
@@ -94,7 +94,7 @@ if (isset($_GET['ajax']) || (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtol
             <td><?php echo htmlspecialchars($doc['full_name']); ?></td>
             <td><?php echo htmlspecialchars($doc['department'] ?? 'N/A'); ?></td>
             <td><?php echo htmlspecialchars($doc['level']); ?></td>
-            <td><a href="/app/controllers/verification_detail.php?doc_id=<?php echo $doc['id']; ?>" class="doc-link"><?php echo htmlspecialchars($doc['document_name']); ?></a></td>
+            <td><a href="/app/controllers/verification_detail.php?doc_id=<?php echo htmlspecialchars($doc['public_id'] ?? $doc['id']); ?>" class="doc-link"><?php echo htmlspecialchars($doc['document_name']); ?></a></td>
             <td><?php echo date('M d, Y', strtotime($doc['upload_date'])); ?></td>
             <td class="td-status <?php echo $status_slug; ?>">
                 <div class="status-wrapper">
@@ -106,7 +106,7 @@ if (isset($_GET['ajax']) || (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtol
                 <div class="action-menu">
                     <img src="/app/src/assets/images/more.svg" alt="More" class="action-btn">
                     <div class="action-menu-content">
-                        <a href="/app/controllers/verification_detail.php?doc_id=<?php echo $doc['id']; ?>" class="action-item">
+                        <a href="/app/controllers/verification_detail.php?doc_id=<?php echo htmlspecialchars($doc['public_id'] ?? $doc['id']); ?>" class="action-item">
                             <img src="/app/src/assets/images/Bold Eye.svg" alt="View"> View
                         </a>
                     </div>

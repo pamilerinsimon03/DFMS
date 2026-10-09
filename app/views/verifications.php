@@ -176,7 +176,7 @@
                         <td><?php echo htmlspecialchars($doc['full_name']); ?></td>
                         <td><?php echo htmlspecialchars($doc['department']); ?></td>
                         <td><?php echo htmlspecialchars($doc['level']); ?></td>
-                        <td><a href="/app/controllers/verification_detail.php?doc_id=<?php echo $doc['id']; ?>"
+                        <td><a href="/app/controllers/verification_detail.php?doc_id=<?php echo htmlspecialchars($doc['public_id'] ?? $doc['id']); ?>"
                                 class="doc-link"><?php echo htmlspecialchars($doc['document_name']); ?></a></td>
                         <td><?php echo date('M d, Y', strtotime($doc['upload_date'] ?? 'now')); ?></td>
                         <td class="td-status <?php echo $status_slug; ?>">
@@ -189,7 +189,7 @@
                             <div class="action-menu">
                                 <img src="/app/src/assets/images/more.svg" alt="More" class="action-btn">
                                 <div class="action-menu-content">
-                                    <a href="/app/controllers/verification_detail.php?doc_id=<?php echo $doc['id']; ?>"
+                                    <a href="/app/controllers/verification_detail.php?doc_id=<?php echo htmlspecialchars($doc['public_id'] ?? $doc['id']); ?>"
                                         class="action-item"><img src="/app/src/assets/images/Bold Eye.svg" alt="View">
                                         View</a>
                                 </div>

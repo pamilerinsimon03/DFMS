@@ -8,7 +8,7 @@ require_once __DIR__ . '/../models/Notification.php';
 $user = User::getById($_SESSION['user_id']);
 $notifications = Notification::getForUser($_SESSION['user_id'], 15);
 $unread_count = Notification::countUnread($_SESSION['user_id']);
-$department_id = $user['department_id'] ?? null;
+$requested_dept = isset($_GET['department']) ? (int)$_GET['department'] : null;
 
 $start_date = !empty($_GET['start_date']) ? $_GET['start_date'] : '2020-01-01';
 $end_date = !empty($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-d');
@@ -21,13 +21,12 @@ $program_type = $_GET['program_type'] ?? null;
 $sort_by = $_GET['sort_by'] ?? 'full_name';
 $sort_order = $_GET['sort_order'] ?? 'asc';
 
-$filter_department_id = $department_id;
 if ($user['matric_number'] === 'SUPER_ADMIN' && isset($_GET['show_all']) && $_GET['show_all'] == '1') {
-    $filter_department_id = null; // Show all students
+    $requested_dept = null; // Show all students
 }
 
-$students = User::getAllStudents($search, $page, $per_page, $filter_department_id, $level, $mode, $program_type, $sort_by, $sort_order, $start_date, $end_date);
-$total = User::countAllStudents($search, $filter_department_id, $level, $mode, $program_type, $start_date, $end_date);
+$students = User::getAllStudents($search, $page, $per_page, $requested_dept, $level, $mode, $program_type, $sort_by, $sort_order, $start_date, $end_date, $user);
+$total = User::countAllStudents($search, $requested_dept, $level, $mode, $program_type, $start_date, $end_date, $user);
 
 $total_pages = ceil($total / $per_page);
 
@@ -57,13 +56,14 @@ if (isset($_GET['ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolo
         $html .= '<div class="no-students"><p>No students found matching your criteria.</p>';
         if ($user['department_id'] && $user['matric_number'] !== 'SUPER_ADMIN') {
             $html .= '<p>You are currently viewing students from your department only.</p>';
-        } elseif ($user['matric_number'] === 'SUPER_ADMIN' && $filter_department_id !== null) {
+        } elseif ($user['matric_number'] === 'SUPER_ADMIN' && $requested_dept !== null) {
             $html .= '<p>You are currently viewing students from your department only. <a href="?' . http_build_query(array_merge($_GET, ['show_all' => '1'])) . '">View all students</a></p>';
         }
         $html .= '</div>';
     } else {
         foreach ($students as $student) {
             $department_html = $student['department_name'] ? '<p class="department-name">' . htmlspecialchars($student['department_name']) . '</p>' : '';
+            $studentPublicId = htmlspecialchars($student['public_id'] ?? $student['id']);
             $html .= sprintf(
                 '<a href="/app/controllers/student_profile.php?id=%s" class="student-card">
                     <img src="/app/src/assets/images/admin-avatar.png" alt="Student Avatar">
@@ -72,7 +72,7 @@ if (isset($_GET['ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolo
                     <p>%s Level</p>
                     %s
                 </a>',
-                $student['id'],
+                $studentPublicId,
                 htmlspecialchars($student['full_name']),
                 htmlspecialchars($student['matric_number']),
                 htmlspecialchars($student['level']),

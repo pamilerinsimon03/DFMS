@@ -109,7 +109,7 @@
                     <td><?php echo htmlspecialchars($doc['document_name']); ?></td>
                     <td><?php echo date('M d, Y', strtotime($doc['upload_date'] ?? 'now')); ?></td>
                     <td class="td-action">
-                        <a href="/app/controllers/verification_detail.php?doc_id=<?php echo $doc['id']; ?>"
+                        <a href="/app/controllers/verification_detail.php?doc_id=<?php echo htmlspecialchars($doc['public_id'] ?? $doc['id']); ?>"
                             class="action-item">
                             <img src="/app/src/assets/images/Bold Eye.svg" alt="View"> View
                         </a>

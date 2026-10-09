@@ -132,7 +132,7 @@
     <?php else: ?>
         <div class="students-grid">
             <?php foreach ($students as $student): ?>
-            <a href="/app/controllers/student_profile.php?id=<?php echo $student['id']; ?>" class="student-card">
+            <a href="/app/controllers/student_profile.php?id=<?php echo htmlspecialchars($student['public_id'] ?? $student['id']); ?>" class="student-card">
                 <img src="/app/src/assets/images/admin-avatar.png" alt="Student Avatar">
                 <h3><?php echo htmlspecialchars($student['full_name']); ?></h3>
                 <p>Matric No: <?php echo htmlspecialchars($student['matric_number']); ?></p>

@@ -1,195 +1,184 @@
 <?php
 /**
- * DFMS Access Control Layer (ACL) Middleware
- * Production-grade security interceptor for centralized RBAC and IDOR prevention.
+ * DFMS Centralized Access Control Layer (ACL) Middleware
+ * 
+ * Production-grade security interceptor enforcing:
+ * 1. Fail-closed route authorization based on permissions.php
+ * 2. Role hierarchy inheritance
+ * 3. Exact script name matching (preventing substring bypasses)
+ * 4. Two-stage object scoping inspecting GET, POST, and REQUEST parameters (UUID and ID)
  */
-class AccessControlMiddleware {
-    private static $strictRoleRoutes = [
-        '/app/controllers/profile.php' => 'student',
-        '/app/controllers/uploads.php' => 'student',
-        '/app/controllers/student_settings.php' => 'student',
-        '/app/controllers/upload_file.php' => 'student'
-    ];
 
-    private static $roleHierarchy = [
-        'super_admin'      => ['faculty_admin', 'department_admin', 'student'],
-        'faculty_admin'    => ['department_admin', 'student'],
-        'department_admin' => ['student'],
-        'student'          => []
-    ];
+require_once __DIR__ . '/AccessScope.php';
+require_once __DIR__ . '/SecurityUtils.php';
 
-    // Centralized route permission registry
-    private static $routePermissions = [
-        '/app/controllers/admin.php'               => ['super_admin', 'faculty_admin', 'department_admin'],
-        '/app/controllers/analytics.php'           => ['super_admin', 'faculty_admin', 'department_admin'],
-        '/app/controllers/students.php'            => ['super_admin', 'faculty_admin', 'department_admin'],
-        '/app/controllers/add_student.php'        => ['super_admin', 'faculty_admin', 'department_admin'],
-        '/app/controllers/verifications.php'      => ['super_admin', 'faculty_admin', 'department_admin'],
-        '/app/controllers/verification_detail.php' => ['super_admin', 'faculty_admin', 'department_admin'],
-        '/app/controllers/backup.php'              => ['super_admin'],
-        '/app/controllers/session_rollover.php'    => ['super_admin'],
-        '/app/controllers/audit_log_viewer.php'    => ['super_admin'],
-        '/app/controllers/file_management.php'     => ['super_admin', 'faculty_admin', 'department_admin'],
-        '/app/controllers/student_profile.php'     => ['super_admin', 'faculty_admin', 'department_admin'],
-        '/app/controllers/bulk_import.php'         => ['super_admin', 'faculty_admin', 'department_admin'],
-        '/app/controllers/settings.php'            => ['super_admin', 'faculty_admin', 'department_admin'],
-        '/app/controllers/update_passwords.php'    => ['super_admin', 'faculty_admin', 'department_admin'],
-        '/app/controllers/download_document.php'   => ['super_admin', 'faculty_admin', 'department_admin'],
-        
-        '/app/controllers/dashboard.php'           => ['super_admin', 'faculty_admin', 'department_admin', 'student'],
-        '/app/controllers/profile.php'             => ['student'],
-        '/app/controllers/uploads.php'             => ['student'],
-        '/app/controllers/student_settings.php'    => ['student'],
-        '/app/controllers/upload_file.php'         => ['student'],
-        '/app/controllers/data_subject_rights.php' => ['super_admin', 'faculty_admin', 'department_admin', 'student'],
-        '/app/controllers/secure_file_viewer.php'  => ['super_admin', 'faculty_admin', 'department_admin', 'student'],
-        '/app/controllers/notifications_mark_read.php' => ['super_admin', 'faculty_admin', 'department_admin', 'student']
-    ];
+class AccessControlMiddleware
+{
+    private static $permissions = null;
 
-    /**
-     * Inspect the current request against session state and route rules.
-     */
-    public static function checkAccess() {
-        if (php_sapi_name() === 'cli') return;
-
-        // Parse target script path
-        $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-        
-        // Find permission requirements
-        $requiredRoles = null;
-        foreach (self::$routePermissions as $route => $roles) {
-            if (stripos($requestUri, $route) !== false) {
-                $requiredRoles = $roles;
-                break;
+    private static function loadPermissions(): array
+    {
+        if (self::$permissions === null) {
+            $configPath = __DIR__ . '/../config/permissions.php';
+            if (file_exists($configPath)) {
+                self::$permissions = require $configPath;
+            } else {
+                self::$permissions = [
+                    'hierarchy' => [
+                        'super_admin'      => ['faculty_admin', 'department_admin', 'student'],
+                        'faculty_admin'    => ['department_admin', 'student'],
+                        'department_admin' => ['student'],
+                        'student'          => []
+                    ],
+                    'public_allowlist' => ['login.php', 'reset_password.php', 'logout.php', 'activate.php', 'maintenance.php'],
+                    'routes' => []
+                ];
             }
         }
+        return self::$permissions;
+    }
 
-        // Public route or assets - pass through
-        if ($requiredRoles === null) {
+    /**
+     * Inspect request against session state and route permission matrix
+     */
+    public static function checkAccess(): void
+    {
+        if (php_sapi_name() === 'cli') {
             return;
         }
 
-        // 1. Authenticated Check
-        if (!isset($_SESSION['user_id'])) {
+        $requestUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+        $scriptName = basename($requestUri);
+
+        // Assets or non-controller routes pass through
+        if (!str_contains($requestUri, '/app/controllers/')) {
+            return;
+        }
+
+        $perms = self::loadPermissions();
+        $publicAllowlist = $perms['public_allowlist'] ?? [];
+
+        // Exact match for public allowlist
+        if (in_array($scriptName, $publicAllowlist, true)) {
+            return;
+        }
+
+        // 1. Fail-Closed Route Check: Must be explicitly registered in permissions.php
+        $routes = $perms['routes'] ?? [];
+        if (!isset($routes[$scriptName])) {
+            self::handleForbidden(
+                $_SESSION['user_id'] ?? null,
+                $requestUri,
+                "Fail-closed policy: Route '{$scriptName}' is not registered in the access control matrix."
+            );
+        }
+
+        // 2. Authentication Check
+        if (empty($_SESSION['user_id'])) {
             self::handleUnauthorized("Session expired or unauthenticated.");
         }
 
-        // Fetch authenticated user
         require_once __DIR__ . '/../models/User.php';
-        $user = User::getById($_SESSION['user_id']);
+        $user = User::getById((int)$_SESSION['user_id']);
         if (!$user) {
             self::handleUnauthorized("Invalid session user.");
         }
 
-        // Determine active role
-        $userRole = 'student';
-        if ($user['matric_number'] === 'SUPER_ADMIN' || $user['role'] === 'super_admin') {
-            $userRole = 'super_admin';
-        } elseif ($user['is_admin'] == 1 || in_array($user['role'], ['admin', 'faculty_admin', 'department_admin'])) {
-            if ($user['role'] === 'faculty_admin' || !empty($user['faculty_id'])) {
-                $userRole = 'faculty_admin';
-            } else {
-                $userRole = 'department_admin';
-            }
-        }
+        // 3. Role Hierarchy & Route Permission Check
+        $userRole = AccessScope::resolveRole($user);
+        $allowedRoles = $routes[$scriptName];
+        $hierarchy = $perms['hierarchy'] ?? [];
 
-        // 2. RBAC Role Match Check
-        $hasRole = false;
-        foreach ($requiredRoles as $role) {
-            if ($userRole === $role || (isset(self::$roleHierarchy[$userRole]) && in_array($role, self::$roleHierarchy[$userRole]))) {
-                $hasRole = true;
+        $isAuthorized = false;
+        foreach ($allowedRoles as $allowedRole) {
+            if ($userRole === $allowedRole) {
+                $isAuthorized = true;
+                break;
+            }
+            // Check if userRole inherits allowedRole down the hierarchy
+            if (isset($hierarchy[$userRole]) && in_array($allowedRole, $hierarchy[$userRole], true)) {
+                $isAuthorized = true;
                 break;
             }
         }
 
-        if (!$hasRole) {
-            self::handleForbidden($user['id'], $requestUri, "Role mismatch: User role '{$userRole}' lacks permission.");
+        if (!$isAuthorized) {
+            self::handleForbidden(
+                $user['id'],
+                $requestUri,
+                "Role mismatch: User role '{$userRole}' is not authorized for route '{$scriptName}'."
+            );
         }
 
-        if (isset(self::$strictRoleRoutes[$requestUri]) && self::$strictRoleRoutes[$requestUri] !== $userRole) {
-            self::handleForbidden($user['id'], $requestUri, "Strict role mismatch: route requires '" . self::$strictRoleRoutes[$requestUri] . "'.");
-        }
-
-        // 3. Granular Data Scope Check (Prevent IDOR / Cross-Department leaks)
-        self::enforceDataScoping($user, $userRole);
+        // 4. Object-Level Scoping: Check $_GET, $_POST, and $_REQUEST
+        self::enforceObjectScoping($user, $userRole, $scriptName);
     }
 
     /**
-     * Enforce strict departmental boundaries on specific target documents or students
+     * Enforce query-level and object-level scoping on submitted identifiers
      */
-    private static function enforceDataScoping($currentUser, $role) {
-        if ($role === 'super_admin') return; // Super admin has global scope
-
-        $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-
-        // Fetch faculty department IDs for faculty_admin
-        $facultyDeptIds = [];
-        if ($role === 'faculty_admin' && !empty($currentUser['faculty_id'])) {
-            global $conn;
-            $stmt = $conn->prepare("SELECT department_id FROM faculty_departments WHERE faculty_id = ?");
-            if ($stmt) {
-                $stmt->bind_param("i", $currentUser['faculty_id']);
-                $stmt->execute();
-                $res = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-                $facultyDeptIds = array_column($res, 'department_id');
-            }
+    private static function enforceObjectScoping(array $user, string $role, string $scriptName): void
+    {
+        if ($role === 'super_admin') {
+            return; // Super admin has universal scope
         }
 
-        // Scoping case A: Document inspection / download / verification
-        $docId = null;
-        if (isset($_GET['doc_id'])) {
-            $docId = (int)$_GET['doc_id'];
-        } elseif (isset($_GET['id']) && (
-            stripos($requestUri, 'secure_file_viewer.php') !== false ||
-            stripos($requestUri, 'download_document.php') !== false
-        )) {
-            $docId = (int)$_GET['id'];
-        }
+        // Check document identifier across GET, POST, REQUEST
+        $docIdRaw = $_POST['doc_id'] 
+            ?? $_GET['doc_id'] 
+            ?? $_POST['id'] 
+            ?? $_GET['id'] 
+            ?? $_REQUEST['doc_id'] 
+            ?? null;
 
-        if ($docId !== null) {
+        if ($docIdRaw !== null && $docIdRaw !== '') {
             require_once __DIR__ . '/../models/Document.php';
-            $doc = Document::getById($docId);
-            
+            $doc = null;
+            if (is_numeric($docIdRaw)) {
+                $doc = Document::getById((int)$docIdRaw);
+            } else {
+                $doc = Document::findByPublicId((string)$docIdRaw);
+            }
+
             if ($doc) {
-                if ($role === 'student') {
-                    // Students can only view their own documents
-                    if ($doc['user_id'] != $currentUser['id']) {
-                        self::handleForbidden($currentUser['id'], $_SERVER['REQUEST_URI'], "IDOR: Student tried accessing another user's document.");
-                    }
-                } elseif ($role === 'department_admin') {
-                    // Admins can only view their department's documents
-                    $owner = User::getById($doc['user_id']);
-                    if ($owner['department_id'] !== $currentUser['department_id']) {
-                        self::handleForbidden($currentUser['id'], $_SERVER['REQUEST_URI'], "IDOR: Department Admin tried accessing student record from another department.");
-                    }
-                } elseif ($role === 'faculty_admin') {
-                    $owner = User::getById($doc['user_id']);
-                    if (!in_array($owner['department_id'], $facultyDeptIds)) {
-                        self::handleForbidden($currentUser['id'], $_SERVER['REQUEST_URI'], "IDOR: Faculty Admin tried accessing student record outside their faculty scoping.");
-                    }
+                if (!AccessScope::isDocumentInScope($user, $doc)) {
+                    self::handleForbidden(
+                        $user['id'],
+                        $_SERVER['REQUEST_URI'],
+                        "IDOR: Out-of-scope document access attempt on Doc ID {$doc['id']}."
+                    );
                 }
             }
         }
 
-        // Scoping case B: Student Profile Inspection (student_profile.php?id=...)
-        $studentId = null;
-        if (stripos($requestUri, 'student_profile.php') !== false && isset($_GET['id'])) {
-            $studentId = (int)$_GET['id'];
-        }
+        // Check user/student identifier across GET, POST, REQUEST
+        $targetUserIdRaw = $_GET['student_id'] 
+            ?? $_POST['student_id'] 
+            ?? (in_array($scriptName, ['student_profile.php', 'student_profile_update.php'], true) ? ($_GET['id'] ?? $_POST['id'] ?? null) : null);
 
-        if ($studentId !== null) {
-            $targetStudent = User::getById($studentId);
-            if ($targetStudent) {
-                if ($role === 'department_admin' && $targetStudent['department_id'] !== $currentUser['department_id']) {
-                    self::handleForbidden($currentUser['id'], $_SERVER['REQUEST_URI'], "IDOR: Department Admin tried inspecting cross-department student profile.");
-                } elseif ($role === 'faculty_admin' && !in_array($targetStudent['department_id'], $facultyDeptIds)) {
-                    self::handleForbidden($currentUser['id'], $_SERVER['REQUEST_URI'], "IDOR: Faculty Admin tried inspecting student profile outside their faculty scoping.");
+        if ($targetUserIdRaw !== null && $targetUserIdRaw !== '') {
+            require_once __DIR__ . '/../models/User.php';
+            $targetUser = null;
+            if (is_numeric($targetUserIdRaw)) {
+                $targetUser = User::getById((int)$targetUserIdRaw);
+            } else {
+                $targetUser = User::findByPublicId((string)$targetUserIdRaw);
+            }
+
+            if ($targetUser) {
+                if (!AccessScope::isUserInScope($user, $targetUser)) {
+                    self::handleForbidden(
+                        $user['id'],
+                        $_SERVER['REQUEST_URI'],
+                        "IDOR: Out-of-scope student profile access attempt on User ID {$targetUser['id']}."
+                    );
                 }
             }
         }
     }
 
-    private static function handleUnauthorized($reason) {
+    private static function handleUnauthorized(string $reason): void
+    {
         if (session_status() === PHP_SESSION_ACTIVE) {
             session_destroy();
         }
@@ -203,8 +192,8 @@ class AccessControlMiddleware {
         exit();
     }
 
-    private static function handleForbidden($userId, $uri, $reason) {
-        require_once __DIR__ . '/../utils/SecurityUtils.php';
+    private static function handleForbidden(?int $userId, string $uri, string $reason): void
+    {
         SecurityUtils::logSecurityEvent('unauthorized_access_attempt', [
             'user_id' => $userId,
             'target_uri' => $uri,
@@ -212,77 +201,25 @@ class AccessControlMiddleware {
             'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown'
         ]);
 
-        require_once __DIR__ . '/../models/User.php';
-        $dashboard_url = User::isAdmin($userId) ? '/app/controllers/admin.php' : '/app/controllers/dashboard.php';
-
         http_response_code(403);
-        
-        $tracking_code = 'SEC-' . strtoupper(bin2hex(random_bytes(4)));
+        $trackingCode = 'SEC-' . strtoupper(bin2hex(random_bytes(4)));
+        $dashboardUrl = ($userId && User::isAdmin($userId)) ? '/app/controllers/admin.php' : '/app/controllers/dashboard.php';
 
         if (isset($_SERVER['HTTP_X_SPA_REQUEST'])) {
             header('Content-Type: application/json');
             echo json_encode([
-                'html' => '
-                <div style="display:flex;align-items:center;justify-content:center;height:80vh;width:100%;">
-                    <div class="glass-card" style="background:rgba(255,255,255,0.85);border:1px solid rgba(0,0,0,0.08);padding:40px;border-radius:16px;text-align:center;max-width:500px;box-shadow:0 10px 30px rgba(0,0,0,0.06);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);">
-                        <div style="font-size:4rem;margin-bottom:20px;">🛡️</div>
-                        <h1 style="color:#FF3B30;font-size:24px;margin-bottom:10px;font-family:\'Poppins\',sans-serif;font-weight:700;">Access Denied</h1>
-                        <p style="color:#4a5568;line-height:1.6;margin-bottom:12px;font-family:\'Poppins\',sans-serif;font-size:14px;">You do not have the required privileges to access this department or resource. This event has been logged for security review.</p>
-                        <p style="color:#718096;font-size:0.85rem;margin-bottom:24px;font-family:monospace;">Tracking Code: ' . $tracking_code . '</p>
-                        <a href="' . $dashboard_url . '" data-no-spa="true" style="background:#01017A;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:500;display:inline-block;transition:all 0.2s;font-family:\'Poppins\',sans-serif;box-shadow:0 4px 10px rgba(1,1,122,0.25);">Return Dashboard</a>
-                    </div>
-                </div>',
+                'html' => '<div style="text-align:center;padding:40px;"><h2>403 Forbidden</h2><p>' . htmlspecialchars($reason) . '</p><p>Tracking Code: ' . $trackingCode . '</p></div>',
                 'title' => 'Forbidden Access'
             ]);
             exit();
         }
-        
-        echo '<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Access Denied - DFMS</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #01017A;
-            --accent: #FF3B30;
-            --text-light: #f3f4f6;
-            --glass-bg: rgba(255, 255, 255, 0.03);
-            --glass-border: rgba(255, 255, 255, 0.08);
-        }
-        html, body {
-            margin: 0; padding: 0; width: 100%; height: 100%;
-            font-family: \'Poppins\', sans-serif;
-            background: radial-gradient(circle at center, #180d1b 0%, #05020c 100%);
-            display: flex; align-items: center; justify-content: center;
-            overflow: hidden; color: var(--text-light);
-        }
-        .error-container {
-            background: var(--glass-bg); border: 1px solid var(--glass-border);
-            backdrop-filter: blur(25px); border-radius: 24px; padding: 48px 40px;
-            width: 90%; max-width: 500px; text-align: center; box-sizing: border-box;
-        }
-        .security-icon { font-size: 40px; }
-        h1 { color: #ffffff; font-size: 26px; font-weight: 700; margin: 0 0 12px 0; }
-        p { font-size: 14px; line-height: 1.6; color: #a0aec0; margin: 0 0 20px 0; }
-        .tracking-box { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); padding: 10px 16px; border-radius: 8px; font-size: 13px; font-family: monospace; color: #718096; margin-bottom: 32px; display: inline-block; }
-        .btn-home { display: inline-block; background: linear-gradient(135deg, #01017A 0%, #0a0a9c 100%); color: #ffffff; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 500; }
-    </style>
-</head>
-<body>
-    <div class="error-container">
-        <div style="width:90px;height:90px;margin:0 auto 28px;display:flex;align-items:center;justify-content:center;background:rgba(255,59,48,0.08);border-radius:50%;border:1px solid rgba(255,59,48,0.2);">
-            <span class="security-icon">🛡️</span>
-        </div>
-        <h1>Access Denied</h1>
-        <p>You do not have the required privileges to access this department or resource. This unauthorized access attempt has been logged for security review.</p>
-        <div class="tracking-box">Tracking Code: <span style="color:#FF3B30;font-weight:600;">' . $tracking_code . '</span></div>
-        <div><a href="' . $dashboard_url . '" class="btn-home">Return Dashboard</a></div>
-    </div>
-</body>
-</html>';
+
+        echo '<!DOCTYPE html><html><head><title>403 Forbidden - DFMS</title></head><body style="font-family:sans-serif;text-align:center;padding:50px;">'
+            . '<h1 style="color:#d9534f;">403 Forbidden</h1>'
+            . '<p>' . htmlspecialchars($reason) . '</p>'
+            . '<p>Tracking Code: <strong>' . $trackingCode . '</strong></p>'
+            . '<p><a href="' . $dashboardUrl . '">Return to Dashboard</a></p>'
+            . '</body></html>';
         exit();
     }
 }

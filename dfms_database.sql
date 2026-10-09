@@ -34,6 +34,7 @@ CREATE TABLE `departments` (
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
+  `public_id` char(36) NOT NULL,
   `matric_number` varchar(20) NOT NULL,
   `password` varchar(255) NOT NULL,
   `full_name` varchar(100) NOT NULL,
@@ -59,19 +60,21 @@ CREATE TABLE `users` (
   `role` varchar(20) NOT NULL DEFAULT 'student',
   PRIMARY KEY (`id`),
   UNIQUE KEY `matric_number` (`matric_number`),
+  UNIQUE KEY `idx_users_public_id` (`public_id`),
   KEY `fk_users_department` (`department_id`),
   CONSTRAINT `fk_users_department` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 -- Seed users
-INSERT INTO `users` (`id`, `matric_number`, `password`, `full_name`, `level`, `session`, `programme`, `created_at`, `is_admin`) VALUES
-(1, 'E0500627', '$2y$10$tpsg0ONSXH..0GlQ77sKNuj0M5KBsW6qbc4UhFXMxtYCDnqKBBl3y', 'Professor Afolabi Samuel', '500L', '2023/2024', 'Bachelor Of Science (Computer Science)', '2025-05-28 18:53:05', 1),
-(2, 'E050238', '$2y$10$3ofYsNgQf8ryeI21JyGZGufUgUQ3CVHiQAJRYh3pYqq2mQIxK4sBK', 'Demo User', '300L', '2023/2024', 'Bachelor Of Science (Computer Science)', '2025-05-28 22:41:39', 0);
+INSERT INTO `users` (`id`, `public_id`, `matric_number`, `password`, `full_name`, `level`, `session`, `programme`, `created_at`, `is_admin`) VALUES
+(1, 'd6797b3b-c3d0-11f1-83e5-1062e59e19c8', 'E0500627', '$2y$10$KuDyQHjFT2vtqdGAQVtjb.PpGQgXGgZlAhAUKCl7AzFOU/Qs9q5hy', 'Professor Afolabi Samuel', '500L', '2023/2024', 'Bachelor Of Science (Computer Science)', '2025-05-28 18:53:05', 1),
+(2, 'd6799001-c3d0-11f1-83e5-1062e59e19c8', 'E050238', '$2y$10$TDKKWY3QbOm9pfxQ2wIW9OK0B3iYUuBlmgIwuq9cm.B5h2h.EA9q2', 'Demo User', '300L', '2023/2024', 'Bachelor Of Science (Computer Science)', '2025-05-28 22:41:39', 0);
 
 -- Table structure for table `documents`
 DROP TABLE IF EXISTS `documents`;
 CREATE TABLE `documents` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
+  `public_id` char(36) NOT NULL,
   `user_id` int(11) NOT NULL,
   `document_name` varchar(100) NOT NULL,
   `file_name` varchar(255) NOT NULL,
@@ -87,6 +90,7 @@ CREATE TABLE `documents` (
   `program_type` varchar(50) DEFAULT NULL,
   `mode` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_docs_public_id` (`public_id`),
   KEY `user_id` (`user_id`),
   KEY `idx_department_id` (`department_id`),
   CONSTRAINT `documents_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
@@ -617,18 +621,18 @@ UPDATE `users` SET `is_admin` = 1, `role` = 'department_admin', `department_id` 
 UPDATE `users` SET `is_admin` = 1, `role` = 'department_admin' WHERE `matric_number` IN ('ADMIN_PSYC', 'ADMIN_ENG', 'ADMIN_SOC', 'ADMIN_LING', 'ADMIN/001');
 
 -- 10.6 Seed Initial Documents for Department 1 (Computer Science)
-INSERT INTO `documents` (`id`, `user_id`, `document_name`, `file_name`, `file_path`, `upload_date`, `status`, `department_id`, `level`, `semester`, `program_type`, `mode`)
-SELECT 53, u.id, 'WASSCE Certificate', 'doc_wassce_2024.pdf', 'secure_uploads/2024_2025/CS/300L/doc_wassce_2024.pdf', '2026-08-03', 'Pending Approval', 1, 300, '1st Semester', 'Full Time', 'UTME'
+INSERT INTO `documents` (`id`, `public_id`, `user_id`, `document_name`, `file_name`, `file_path`, `upload_date`, `status`, `department_id`, `level`, `semester`, `program_type`, `mode`)
+SELECT 53, 'd5300000-0000-4000-8000-000000000053', u.id, 'WASSCE Certificate', 'doc_wassce_2024.pdf', 'secure_uploads/2024_2025/CS/300L/doc_wassce_2024.pdf', '2026-08-03', 'Pending Approval', 1, 300, '1st Semester', 'Full Time', 'UTME'
 FROM `users` u WHERE u.`matric_number` = 'E050238'
 ON DUPLICATE KEY UPDATE `document_name` = VALUES(`document_name`);
 
-INSERT INTO `documents` (`id`, `user_id`, `document_name`, `file_name`, `file_path`, `upload_date`, `status`, `department_id`, `level`, `semester`, `program_type`, `mode`)
-SELECT 54, u.id, 'Birth Certificate', 'doc_birth_cert.pdf', 'secure_uploads/2024_2025/CS/100L/doc_birth_cert.pdf', '2026-08-03', 'Approved', 1, 100, '1st Semester', 'Full Time', 'UTME'
+INSERT INTO `documents` (`id`, `public_id`, `user_id`, `document_name`, `file_name`, `file_path`, `upload_date`, `status`, `department_id`, `level`, `semester`, `program_type`, `mode`)
+SELECT 54, 'd5400000-0000-4000-8000-000000000054', u.id, 'Birth Certificate', 'doc_birth_cert.pdf', 'secure_uploads/2024_2025/CS/100L/doc_birth_cert.pdf', '2026-08-03', 'Approved', 1, 100, '1st Semester', 'Full Time', 'UTME'
 FROM `users` u WHERE u.`matric_number` = 'U123001'
 ON DUPLICATE KEY UPDATE `document_name` = VALUES(`document_name`);
 
-INSERT INTO `documents` (`id`, `user_id`, `document_name`, `file_name`, `file_path`, `upload_date`, `status`, `department_id`, `level`, `semester`, `program_type`, `mode`)
-SELECT 55, u.id, 'JAMB Admission Letter', 'doc_jamb_adm.pdf', 'secure_uploads/2024_2025/CS/200L/doc_jamb_adm.pdf', '2026-08-03', 'Pending Approval', 1, 200, '1st Semester', 'Full Time', 'Direct Entry'
+INSERT INTO `documents` (`id`, `public_id`, `user_id`, `document_name`, `file_name`, `file_path`, `upload_date`, `status`, `department_id`, `level`, `semester`, `program_type`, `mode`)
+SELECT 55, 'd5500000-0000-4000-8000-000000000055', u.id, 'JAMB Admission Letter', 'doc_jamb_adm.pdf', 'secure_uploads/2024_2025/CS/200L/doc_jamb_adm.pdf', '2026-08-03', 'Pending Approval', 1, 200, '1st Semester', 'Full Time', 'Direct Entry'
 FROM `users` u WHERE u.`matric_number` = 'U123002'
 ON DUPLICATE KEY UPDATE `document_name` = VALUES(`document_name`);
 
@@ -648,7 +652,8 @@ CREATE TABLE IF NOT EXISTS `schema_migrations` (
 
 INSERT IGNORE INTO `schema_migrations` (`version`) VALUES
   ('2026_08_10_000000_enterprise_upgrades.sql'),
-  ('2026_08_11_000000_performance_indexes.sql');
+  ('2026_08_11_000000_performance_indexes.sql'),
+  ('2026_10_09_000001_add_public_id.sql');
 
 COMMIT;
 

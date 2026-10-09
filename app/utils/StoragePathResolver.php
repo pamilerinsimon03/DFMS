@@ -138,6 +138,31 @@ class StoragePathResolver
     }
 
     /**
+     * Compatibility helper for resolving upload directory
+     */
+    public static function resolveUploadDirectory(string $session, string $deptCode, $level): array
+    {
+        $storageRoot = self::getStorageRoot();
+        $sessionFolder = preg_replace('/[^a-zA-Z0-9_-]/', '_', str_replace('/', '_', $session ?: 'default'));
+        $deptFolder    = preg_replace('/[^a-zA-Z0-9_-]/', '_', strtoupper($deptCode ?: 'GENERAL'));
+        $cleanLevel    = preg_replace('/[^0-9]/', '', (string)$level);
+        $levelFolder   = !empty($cleanLevel) ? $cleanLevel . 'L' : 'GENERAL';
+
+        $relativeDir = "{$sessionFolder}/{$deptFolder}/{$levelFolder}/";
+        $fullDir = "{$storageRoot}/{$relativeDir}";
+
+        if (!is_dir($fullDir)) {
+            @mkdir($fullDir, 0750, true);
+            @chmod($fullDir, 0750);
+        }
+
+        return [
+            'relative' => $relativeDir,
+            'absolute' => $fullDir
+        ];
+    }
+
+    /**
      * Resolve an absolute filesystem path from a relative documents.file_path,
      * ensuring it strictly resides within STORAGE_ROOT to block traversal attacks.
      */

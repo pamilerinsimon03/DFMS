@@ -2,21 +2,97 @@
 require_once __DIR__ . '/../config/config.php';
 
 class User {
-    public static function getById($id) {
+    public static function generateUUID(): string {
+        $data = random_bytes(16);
+        $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
+        $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+    }
+
+    public static function resolveId($idOrPublicId): ?int {
+        if (empty($idOrPublicId)) {
+            return null;
+        }
+        if (is_numeric($idOrPublicId)) {
+            return (int)$idOrPublicId;
+        }
         global $conn;
+        if (!$conn) return null;
+        $stmt = $conn->prepare("SELECT id FROM users WHERE public_id = ?");
+        if (!$stmt) return null;
+        $stmt->bind_param("s", $idOrPublicId);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        return $row ? (int)$row['id'] : null;
+    }
+
+    public static function findByPublicId(string $publicId): ?array {
+        global $conn;
+        if (!$conn) return null;
         $sql = "
             SELECT 
                 u.*, 
                 d.name as department_name,
-                d.code as department_code
+                d.code as department_code,
+                f.name as faculty_name
             FROM users u
             LEFT JOIN departments d ON u.department_id = d.id
+            LEFT JOIN faculties f ON u.faculty_id = f.id
+            WHERE u.public_id = ?
+        ";
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) return null;
+        $stmt->bind_param("s", $publicId);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        return $result ?: null;
+    }
+
+    public static function getByIdScoped($idOrPublicId, $actor = null): ?array {
+        $id = self::resolveId($idOrPublicId);
+        if (!$id) {
+            return null;
+        }
+        $targetUser = self::getById($id);
+        if (!$targetUser) {
+            return null;
+        }
+        if ($actor === null && isset($_SESSION['user_id'])) {
+            $actor = self::getById((int)$_SESSION['user_id']);
+        }
+        if ($actor !== null) {
+            require_once __DIR__ . '/../utils/AccessScope.php';
+            if (!AccessScope::isUserInScope($actor, $targetUser)) {
+                return null;
+            }
+        }
+        return $targetUser;
+    }
+
+    public static function getById($id) {
+        global $conn;
+        if (!$conn) return null;
+        $numericId = self::resolveId($id);
+        if (!$numericId) return null;
+        $sql = "
+            SELECT 
+                u.*, 
+                d.name as department_name,
+                d.code as department_code,
+                f.name as faculty_name
+            FROM users u
+            LEFT JOIN departments d ON u.department_id = d.id
+            LEFT JOIN faculties f ON u.faculty_id = f.id
             WHERE u.id = ?
         ";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $id);
+        if (!$stmt) return null;
+        $stmt->bind_param("i", $numericId);
         $stmt->execute();
-        return $stmt->get_result()->fetch_assoc();
+        $result = $stmt->get_result();
+        return $result ? $result->fetch_assoc() : null;
     }
 
     public static function getByMatricNumber($matric_number) {
@@ -51,27 +127,34 @@ class User {
             return ['success' => false, 'message' => 'Matric number already exists.'];
         }
         
+        $public_id = self::generateUUID();
         $activation_token = bin2hex(random_bytes(32));
         $is_activated = 0;
         $placeholder_password = '*ACTIVATION_REQUIRED*';
         
-        $sql = "INSERT INTO users (matric_number, password, full_name, level, session, programme, program_type, mode, department_id, email, role, is_admin, activation_token, is_activated) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'student', 0, ?, ?)";
+        $sql = "INSERT INTO users (public_id, matric_number, password, full_name, level, session, programme, program_type, mode, department_id, email, role, is_admin, activation_token, is_activated) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'student', 0, ?, ?)";
         
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
             return ['success' => false, 'message' => 'Database prepare failed: ' . $conn->error];
         }
         
-        $stmt->bind_param("ssssssssissi", 
+        $program_type = $student_data['program_type'] ?? 'Full Time';
+        $mode = $student_data['mode'] ?? 'UTME';
+        $session = $student_data['session'] ?? '2025/2026';
+        $level = $student_data['level'] ?? 100;
+        
+        $stmt->bind_param("sssssssssissi", 
+            $public_id,
             $student_data['matric_number'],
             $placeholder_password,
             $student_data['full_name'],
-            $student_data['level'],
-            $student_data['session'],
+            $level,
+            $session,
             $student_data['programme'],
-            $student_data['program_type'],
-            $student_data['mode'],
+            $program_type,
+            $mode,
             $student_data['department_id'],
             $student_data['email'],
             $activation_token,
@@ -82,7 +165,9 @@ class User {
             return [
                 'success' => true, 
                 'message' => 'Student account created. Activation token generated.',
-                'activation_token' => $activation_token
+                'activation_token' => $activation_token,
+                'public_id' => $public_id,
+                'password' => $placeholder_password
             ];
         } else {
             return ['success' => false, 'message' => 'Database error: ' . $stmt->error];
@@ -98,8 +183,9 @@ class User {
         $types = '';
 
         foreach ($students as $s) {
-            $values[] = "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'student', 0, ?, 0)";
-            $types .= "ssssssssiss";
+            $values[] = "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'student', 0, ?, 0)";
+            $types .= "sssssssssiss";
+            $params[] = self::generateUUID();
             $params[] = $s['matric_number'];
             $params[] = '*ACTIVATION_REQUIRED*';
             $params[] = $s['full_name'];
@@ -113,7 +199,7 @@ class User {
             $params[] = bin2hex(random_bytes(16));
         }
 
-        $sql = "INSERT INTO users (matric_number, password, full_name, level, session, programme, program_type, mode, department_id, email, role, is_admin, activation_token, is_activated) VALUES " . implode(', ', $values);
+        $sql = "INSERT INTO users (public_id, matric_number, password, full_name, level, session, programme, program_type, mode, department_id, email, role, is_admin, activation_token, is_activated) VALUES " . implode(', ', $values);
         
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
@@ -212,22 +298,37 @@ class User {
         }
     }
 
-    public static function getAllStudents($search = '', $page = 1, $per_page = 50, $department_id = null, $level = null, $mode = null, $program_type = null, $sort_by = 'full_name', $sort_order = 'asc', $start_date = null, $end_date = null) {
+    public static function getAllStudents($search = '', $page = 1, $per_page = 50, $department_id = null, $level = null, $mode = null, $program_type = null, $sort_by = 'full_name', $sort_order = 'asc', $start_date = null, $end_date = null, $actor = null) {
         global $conn;
+        if (!$conn) return [];
         $offset = ($page - 1) * $per_page;
         $sql = "SELECT u.*, d.name as department_name FROM users u LEFT JOIN departments d ON u.department_id = d.id WHERE u.is_admin = 0";
         
         $params = [];
         $types = '';
 
-        if ($department_id) {
+        if ($actor === null && isset($_SESSION['user_id'])) {
+            $actor = self::getById((int)$_SESSION['user_id']);
+        }
+
+        require_once __DIR__ . '/../utils/AccessScope.php';
+
+        if ($actor !== null) {
+            $scope = AccessScope::buildUserScopeFilter($actor, $department_id ? (int)$department_id : null, 'u.');
+            $sql .= " AND " . $scope['sql'];
+            $types .= $scope['types'];
+            foreach ($scope['params'] as $p) {
+                $params[] = $p;
+            }
+        } elseif ($department_id) {
             $sql .= " AND u.department_id = ?";
-            $params[] = $department_id;
+            $params[] = (int)$department_id;
             $types .= 'i';
         }
+
         if ($level) {
             $sql .= " AND u.level = ?";
-            $params[] = $level;
+            $params[] = (int)$level;
             $types .= 'i';
         }
         if ($mode) {
@@ -256,9 +357,14 @@ class User {
             $types .= 'ss';
         }
 
-        $sql .= " ORDER BY $sort_by $sort_order LIMIT ? OFFSET ?";
-        $params[] = $per_page;
-        $params[] = $offset;
+        // Whitelist sort fields against SQL injection
+        $allowed_sort_by = ['full_name', 'matric_number', 'level', 'session', 'programme', 'created_at'];
+        $clean_sort_by = in_array($sort_by, $allowed_sort_by, true) ? $sort_by : 'full_name';
+        $clean_sort_order = strtolower($sort_order) === 'desc' ? 'DESC' : 'ASC';
+
+        $sql .= " ORDER BY u.{$clean_sort_by} {$clean_sort_order} LIMIT ? OFFSET ?";
+        $params[] = (int)$per_page;
+        $params[] = (int)$offset;
         $types .= 'ii';
         
         $stmt = $conn->prepare($sql);
@@ -269,35 +375,50 @@ class User {
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
 
-    public static function countAllStudents($search = '', $department_id = null, $level = null, $mode = null, $program_type = null, $start_date = null, $end_date = null) {
+    public static function countAllStudents($search = '', $department_id = null, $level = null, $mode = null, $program_type = null, $start_date = null, $end_date = null, $actor = null) {
         global $conn;
-        $sql = "SELECT COUNT(*) as total FROM users WHERE is_admin = 0";
+        if (!$conn) return 0;
+        $sql = "SELECT COUNT(*) as total FROM users u WHERE u.is_admin = 0";
 
         $params = [];
         $types = '';
 
-        if ($department_id) {
-            $sql .= " AND department_id = ?";
-            $params[] = $department_id;
+        if ($actor === null && isset($_SESSION['user_id'])) {
+            $actor = self::getById((int)$_SESSION['user_id']);
+        }
+
+        require_once __DIR__ . '/../utils/AccessScope.php';
+
+        if ($actor !== null) {
+            $scope = AccessScope::buildUserScopeFilter($actor, $department_id ? (int)$department_id : null, 'u.');
+            $sql .= " AND " . $scope['sql'];
+            $types .= $scope['types'];
+            foreach ($scope['params'] as $p) {
+                $params[] = $p;
+            }
+        } elseif ($department_id) {
+            $sql .= " AND u.department_id = ?";
+            $params[] = (int)$department_id;
             $types .= 'i';
         }
+
         if ($level) {
-            $sql .= " AND level = ?";
-            $params[] = $level;
+            $sql .= " AND u.level = ?";
+            $params[] = (int)$level;
             $types .= 'i';
         }
         if ($mode) {
-            $sql .= " AND mode = ?";
+            $sql .= " AND u.mode = ?";
             $params[] = $mode;
             $types .= 's';
         }
         if ($program_type) {
-            $sql .= " AND program_type = ?";
+            $sql .= " AND u.program_type = ?";
             $params[] = $program_type;
             $types .= 's';
         }
         if ($start_date && $end_date) {
-            $sql .= " AND created_at BETWEEN ? AND ?";
+            $sql .= " AND u.created_at BETWEEN ? AND ?";
             $start_datetime = $start_date . ' 00:00:00';
             $end_datetime = $end_date . ' 23:59:59';
             $params[] = $start_datetime;
@@ -305,7 +426,7 @@ class User {
             $types .= 'ss';
         }
         if ($search) {
-            $sql .= " AND (full_name LIKE ? OR matric_number LIKE ?)";
+            $sql .= " AND (u.full_name LIKE ? OR u.matric_number LIKE ?)";
             $search_param = "%$search%";
             $params[] = $search_param;
             $params[] = $search_param;
@@ -318,7 +439,7 @@ class User {
         }
         $stmt->execute();
         $result = $stmt->get_result()->fetch_assoc();
-        return $result['total'];
+        return $result ? (int)$result['total'] : 0;
     }
 
     public static function updateProfile($id, $full_name, $level, $programme, $session, $department_id, $program_type, $mode) {

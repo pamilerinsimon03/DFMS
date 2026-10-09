@@ -47,12 +47,13 @@ class DocumentIntegrationTest extends TestCase {
         
         // Let's test specific DB methods like getDocumentsByUserId after manual insertion to verify schema.
         global $conn;
-        $stmt = $conn->prepare("INSERT INTO documents (user_id, document_name, file_name, file_path, upload_date, status, department_id) VALUES (?, ?, ?, ?, NOW(), 'Pending Quality Check', ?)");
+        $docUuid = Document::generateUUID();
+        $stmt = $conn->prepare("INSERT INTO documents (public_id, user_id, document_name, file_name, file_path, upload_date, status, department_id) VALUES (?, ?, ?, ?, ?, NOW(), 'Pending Quality Check', ?)");
         $docName = 'Final Year Project';
         $fileName = 'project.pdf';
         $filePath = '/uploads/docs/project.pdf';
         $deptId = 1;
-        $stmt->bind_param("isssi", $user['id'], $docName, $fileName, $filePath, $deptId);
+        $stmt->bind_param("sisssi", $docUuid, $user['id'], $docName, $fileName, $filePath, $deptId);
         $stmt->execute();
         $docId = $stmt->insert_id;
         $this->assertGreaterThan(0, $docId);
