@@ -143,7 +143,6 @@ ON DUPLICATE KEY UPDATE `full_name` = VALUES(`full_name`);
 -- ====================================================
 
 -- Set codes for existing departments
-UPDATE `departments` SET `code` = 'CS'   WHERE `name` = 'Computer Science';
 UPDATE `departments` SET `code` = 'PSYC' WHERE `name` = 'Psychology';
 UPDATE `departments` SET `code` = 'MATH' WHERE `name` = 'Mathematics';
 
@@ -158,25 +157,29 @@ SET u.`department_id` = d.`id`;
 -- ====================================================
 
 
--- Add new departments and admin users for each
+-- Add new departments
 INSERT INTO `departments` (`id`, `name`, `code`) VALUES
   (1, 'Computer Science', 'CS'),
   (2, 'Psychology', 'PSYC'),
   (3, 'English', 'ENG'),
   (4, 'Sociology', 'SOC'),
-  (5, 'Linguistics', 'LING')
-ON DUPLICATE KEY UPDATE `name` = VALUES(`name`);
+  (5, 'Linguistics', 'LING'),
+  (7, 'Computer Science and Artificial Intelligence', 'CSC'),
+  (8, 'Data Science', 'DATA'),
+  (9, 'Software Engineering', 'SENG'),
+  (10, 'Information and Communication Technology', 'ICT')
+ON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `code` = VALUES(`code`);
 
 INSERT INTO `users` (`matric_number`, `password`, `full_name`, `email`, `role`, `department_id`) VALUES
-  ('ADMIN_PSYC', '$2y$10$3k.P.m/eE5p.dO5.y3o7A...', 'Psychology Admin', 'psych_admin@dfms.com', 'admin', 2),
-  ('ADMIN_ENG',  '$2y$10$3k.P.m/eE5p.dO5.y3o7A...', 'English Admin',   'eng_admin@dfms.com',  'admin', 3),
-  ('ADMIN_SOC',  '$2y$10$3k.P.m/eE5p.dO5.y3o7A...', 'Sociology Admin', 'soc_admin@dfms.com',  'admin', 4),
-  ('ADMIN_LING', '$2y$10$3k.P.m/eE5p.dO5.y3o7A...', 'Linguistics Admin','ling_admin@dfms.com','admin',5)
+  ('ADMIN_PSYC', '$2y$10$KuDyQHjFT2vtqdGAQVtjb.PpGQgXGgZlAhAUKCl7AzFOU/Qs9q5hy', 'Psychology Admin', 'psych_admin@dfms.com', 'admin', 2),
+  ('ADMIN_ENG',  '$2y$10$KuDyQHjFT2vtqdGAQVtjb.PpGQgXGgZlAhAUKCl7AzFOU/Qs9q5hy', 'English Admin',   'eng_admin@dfms.com',  'admin', 3),
+  ('ADMIN_SOC',  '$2y$10$KuDyQHjFT2vtqdGAQVtjb.PpGQgXGgZlAhAUKCl7AzFOU/Qs9q5hy', 'Sociology Admin', 'soc_admin@dfms.com',  'admin', 4),
+  ('ADMIN_LING', '$2y$10$KuDyQHjFT2vtqdGAQVtjb.PpGQgXGgZlAhAUKCl7AzFOU/Qs9q5hy', 'Linguistics Admin','ling_admin@dfms.com','admin',5)
 ON DUPLICATE KEY UPDATE `full_name` = VALUES(`full_name`);
 
 -- Create 10 student users across departments
 INSERT INTO `users` (`matric_number`, `password`, `full_name`, `email`, `level`, `programme`, `program_type`, `mode`, `department_id`, `role`) VALUES
-    ('U123001', '$2y$10$3k.P.m/eE5p.dO5.y3o7A...', 'CS Student One',   'cs.student1@dfms.com', 100, 'Computer Science','Undergraduate','Regular',1,'student'),
+    ('U123001', '$2y$10$TDKKWY3QbOm9pfxQ2wIW9OK0B3iYUuBlmgIwuq9cm.B5h2h.EA9q2', 'CS Student One',   'cs.student1@dfms.com', 100, 'Computer Science','Undergraduate','Regular',1,'student'),
     ('U123002', '$2y$10$3k.P.m/eE5p.dO5.y3o7A.8Z4nCqJqHCpUa.4c3s6b8v/r.W/yS9G', 'CS Student Two', 'cs.student2@dfms.com', 200, 'Computer Science', 'Undergraduate', 'Regular', 1, 'student'),
     ('U123003', '$2y$10$3k.P.m/eE5p.dO5.y3o7A.8Z4nCqJqHCpUa.4c3s6b8v/r.W/yS9G', 'Psychology Student One', 'psych.student1@dfms.com', 300, 'Psychology', 'Undergraduate', 'Regular', 2, 'student'),
     ('U123004', '$2y$10$3k.P.m/eE5p.dO5.y3o7A.8Z4nCqJqHCpUa.4c3s6b8v/r.W/yS9G', 'Psychology Student Two', 'psych.student2@dfms.com', 400, 'Psychology', 'Postgraduate', 'Distance Learning', 2, 'student'),
@@ -365,8 +368,6 @@ BEGIN
         d.id,
         d.document_name,
         d.file_path,
-        d.file_size,
-        d.file_type,
         d.status,
         d.created_at
     FROM documents d 
@@ -521,4 +522,135 @@ DELIMITER ;
 CALL UpgradeDocumentsTable();
 DROP PROCEDURE UpgradeDocumentsTable;
 
+-- ====================================================
+-- 10. Migration Phase 4: Enterprise Production Upgrades
+-- ====================================================
+
+-- 10.1 Faculties & Faculty Department Scoping
+CREATE TABLE IF NOT EXISTS `faculties` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(100) NOT NULL,
+  `code` VARCHAR(10) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `faculty_departments` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `faculty_id` INT(11) NOT NULL,
+  `department_id` INT(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_fac_dept` (`faculty_id`, `department_id`),
+  CONSTRAINT `fk_facdept_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculties` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_facdept_department` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Seed default faculties
+INSERT INTO `faculties` (`id`, `name`, `code`) VALUES
+  (1, 'Faculty of Science', 'SCI'),
+  (2, 'Faculty of Social Sciences', 'SOCSCI'),
+  (3, 'Faculty of Arts', 'ARTS'),
+  (6, 'Faculty of Computing', 'COMP')
+ON DUPLICATE KEY UPDATE `name` = VALUES(`name`);
+
+-- Map existing departments to faculties
+INSERT INTO `faculty_departments` (`faculty_id`, `department_id`) VALUES
+  (1, 1), -- Computer Science -> Science
+  (2, 2), -- Psychology -> Social Sciences
+  (3, 3), -- English -> Arts
+  (2, 4), -- Sociology -> Social Sciences
+  (3, 5), -- Linguistics -> Arts
+  (6, 7), -- Computer Science & AI -> Computing
+  (6, 8), -- Data Science -> Computing
+  (6, 9), -- Software Engineering -> Computing
+  (6, 10) -- ICT -> Computing
+ON DUPLICATE KEY UPDATE `faculty_id` = VALUES(`faculty_id`);
+
+-- Add faculty_id, activation_token, and is_activated to users table
+ALTER TABLE users 
+ADD COLUMN IF NOT EXISTS `faculty_id` INT(11) NULL AFTER `department_id`,
+ADD COLUMN IF NOT EXISTS `activation_token` VARCHAR(64) NULL AFTER `role`,
+ADD COLUMN IF NOT EXISTS `is_activated` TINYINT(1) NOT NULL DEFAULT 1 AFTER `activation_token`;
+
+-- 10.2 Document Processing Queue (Async OCR / Quality Checks)
+CREATE TABLE IF NOT EXISTS `document_processing_queue` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `document_id` INT(11) NOT NULL,
+  `user_id` INT(11) NOT NULL,
+  `file_path` VARCHAR(255) NOT NULL,
+  `status` ENUM('pending', 'processing', 'completed', 'failed') DEFAULT 'pending',
+  `attempts` INT(11) DEFAULT 0,
+  `error_log` TEXT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_queue_status` (`status`),
+  KEY `fk_queue_document` (`document_id`),
+  CONSTRAINT `fk_queue_document` FOREIGN KEY (`document_id`) REFERENCES `documents` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 10.3 Stateful Rate Limiting Fallback Layer
+CREATE TABLE IF NOT EXISTS `rate_limits` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `key_hash` VARCHAR(64) NOT NULL,
+  `timestamp` INT(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `idx_key_timestamp` (`key_hash`, `timestamp`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 10.4 Session History & Roll-Over Archiving
+CREATE TABLE IF NOT EXISTS `session_history` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `user_id` INT(11) NOT NULL,
+  `session` VARCHAR(20) NOT NULL,
+  `level` VARCHAR(10) NOT NULL,
+  `department_id` INT(11) NOT NULL,
+  `archived_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `fk_sesshist_user` (`user_id`),
+  CONSTRAINT `fk_sesshist_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 10.5 Update admin user roles & flag
+UPDATE `users` SET `is_admin` = 1, `role` = 'super_admin' WHERE `matric_number` = 'SUPER_ADMIN';
+UPDATE `users` SET `is_admin` = 1, `role` = 'department_admin', `department_id` = 1 WHERE `matric_number` = 'E0500627';
+UPDATE `users` SET `is_admin` = 1, `role` = 'department_admin' WHERE `matric_number` IN ('ADMIN_PSYC', 'ADMIN_ENG', 'ADMIN_SOC', 'ADMIN_LING', 'ADMIN/001');
+
+-- 10.6 Seed Initial Documents for Department 1 (Computer Science)
+INSERT INTO `documents` (`id`, `user_id`, `document_name`, `file_name`, `file_path`, `upload_date`, `status`, `department_id`, `level`, `semester`, `program_type`, `mode`)
+SELECT 53, u.id, 'WASSCE Certificate', 'doc_wassce_2024.pdf', 'secure_uploads/2024_2025/CS/300L/doc_wassce_2024.pdf', '2026-08-03', 'Pending Approval', 1, 300, '1st Semester', 'Full Time', 'UTME'
+FROM `users` u WHERE u.`matric_number` = 'E050238'
+ON DUPLICATE KEY UPDATE `document_name` = VALUES(`document_name`);
+
+INSERT INTO `documents` (`id`, `user_id`, `document_name`, `file_name`, `file_path`, `upload_date`, `status`, `department_id`, `level`, `semester`, `program_type`, `mode`)
+SELECT 54, u.id, 'Birth Certificate', 'doc_birth_cert.pdf', 'secure_uploads/2024_2025/CS/100L/doc_birth_cert.pdf', '2026-08-03', 'Approved', 1, 100, '1st Semester', 'Full Time', 'UTME'
+FROM `users` u WHERE u.`matric_number` = 'U123001'
+ON DUPLICATE KEY UPDATE `document_name` = VALUES(`document_name`);
+
+INSERT INTO `documents` (`id`, `user_id`, `document_name`, `file_name`, `file_path`, `upload_date`, `status`, `department_id`, `level`, `semester`, `program_type`, `mode`)
+SELECT 55, u.id, 'JAMB Admission Letter', 'doc_jamb_adm.pdf', 'secure_uploads/2024_2025/CS/200L/doc_jamb_adm.pdf', '2026-08-03', 'Pending Approval', 1, 200, '1st Semester', 'Full Time', 'Direct Entry'
+FROM `users` u WHERE u.`matric_number` = 'U123002'
+ON DUPLICATE KEY UPDATE `document_name` = VALUES(`document_name`);
+
+-- 10.7 Production Performance Composite Indexes
+CREATE INDEX IF NOT EXISTS `idx_docs_dept_status_created` ON `documents` (`department_id`, `status`, `created_at` DESC);
+CREATE INDEX IF NOT EXISTS `idx_docs_user_status` ON `documents` (`user_id`, `status`);
+CREATE INDEX IF NOT EXISTS `idx_users_dept_level` ON `users` (`department_id`, `level`, `program_type`, `mode`);
+
+-- ====================================================
+-- 11. Schema Migrations Ledger
+-- ====================================================
+CREATE TABLE IF NOT EXISTS `schema_migrations` (
+  `version` VARCHAR(255) NOT NULL,
+  `applied_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`version`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO `schema_migrations` (`version`) VALUES
+  ('2026_08_10_000000_enterprise_upgrades.sql'),
+  ('2026_08_11_000000_performance_indexes.sql');
+
 COMMIT;
+
+
+
