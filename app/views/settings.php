@@ -99,13 +99,13 @@
                     </form>
                 <?php else: ?>
                     <div class="info-box">
-                        <p><strong>Student Password Update</strong></p>
-                        <p>Update all existing student passwords to the new format: <strong>surname12345</strong></p>
-                        <form method="POST" onsubmit="return confirm('Are you sure you want to update all student passwords? This action cannot be undone.');">
+                        <p><strong>Pending Student Account Activation</strong></p>
+                        <p>Resend activation links via email to all students whose accounts are pending activation.</p>
+                        <form method="POST" onsubmit="return confirm('Resend activation emails to all unactivated student accounts?');">
                             <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                             <button type="submit" name="action" value="update_passwords" class="btn btn-warning">
-                                <span class="btn-icon"><i data-lucide="refresh-cw"></i></span>
-                                Update All Student Passwords
+                                <span class="btn-icon"><i data-lucide="mail"></i></span>
+                                Resend Activation Links
                             </button>
                         </form>
                     </div>

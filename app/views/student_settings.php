@@ -220,6 +220,36 @@
                 </div>
             </div>
         </div>
+
+        <div class="settings-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <img src="/app/src/assets/images/Document Purple.svg" alt="Data Protection Icon">
+                </div>
+                <div class="card-title">
+                    <h3>Data Protection & Privacy Rights</h3>
+                    <p>Manage your rights under NDPA / NDPR 2019</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="tips-list" style="margin-bottom: 20px;">
+                    <div class="tip-item">
+                        <div class="tip-icon">
+                            <img src="/app/src/assets/images/Check.svg" alt="Check Icon">
+                        </div>
+                        <div class="tip-content">
+                            <h4>Self-Service Data Rights</h4>
+                            <p>Request data access exports, rectify personal details, or request data deletion under institutional retention policies.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <a href="/app/controllers/data_subject_rights.php" class="btn btn-primary" style="display: inline-flex; align-items: center; text-decoration: none;">
+                        Manage Privacy & Data Rights
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

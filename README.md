@@ -1,193 +1,308 @@
 # University of Ibadan Digital File Management System (DFMS)
 
-A secure web portal for students, administrators, and lecturers to manage academic documents with comprehensive security features and NDPR compliance.
+[![Build Status](https://img.shields.io/github/actions/workflow/status/pamilerinsimon03/DFMS/security-scan.yml?branch=main)](https://github.com/pamilerinsimon03/DFMS/actions)
+[![NDPR Compliance](https://img.shields.io/badge/Compliance-NDPR-green.svg)](docs/DOCUMENTATION.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-## Tech Stack
-
-* **Backend:** PHP
-* **Frontend:** HTML5, CSS3, Vanilla JavaScript (ES6+)
-* **Database:** MySQL
-
-## Server Requirements
-
-For the application to run correctly, the server must meet the following requirements:
-
-* PHP 8.0 or higher
-* MySQL 5.7 or higher
-* GD extension (bundled with PHP) for blur detection
-* A web server such as Apache or Nginx
-
-## Image Quality & OCR Validation
-
-These features automate rejection of blurry or unreadable uploads. Install and configure the following:
-
-### Linux (Debian/Ubuntu 20.04/22.04+)
-
-Run the following commands to install the required dependencies (Tesseract OCR, ImageMagick, and PHP extension):
-
-```bash
-# 1. Update package list
-sudo apt-get update
-
-# 2. Install Tesseract OCR and its language pack
-sudo apt-get install tesseract-ocr tesseract-ocr-eng -y
-
-# 3. Install ImageMagick and PHP Extension
-# (Replace php8.1 with your installed version if different)
-sudo apt-get install imagemagick php-imagick -y
-
-# 4. Restart Web Server to load new PHP extension
-sudo systemctl restart apache2
-# OR if using Nginx+FPM:
-# sudo systemctl restart php8.1-fpm
-```
-
-### Windows (XAMPP/WAMP)
-
-1.  **Check PHP Version**: Create an `info.php` file (`<?php phpinfo(); ?>`) to see your PHP version (e.g., 8.2), Architecture (x64), and Thread Safety (TS).
-2.  **Install ImageMagick**:
-    *   Download from [ImageMagick Windows Downloads](https://imagemagick.org/script/download.php#windows) (select DLL version, e.g., `ImageMagick-7.1.x-Q16-HDRI-x64-dll.exe`).
-    *   **Important**: Check **"Add to System Path"** during installation.
-3.  **Install PHP Extension**:
-    *   Download from [PECL Imagick](https://pecl.php.net/package/imagick). Choose the DLL matching your PHP version/TS.
-    *   Extract `php_imagick.dll` to `C:\xampp\php\ext\`.
-    *   Extract `CORE_RL_*.dll` and `IM_MOD_RL_*.dll` files to `C:\xampp\apache\bin\`.
-4.  **Install Tesseract OCR**:
-    *   Download installer from [UB Mannheim Tesseract Wiki](https://github.com/UB-Mannheim/tesseract/wiki).
-    *   **Important**: Check **"Add to Path"** during installation so the system can find `tesseract.exe`.
-5.  **Configure PHP**:
-    *   Edit `php.ini` and add `extension=imagick`.
-6.  **Restart Apache**: Restart the server from the XAMPP Control Panel.
+A high-security web portal for students, administrators, and academic staff at the University of Ibadan to manage, verify, and archive academic documents with automated quality checks, antivirus scanning, role-based access control, and full NDPR compliance.
 
 ---
 
-## Getting Started
+## 📐 System Architecture
 
-1. **Clone the repository:**
+DFMS is built on a clean **Model-View-Controller (MVC)** pattern with a dedicated **Service Layer**, **Security Middleware**, and **Secure Storage Engine**.
 
-   ```bash
-   git clone <repository_url>
-   cd DFMS
-   ```
-2. **Database Setup:**
+```
+                           +------------------------+
+                           |     Client Browser     |
+                           +-----------+------------+
+                                       |
+                                       v
+                           +------------------------+
+                           |    public/index.php    |
+                           |   (Front Controller)   |
+                           +-----------+------------+
+                                       |
+                   +-------------------+-------------------+
+                   |                                       |
+                   v                                       v
+       +-----------------------+               +-----------------------+
+       | AccessControl         |               | SecurityUtils         |
+       | Middleware (RBAC)     |               | (CSRF / Rate Limit)   |
+       +-----------+-----------+               +-----------+-----------+
+                   |                                       |
+                   +-------------------+-------------------+
+                                       |
+                                       v
+                           +------------------------+
+                           |   app/controllers/     |
+                           +-----------+------------+
+                                       |
+          +----------------------------+----------------------------+
+          |                            |                            |
+          v                            v                            v
++-------------------+        +-------------------+        +-------------------+
+|    app/models/    |        |   app/services/   |        |    app/views/     |
+| User / Document   |        | Quality / Scan    |        |  UI & Views (SPA) |
++---------+---------+        +---------+---------+        +-------------------+
+          |                            |
+          v                            v
++-------------------+        +-------------------+
+|  MySQL Database   |        | secure_uploads/   |
+| (Relational Store)|        | (Outside Webroot) |
++-------------------+        +-------------------+
+```
 
-   * Import the `dfms_database.sql` file into MySQL database.
-   * The system now uses environment variables for secure credential management.
-3. **Install Dependencies:**
+### Key Architectural Layers
 
-   * Follow the steps under **Image Quality & OCR Validation** if you need automated checks.
-4. **Web Server Configuration:**
+1. **Front Controller & Routing (`public/index.php`)**: Single entry point handling security initialization, global CSRF & XSS filtering, routing, and response rendering.
+2. **Controller Layer (`app/controllers/`)**: Manages request handling, input validation, authorization checks, and dispatches to services/models. Includes single-page application (SPA) endpoints (`spa.js`).
+3. **Model Layer (`app/models/`)**: Encapsulates data persistence and business logic for `User`, `Document`, `FileRequirement`, `Notification`, and `PasswordReset`.
+4. **Service Layer (`app/services/`)**:
+   - `QualityCheckService`: Automated document blur detection (variance of Laplacian via Imagick/GD) and OCR text readability (Tesseract OCR).
+   - `ClamAVScannerService`: Antivirus scanning integration (socket/CLI daemon) for uploaded files.
+   - `MailService`: SMTP transactional email notifications for password resets and verification updates.
+   - `SessionRollOverService`: Automated academic session transitions, student level progression, and requirement mapping.
+   - `AcademicCalendarService`: Session and semester calculation engine.
+   - `FilenameGenerator`: Generates secure, sanitized, hashed filenames.
+5. **Security & Utilities Layer (`app/utils/`)**:
+   - `AccessControlMiddleware`: Strict Role-Based Access Control (Super Admin, Departmental Admin, Lecturer, Student).
+   - `SecurityUtils`: CSRF protection, rate limiting (IP & User), XSS sanitization, secure hashing, and security/audit logging (`app/logs/`).
+   - `DataRetention`: Automated NDPR policy enforcement and data purging.
+   - `StoragePathResolver`: Resolves storage paths for files isolated outside the webroot.
+6. **Background Processing & Maintenance (`app/scripts/`)**:
+   - `queue_worker.php`: Asynchronous background processing for emails, quality checks, and heavy scans.
+   - `security_maintenance.php`: Scheduled maintenance script for log rotation, expired session cleanup, and NDPR data retention enforcement.
 
-   * Point your web server’s document root to the `/public` directory.
+---
 
-## Project Structure
+## 🛠️ Tech Stack & Dependencies
+
+* **Backend:** PHP 8.0+ (PDO, GD, Imagick, Fileinfo extensions)
+* **Frontend:** HTML5, CSS3, Vanilla JavaScript (ES6+), SPA routing
+* **Database:** MySQL 5.7+ / MariaDB 10.3+
+* **Document Processing & Validation:** Tesseract OCR, ImageMagick, ClamAV Antivirus
+* **Static Analysis:** PHPStan (Level 5), Psalm
+* **Testing:** PHPUnit (Unit & Integration), Playwright (E2E)
+* **CI/CD & Security:** GitHub Actions (`security-scan.yml`, `ndpr-compliance.yml`)
+
+---
+
+## 📁 Project Structure
 
 ```
 DFMS/
+├── .github/
+│   └── workflows/              # CI/CD Workflows (Security Scanning & NDPR Compliance)
 ├── app/
-│   ├── config/      # Database and app configuration
-│   ├── controllers/ # Handles user requests and business logic
-│   ├── models/      # Database interaction and data models
-│   ├── views/       # PHP templates for the UI
-│   ├── src/         # CSS, JS, and image assets
-│   ├── utils/       # Security utilities and helper functions
-│   └── logs/        # Security and audit logs
-├── docs/            # Documentation (see docs/README.md)
-├── secure_uploads/  # Secure file storage (outside webroot)
-├── public/
-│   └── index.php    # Front controller
-├── dfms_database.sql # Complete database schema with security updates
-├── .htaccess        # Security headers and access controls
-├── env.example      # Environment variables template
-└── README.md        # This file
+│   ├── config/                 # Database, document types & system settings
+│   │   ├── config.php
+│   │   ├── document_types.php
+│   │   └── settings.json
+│   ├── controllers/            # Request handlers (Uploads, Auth, Admin, Verifications)
+│   ├── logs/                   # Security, audit, and system event logs
+│   │   ├── audit.log
+│   │   └── security.log
+│   ├── models/                 # Data models (User, Document, FileRequirement, etc.)
+│   ├── scripts/                # Background queue worker, security maintenance & CLI tools
+│   │   ├── queue_worker.php
+│   │   ├── security_maintenance.php
+│   │   ├── add_department.php
+│   │   ├── add_faculty.php
+│   │   └── run_migrations.php
+│   ├── services/               # Core business services (QualityCheck, ClamAV, Mail, Session)
+│   ├── src/                    # CSS, JS (SPA logic), and visual assets
+│   ├── utils/                  # Security utilities, RBAC middleware, NDPR data retention
+│   └── views/                  # UI templates & partial views
+├── docs/                       # Complete documentation & security test cases
+├── public/                     # Web root
+│   ├── index.php               # Front controller
+│   └── activate.php            # Account activation portal
+├── secure_uploads/             # Secure document storage (isolated outside webroot)
+├── tests/                      # Automated test suite
+│   ├── Unit/                   # Model & Service Unit tests
+│   ├── Integration/            # Controller & Security Integration tests
+│   ├── E2E/                    # Playwright End-to-End tests
+│   └── bootstrap.php           # Test environment bootstrap script
+├── .env.example                # Environment configuration template
+├── .htaccess                   # Security headers, access rules, URL rewrites
+├── deploy_security_fixes.sh    # Security validation & deployment script
+├── dfms_database.sql           # Database schema & initial seed data
+├── phpstan.neon                # PHPStan static analysis configuration
+├── psalm.xml                   # Psalm static analysis configuration
+└── README.md                   # System Overview (This file)
 ```
 
-## Login Credentials
+---
 
-### Admin Users
-- **Main Admin**: Matric `E0500627`, Password `test101`
-- **Psychology Admin**: Matric `ADMIN_PSYC`, Password `admin12345`
-- **English Admin**: Matric `ADMIN_ENG`, Password `admin12345`
-- **Sociology Admin**: Matric `ADMIN_SOC`, Password `admin12345`
-- **Linguistics Admin**: Matric `ADMIN_LING`, Password `admin12345`
-- **Super Admin**: Matric `SUPER_ADMIN`, Password `admin12345`
+## 🔐 Core Security & NDPR Compliance Features
 
-### Student Users
-Default Password format: `surname12345` (e.g., for "John Doe" → `doe12345`)
+- **Isolated File Storage:** All uploaded documents are stored in `secure_uploads/` outside the web root and streamed through `secure_file_viewer.php` after authentication and permission validation (protects against IDOR and direct code execution).
+- **Automated Quality & Malware Inspection:** Every upload undergoes blur detection (variance of Laplacian), OCR readability checks, and ClamAV antivirus scanning before acceptance.
+- **Role-Based Access Control (RBAC):** Hierarchical permissions governing Super Admin, Departmental Admin, Lecturer, and Student roles.
+- **CSRF & XSS Protection:** Anti-CSRF token verification on all POST/PUT requests and multi-layer input sanitization.
+- **Rate Limiting:** Granular throttling on authentication and API endpoints to prevent brute-force attacks.
+- **Audit & Security Logging:** Comprehensive security event tracking (`app/logs/security.log`) and audit trailing (`app/logs/audit.log`) with an interactive Super Admin viewer.
+- **NDPR Compliance Portal:** Self-service portal for data subjects (students) to submit Subject Access Requests (SAR), request account deletion (Right to be Forgotten), and manage consent preferences (`data_subject_rights.php`). Automated log and document retention purging (`DataRetention.php`).
+- **Security Headers:** Strict HTTP headers configured via `.htaccess` (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, HSTS).
 
-**Note:** The system now supports automatic password generation based on student surnames. New students will have passwords in the format: `surname12345` (e.g., "John Doe" → password: "doe12345").
+---
 
-## Admin Features
+## ⚡ Getting Started & Installation
 
-### Student Management
-- **Add Individual Students**: Navigate to "Add Student" in the admin panel to add students one by one
-- **Bulk Import Students**: Use "Bulk Import" to upload a CSV file with multiple students
-- **Update Passwords**: Use "Update Passwords" to change all existing student passwords to the new format
+### Server Prerequisites
 
-### CSV Import Format
-The bulk import feature accepts CSV files with the following columns:
-- `matric_number` (required)
-- `full_name` (required) 
-- `level` (required)
-- `session` (required)
-- `programme` (required)
-- `department_id` (required)
-- `program_type` (optional, default: Undergraduate)
-- `mode` (optional, default: Regular)
-- `email` (optional)
+Ensure your host environment has the following installed:
+- PHP >= 8.0 with `pdo_mysql`, `gd`, `imagick`, `fileinfo`
+- MySQL >= 5.7 or MariaDB >= 10.3
+- Apache (with `mod_rewrite` & `mod_headers`) or Nginx
+- Tesseract OCR & ImageMagick (for automated OCR & quality checks)
+- ClamAV (optional for malware scanning)
 
-Download the CSV template from the bulk import page for the correct format.
+---
 
-### Quick Login Reference
+### Step-by-Step Setup
 
-**Admin Users:**
-- Main Admin: `E0500627` / `test101`
-- Psychology Admin: `ADMIN_PSYC` / `admin12345`
-- English Admin: `ADMIN_ENG` / `admin12345`
-- Sociology Admin: `ADMIN_SOC` / `admin12345`
-- Linguistics Admin: `ADMIN_LING` / `admin12345`
-- Super Admin: `SUPER_ADMIN` / `admin12345`
+#### 1. Clone Repository & Setup Environment
+```bash
+git clone https://github.com/pamilerinsimon03/DFMS.git
+cd DFMS
 
-**Student Users:**
-- Computer Science: `U123001`, `U123002` (password: `surname12345`)
-- Psychology: `U123003`, `U123004` (password: `surname12345`)
-- English: `U123005`, `U123006` (password: `surname12345`)
-- Sociology: `U123007`, `U123008` (password: `surname12345`)
-Linguistics: U123009, U123010
+# Create environment configuration file
+cp env.example .env
+```
+Edit `.env` to configure your database credentials and environment settings:
+```ini
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=dfms_database
+DB_USER=your_db_user
+DB_PASS=your_db_password
+APP_DEBUG=false
+```
 
-## 📚 Documentation
+#### 2. Database Initialization
+Import the database schema and seed data into MySQL:
+```bash
+mysql -u your_db_user -p dfms_database < dfms_database.sql
+```
 
-All documentation is available in the [`docs/`](docs/) directory:
+#### 3. Install OCR & Image Processing Dependencies
 
-- **[System Documentation](docs/DOCUMENTATION.md)** - Complete setup and usage guide
-- **[Test Cases](docs/Security_Test_Cases.md)** - Security testing procedures
+##### Linux (Ubuntu/Debian)
+```bash
+# Install Tesseract OCR and ImageMagick
+sudo apt-get update
+sudo apt-get install tesseract-ocr tesseract-ocr-eng imagemagick php-imagick clamav clamav-daemon -y
 
-## 🚀 Quick Security Setup
+# Restart Web Server
+sudo systemctl restart apache2 # or php-fpm
+```
 
-1. **Environment Setup:**
-   ```bash
-   cp env.example .env
-   # Edit .env with your database credentials
-   ```
+##### Windows (XAMPP / WAMP)
+1. Download & install **ImageMagick** (DLL version) and ensure **"Add to System Path"** is selected.
+2. Enable `extension=imagick` in `php.ini`.
+3. Download & install **Tesseract OCR** installer and add the install directory to your system `PATH`.
 
-2. **Database Setup:**
-   ```bash
-   mysql -u your_user -p your_database < dfms_database.sql
-   ```
+#### 4. Configure Web Server & Permissions
+Point your web server's Document Root to the `/public` directory of the project.
 
-3. **Security Validation:**
-   ```bash
-   # Run the deployment script (optional - fixes already applied)
-   ./deploy_security_fixes.sh
-   ```
+Run the deployment script to verify security rules and set directory permissions:
+```bash
+chmod +x deploy_security_fixes.sh
+./deploy_security_fixes.sh
+```
 
-## 🔐 Security Features
+---
 
-- **CSRF Protection** - All forms protected against cross-site request forgery
-- **Input Validation** - Comprehensive validation and sanitization
-- **Rate Limiting** - Protection against brute force attacks
-- **Secure File Uploads** - Files stored outside webroot with validation
-- **Audit Logging** - Complete security event tracking
-- **NDPR Compliance** - Full data protection regulation compliance
-- **Session Security** - Secure session management with proper flags
+## 🔑 Initial Credential Seeding & Activation
+
+### Administrative Account Credentials
+To uphold the zero hardcoded default credentials requirement, initial administrative passwords are not committed in plain text. Generate secure initial credentials dynamically:
+```bash
+php app/scripts/seed_demo.php
+```
+
+| Role | Matric / Username | Credential Generation | Scope |
+| :--- | :--- | :--- | :--- |
+| **Super Admin** | `SUPER_ADMIN` | Cryptographic random via `seed_demo.php` | Global System Access & Audit Logs |
+| **Faculty Admin** | `E0500627` | Cryptographic random via `seed_demo.php` | Faculty of Science / Main Admin |
+| **Psychology Admin** | `ADMIN_PSYC` | Cryptographic random via `seed_demo.php` | Department of Psychology |
+| **English Admin** | `ADMIN_ENG` | Cryptographic random via `seed_demo.php` | Department of English |
+| **Sociology Admin** | `ADMIN_SOC` | Cryptographic random via `seed_demo.php` | Department of Sociology |
+| **Linguistics Admin** | `ADMIN_LING` | Cryptographic random via `seed_demo.php` | Department of Linguistics |
+
+### Student Accounts & Onboarding Flow
+Surname-derived passwords (such as `surname12345`) are eliminated. Student accounts are created in an unactivated state (`password = '*ACTIVATION_REQUIRED*'`) and onboarded via single-use email activation tokens (valid for 48 hours). Students navigate to `/app/controllers/activate.php?token=...` to set their password and record statutory NDPA 2023 consents.
+
+| Matric Number | Department | Sample Level | Authentication Setup |
+| :--- | :--- | :--- | :--- |
+| `U123001` - `U123002` | Computer Science | 100L / 200L | Email Activation Token |
+| `U123003` - `U123004` | Psychology | 100L / 200L | Email Activation Token |
+| `U123005` - `U123006` | English | 100L / 200L | Email Activation Token |
+| `U123007` - `U123008` | Sociology | 100L / 200L | Email Activation Token |
+| `U123009` - `U123010` | Linguistics | 100L / 200L | Email Activation Token |
+
+---
+
+## 🔄 Background Workers & Scheduled Tasks
+
+### 1. Security Maintenance Cron Job
+Schedule the security maintenance script to run daily for log rotation, expired session cleanup, and NDPR data retention enforcement:
+```bash
+0 2 * * * cd /path/to/DFMS && php app/scripts/security_maintenance.php >> app/logs/maintenance.log 2>&1
+```
+
+### 2. Asynchronous Queue Worker
+Run the background queue worker to handle asynchronous emails and quality check processing:
+```bash
+php app/scripts/queue_worker.php
+```
+
+---
+
+## 🧪 Testing & Code Quality
+
+### Static Analysis
+Run static analysis tools to verify code type safety and code quality:
+```bash
+# Run PHPStan
+./vendor/bin/phpstan analyse -c phpstan.neon
+
+# Run Psalm
+./vendor/bin/psalm
+```
+
+### Automated Unit & Integration Tests (PHPUnit)
+The PHPUnit test suite includes tests for user authentication, security utilities, services, and document workflows:
+```bash
+# Execute unit & integration test suite
+./vendor/bin/phpunit --bootstrap tests/bootstrap.php tests/
+```
+
+### End-to-End Tests (Playwright)
+Run the Playwright E2E suite to test full browser flows (Login, Student Uploads, Admin Verification):
+```bash
+# Setup E2E data fixture
+php tests/setup_e2e_data.php
+
+# Run Playwright specs
+npx playwright test
+```
+
+---
+
+## 📚 Documentation & Guides
+
+Additional detailed documentation is located in the [`docs/`](docs/) directory:
+
+- **[System & Hosting Guide](docs/DOCUMENTATION.md)** - Comprehensive server, hosting, migration, and API documentation.
+- **[Security Test Cases](docs/Security_Test_Cases.md)** - Comprehensive security verification manual and penetration test procedures.
+
+---
+
+## 📄 License
+
+This project is open-sourced under the [MIT License](LICENSE).
+
 

@@ -12,11 +12,10 @@ class PasswordReset {
             $cleanStmt->execute();
         }
 
-        // 15 minutes expiry per NDPR 2019 recommendations
-        $expires_at = date('Y-m-d H:i:s', strtotime('+15 minutes'));
-        $sql = "INSERT INTO password_resets (user_id, token, expires_at) VALUES (?, ?, ?)";
+        // 15 minutes expiry using database clock to avoid PHP-MySQL timezone skew
+        $sql = "INSERT INTO password_resets (user_id, token, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 15 MINUTE))";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("iss", $user_id, $hashed_token, $expires_at);
+        $stmt->bind_param("is", $user_id, $hashed_token);
         return $stmt->execute();
     }
 
@@ -24,9 +23,9 @@ class PasswordReset {
         global $conn;
         $hashed_token = hash('sha256', $raw_token);
         
-        $sql = "SELECT * FROM password_resets WHERE (token = ? OR token = ?) AND expires_at > NOW()";
+        $sql = "SELECT * FROM password_resets WHERE token = ? AND expires_at > NOW()";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ss", $hashed_token, $raw_token);
+        $stmt->bind_param("s", $hashed_token);
         $stmt->execute();
         return $stmt->get_result()->fetch_assoc();
     }
@@ -34,9 +33,9 @@ class PasswordReset {
     public static function delete($raw_token) {
         global $conn;
         $hashed_token = hash('sha256', $raw_token);
-        $sql = "DELETE FROM password_resets WHERE token = ? OR token = ?";
+        $sql = "DELETE FROM password_resets WHERE token = ?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ss", $hashed_token, $raw_token);
+        $stmt->bind_param("s", $hashed_token);
         return $stmt->execute();
     }
 }

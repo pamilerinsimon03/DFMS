@@ -250,9 +250,16 @@
     background-color: #f8f9fa;
 }
 
-.file-label:hover {
+.file-label:hover,
+.file-label.drag-over {
     border-color: #6366f1;
     background-color: #f0f4ff;
+    transform: scale(1.01);
+}
+
+.file-label.has-file {
+    border-color: #10b981;
+    background-color: #ecfdf5;
 }
 
 .file-icon {
@@ -263,6 +270,10 @@
 .file-text {
     color: #666;
     font-size: 1rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 .upload-form .btn {

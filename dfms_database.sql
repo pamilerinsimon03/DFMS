@@ -59,6 +59,9 @@ CREATE TABLE `users` (
   `emergency_contact_relationship` varchar(50) DEFAULT NULL,
   `profile_updated_at` timestamp NULL DEFAULT NULL,
   `role` varchar(20) NOT NULL DEFAULT 'student',
+  `activation_token` varchar(64) DEFAULT NULL,
+  `activation_expires_at` timestamp NULL DEFAULT NULL,
+  `is_activated` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `matric_number` (`matric_number`),
   UNIQUE KEY `idx_users_public_id` (`public_id`),
@@ -67,9 +70,9 @@ CREATE TABLE `users` (
 ) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 -- Seed users
-INSERT INTO `users` (`id`, `public_id`, `matric_number`, `password`, `full_name`, `level`, `session`, `programme`, `created_at`, `is_admin`) VALUES
-(1, 'd6797b3b-c3d0-11f1-83e5-1062e59e19c8', 'E0500627', '$2y$10$KuDyQHjFT2vtqdGAQVtjb.PpGQgXGgZlAhAUKCl7AzFOU/Qs9q5hy', 'Professor Afolabi Samuel', '500L', '2023/2024', 'Bachelor Of Science (Computer Science)', '2025-05-28 18:53:05', 1),
-(2, 'd6799001-c3d0-11f1-83e5-1062e59e19c8', 'E050238', '$2y$10$TDKKWY3QbOm9pfxQ2wIW9OK0B3iYUuBlmgIwuq9cm.B5h2h.EA9q2', 'Demo User', '300L', '2023/2024', 'Bachelor Of Science (Computer Science)', '2025-05-28 22:41:39', 0);
+INSERT INTO `users` (`id`, `public_id`, `matric_number`, `password`, `full_name`, `level`, `session`, `programme`, `created_at`, `is_admin`, `is_activated`) VALUES
+(1, 'd6797b3b-c3d0-11f1-83e5-1062e59e19c8', 'E0500627', '$2y$10$KuDyQHjFT2vtqdGAQVtjb.PpGQgXGgZlAhAUKCl7AzFOU/Qs9q5hy', 'Professor Afolabi Samuel', '500L', '2023/2024', 'Bachelor Of Science (Computer Science)', '2025-05-28 18:53:05', 1, 1),
+(2, 'd6799001-c3d0-11f1-83e5-1062e59e19c8', 'E050238', '$2y$10$TDKKWY3QbOm9pfxQ2wIW9OK0B3iYUuBlmgIwuq9cm.B5h2h.EA9q2', 'Demo User', '300L', '2023/2024', 'Bachelor Of Science (Computer Science)', '2025-05-28 22:41:39', 0, 1);
 
 -- Table structure for table `documents`
 DROP TABLE IF EXISTS `documents`;
@@ -106,11 +109,26 @@ CREATE TABLE `password_resets` (
   `user_id` int(11) NOT NULL,
   `token` varchar(255) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `expires_at` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `expires_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
+  KEY `idx_password_resets_token` (`token`),
+  KEY `idx_password_resets_expires` (`expires_at`),
   CONSTRAINT `password_resets_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+-- Table structure for table `email_queue`
+CREATE TABLE IF NOT EXISTS `email_queue` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `recipient` varchar(255) NOT NULL,
+  `subject` varchar(255) NOT NULL,
+  `message` text NOT NULL,
+  `status` enum('pending','sent','failed') DEFAULT 'pending',
+  `attempts` int(11) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_queue_status_attempts` (`status`, `attempts`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Table structure for table `tag_errors`
 DROP TABLE IF EXISTS `tag_errors`;
@@ -184,18 +202,18 @@ INSERT INTO `users` (`matric_number`, `password`, `full_name`, `email`, `role`, 
   ('ADMIN_LING', '$2y$10$KuDyQHjFT2vtqdGAQVtjb.PpGQgXGgZlAhAUKCl7AzFOU/Qs9q5hy', 'Linguistics Admin','ling_admin@dfms.com','admin',5)
 ON DUPLICATE KEY UPDATE `full_name` = VALUES(`full_name`);
 
--- Create 10 student users across departments
-INSERT INTO `users` (`matric_number`, `password`, `full_name`, `email`, `level`, `programme`, `program_type`, `mode`, `department_id`, `role`) VALUES
-    ('U123001', '$2y$10$TDKKWY3QbOm9pfxQ2wIW9OK0B3iYUuBlmgIwuq9cm.B5h2h.EA9q2', 'CS Student One',   'cs.student1@dfms.com', 100, 'Computer Science','Undergraduate','Regular',1,'student'),
-    ('U123002', '$2y$10$3k.P.m/eE5p.dO5.y3o7A.8Z4nCqJqHCpUa.4c3s6b8v/r.W/yS9G', 'CS Student Two', 'cs.student2@dfms.com', 200, 'Computer Science', 'Undergraduate', 'Regular', 1, 'student'),
-    ('U123003', '$2y$10$3k.P.m/eE5p.dO5.y3o7A.8Z4nCqJqHCpUa.4c3s6b8v/r.W/yS9G', 'Psychology Student One', 'psych.student1@dfms.com', 300, 'Psychology', 'Undergraduate', 'Regular', 2, 'student'),
-    ('U123004', '$2y$10$3k.P.m/eE5p.dO5.y3o7A.8Z4nCqJqHCpUa.4c3s6b8v/r.W/yS9G', 'Psychology Student Two', 'psych.student2@dfms.com', 400, 'Psychology', 'Postgraduate', 'Distance Learning', 2, 'student'),
-    ('U123005', '$2y$10$3k.P.m/eE5p.dO5.y3o7A.8Z4nCqJqHCpUa.4c3s6b8v/r.W/yS9G', 'English Student One', 'eng.student1@dfms.com', 100, 'English', 'Undergraduate', 'Regular', 3, 'student'),
-    ('U123006', '$2y$10$3k.P.m/eE5p.dO5.y3o7A.8Z4nCqJqHCpUa.4c3s6b8v/r.W/yS9G', 'English Student Two', 'eng.student2@dfms.com', 200, 'English', 'Undergraduate', 'Regular', 3, 'student'),
-    ('U123007', '$2y$10$3k.P.m/eE5p.dO5.y3o7A.8Z4nCqJqHCpUa.4c3s6b8v/r.W/yS9G', 'Sociology Student One', 'soc.student1@dfms.com', 300, 'Sociology', 'Undergraduate', 'Regular', 4, 'student'),
-    ('U123008', '$2y$10$3k.P.m/eE5p.dO5.y3o7A.8Z4nCqJqHCpUa.4c3s6b8v/r.W/yS9G', 'Sociology Student Two', 'soc.student2@dfms.com', 400, 'Sociology', 'Postgraduate', 'Distance Learning', 4, 'student'),
-    ('U123009', '$2y$10$3k.P.m/eE5p.dO5.y3o7A.8Z4nCqJqHCpUa.4c3s6b8v/r.W/yS9G', 'Linguistics Student One', 'ling.student1@dfms.com', 100, 'Linguistics', 'Undergraduate', 'Regular', 5, 'student'),
-    ('U123010', '$2y$10$3k.P.m/eE5p.dO5.y3o7A.8Z4nCqJqHCpUa.4c3s6b8v/r.W/yS9G', 'Linguistics Student Two', 'ling.student2@dfms.com', 200, 'Linguistics', 'Undergraduate', 'Regular', 5, 'student')
+-- Create 10 student users across departments (unactivated by default with mandatory activation tokens)
+INSERT INTO `users` (`matric_number`, `password`, `full_name`, `email`, `level`, `programme`, `program_type`, `mode`, `department_id`, `role`, `is_activated`, `activation_token`, `activation_expires_at`) VALUES
+    ('U123001', '*ACTIVATION_REQUIRED*', 'CS Student One',   'cs.student1@dfms.com', 100, 'Computer Science','Undergraduate','Regular',1,'student', 0, SHA2('seed_U123001', 256), DATE_ADD(NOW(), INTERVAL 48 HOUR)),
+    ('U123002', '*ACTIVATION_REQUIRED*', 'CS Student Two', 'cs.student2@dfms.com', 200, 'Computer Science', 'Undergraduate', 'Regular', 1, 'student', 0, SHA2('seed_U123002', 256), DATE_ADD(NOW(), INTERVAL 48 HOUR)),
+    ('U123003', '*ACTIVATION_REQUIRED*', 'Psychology Student One', 'psych.student1@dfms.com', 300, 'Psychology', 'Undergraduate', 'Regular', 2, 'student', 0, SHA2('seed_U123003', 256), DATE_ADD(NOW(), INTERVAL 48 HOUR)),
+    ('U123004', '*ACTIVATION_REQUIRED*', 'Psychology Student Two', 'psych.student2@dfms.com', 400, 'Psychology', 'Postgraduate', 'Distance Learning', 2, 'student', 0, SHA2('seed_U123004', 256), DATE_ADD(NOW(), INTERVAL 48 HOUR)),
+    ('U123005', '*ACTIVATION_REQUIRED*', 'English Student One', 'eng.student1@dfms.com', 100, 'English', 'Undergraduate', 'Regular', 3, 'student', 0, SHA2('seed_U123005', 256), DATE_ADD(NOW(), INTERVAL 48 HOUR)),
+    ('U123006', '*ACTIVATION_REQUIRED*', 'English Student Two', 'eng.student2@dfms.com', 200, 'English', 'Undergraduate', 'Regular', 3, 'student', 0, SHA2('seed_U123006', 256), DATE_ADD(NOW(), INTERVAL 48 HOUR)),
+    ('U123007', '*ACTIVATION_REQUIRED*', 'Sociology Student One', 'soc.student1@dfms.com', 300, 'Sociology', 'Undergraduate', 'Regular', 4, 'student', 0, SHA2('seed_U123007', 256), DATE_ADD(NOW(), INTERVAL 48 HOUR)),
+    ('U123008', '*ACTIVATION_REQUIRED*', 'Sociology Student Two', 'soc.student2@dfms.com', 400, 'Sociology', 'Postgraduate', 'Distance Learning', 4, 'student', 0, SHA2('seed_U123008', 256), DATE_ADD(NOW(), INTERVAL 48 HOUR)),
+    ('U123009', '*ACTIVATION_REQUIRED*', 'Linguistics Student One', 'ling.student1@dfms.com', 100, 'Linguistics', 'Undergraduate', 'Regular', 5, 'student', 0, SHA2('seed_U123009', 256), DATE_ADD(NOW(), INTERVAL 48 HOUR)),
+    ('U123010', '*ACTIVATION_REQUIRED*', 'Linguistics Student Two', 'ling.student2@dfms.com', 200, 'Linguistics', 'Undergraduate', 'Regular', 5, 'student', 0, SHA2('seed_U123010', 256), DATE_ADD(NOW(), INTERVAL 48 HOUR))
 ON DUPLICATE KEY UPDATE `full_name` = VALUES(`full_name`);
 
 -- Populate documents.department_id from users

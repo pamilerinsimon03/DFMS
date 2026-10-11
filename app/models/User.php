@@ -109,14 +109,10 @@ class User {
         return $user && $user['is_admin'] == 1;
     }
 
-    public static function generatePassword($full_name) {
-        $name_parts = explode(' ', trim($full_name));
-        $surname = end($name_parts);
-        $surname = strtolower(preg_replace('/[^a-zA-Z]/', '', $surname));
-        if (empty($surname)) {
-            $surname = 'student';
-        }
-        return $surname . '12345';
+    public static function generatePassword($full_name = null) {
+        // Surname-based password generation removed per security requirements
+        // Produces cryptographically secure random credentials
+        return bin2hex(random_bytes(8)) . '!A1';
     }
 
     public static function createStudent($student_data) {
@@ -132,8 +128,8 @@ class User {
         $is_activated = 0;
         $placeholder_password = '*ACTIVATION_REQUIRED*';
         
-        $sql = "INSERT INTO users (public_id, matric_number, password, full_name, level, session, programme, program_type, mode, department_id, email, role, is_admin, activation_token, is_activated) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'student', 0, ?, ?)";
+        $sql = "INSERT INTO users (public_id, matric_number, password, full_name, level, session, programme, program_type, mode, department_id, email, role, is_admin, activation_token, activation_expires_at, is_activated) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'student', 0, ?, DATE_ADD(NOW(), INTERVAL 48 HOUR), ?)";
         
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
@@ -162,10 +158,24 @@ class User {
         );
         
         if ($stmt->execute()) {
+            $activation_url = null;
+            if (!empty($student_data['email'])) {
+                require_once __DIR__ . '/../services/MailService.php';
+                $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
+                $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+                $activation_url = $protocol . $host . "/app/controllers/activate.php?token=" . $activation_token;
+                $msg = "<p>Dear " . htmlspecialchars($student_data['full_name']) . ",</p>"
+                     . "<p>Your DFMS Student Portal account has been created.</p>"
+                     . "<p>Please click the link below to set your secure password and activate your account:</p>"
+                     . "<p><a href='{$activation_url}' style='padding:10px 20px; background:#4f46e5; color:white; text-decoration:none; border-radius:5px; display:inline-block;'>Activate Account</a></p>"
+                     . "<p>This activation link is valid for 48 hours and can only be used once.</p>";
+                MailService::queue($student_data['email'], 'Activate Your DFMS Account', $msg);
+            }
             return [
                 'success' => true, 
                 'message' => 'Student account created. Activation token generated.',
                 'activation_token' => $activation_token,
+                'activation_url' => $activation_url,
                 'public_id' => $public_id,
                 'password' => $placeholder_password
             ];
@@ -183,7 +193,7 @@ class User {
         $types = '';
 
         foreach ($students as $s) {
-            $values[] = "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'student', 0, ?, 0)";
+            $values[] = "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'student', 0, ?, DATE_ADD(NOW(), INTERVAL 48 HOUR), 0)";
             $types .= "sssssssssiss";
             $params[] = self::generateUUID();
             $params[] = $s['matric_number'];
@@ -195,11 +205,25 @@ class User {
             $params[] = $s['program_type'] ?? 'Undergraduate';
             $params[] = $s['mode'] ?? 'Regular';
             $params[] = $s['department_id'];
-            $params[] = $s['email'] ?? '';
-            $params[] = bin2hex(random_bytes(16));
+            $email = $s['email'] ?? '';
+            $params[] = $email;
+            $token = bin2hex(random_bytes(32));
+            $params[] = $token;
+
+            if (!empty($email)) {
+                require_once __DIR__ . '/../services/MailService.php';
+                $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
+                $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+                $actUrl = $protocol . $host . "/app/controllers/activate.php?token=" . $token;
+                $msg = "<p>Dear " . htmlspecialchars($s['full_name']) . ",</p>"
+                     . "<p>Your DFMS account has been provisioned. Please activate your account:</p>"
+                     . "<p><a href='{$actUrl}'>Activate Account</a></p>"
+                     . "<p>This link expires in 48 hours.</p>";
+                MailService::queue($email, 'Activate Your DFMS Account', $msg);
+            }
         }
 
-        $sql = "INSERT INTO users (public_id, matric_number, password, full_name, level, session, programme, program_type, mode, department_id, email, role, is_admin, activation_token, is_activated) VALUES " . implode(', ', $values);
+        $sql = "INSERT INTO users (public_id, matric_number, password, full_name, level, session, programme, program_type, mode, department_id, email, role, is_admin, activation_token, activation_expires_at, is_activated) VALUES " . implode(', ', $values);
         
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
@@ -216,7 +240,7 @@ class User {
 
     public static function activateAccountByToken($token, $dobInput, $newPassword) {
         global $conn;
-        $stmt = $conn->prepare("SELECT * FROM users WHERE activation_token = ? AND is_activated = 0");
+        $stmt = $conn->prepare("SELECT * FROM users WHERE activation_token = ? AND is_activated = 0 AND (activation_expires_at IS NULL OR activation_expires_at > NOW())");
         $stmt->bind_param("s", $token);
         $stmt->execute();
         $user = $stmt->get_result()->fetch_assoc();
@@ -225,7 +249,7 @@ class User {
             return ['success' => false, 'message' => 'Invalid or expired activation token.'];
         }
 
-        if (!empty($user['date_of_birth']) && $user['date_of_birth'] !== $dobInput) {
+        if (!empty($user['date_of_birth']) && !empty($dobInput) && $user['date_of_birth'] !== $dobInput) {
             return ['success' => false, 'message' => 'Date of Birth does not match portal records.'];
         }
 
@@ -235,7 +259,7 @@ class User {
 
         $hashed = password_hash($newPassword, PASSWORD_DEFAULT);
 
-        $update = $conn->prepare("UPDATE users SET password = ?, is_activated = 1, activation_token = NULL WHERE id = ?");
+        $update = $conn->prepare("UPDATE users SET password = ?, is_activated = 1, activation_token = NULL, activation_expires_at = NULL WHERE id = ?");
         $update->bind_param("si", $hashed, $user['id']);
 
         if ($update->execute()) {
@@ -269,23 +293,32 @@ class User {
     public static function updateAllStudentPasswords() {
         global $conn;
         
-        $sql = "SELECT id, full_name FROM users WHERE is_admin = 0";
+        $sql = "SELECT id, full_name, email FROM users WHERE is_admin = 0 AND (is_activated = 0 OR password = '*ACTIVATION_REQUIRED*')";
         $result = $conn->query($sql);
         $students = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
         
         $updated_count = 0;
         $errors = [];
+        require_once __DIR__ . '/../services/MailService.php';
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
         
         foreach ($students as $student) {
-            $new_password = self::generatePassword($student['full_name']);
-            $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
-            
-            $update_sql = "UPDATE users SET password = ? WHERE id = ?";
+            $newToken = bin2hex(random_bytes(32));
+            $update_sql = "UPDATE users SET activation_token = ?, activation_expires_at = DATE_ADD(NOW(), INTERVAL 48 HOUR), is_activated = 0, password = '*ACTIVATION_REQUIRED*' WHERE id = ?";
             $stmt = $conn->prepare($update_sql);
-            $stmt->bind_param("si", $hashed_password, $student['id']);
+            $stmt->bind_param("si", $newToken, $student['id']);
             
             if ($stmt->execute()) {
                 $updated_count++;
+                if (!empty($student['email'])) {
+                    $actUrl = $protocol . $host . "/app/controllers/activate.php?token=" . $newToken;
+                    $msg = "<p>Dear " . htmlspecialchars($student['full_name']) . ",</p>"
+                         . "<p>Your DFMS account activation token has been refreshed. Please activate your account:</p>"
+                         . "<p><a href='{$actUrl}'>Activate Account</a></p>"
+                         . "<p>This link expires in 48 hours.</p>";
+                    MailService::queue($student['email'], 'Activate Your DFMS Account', $msg);
+                }
             } else {
                 $errors[] = "Failed to update student ID {$student['id']}: " . $stmt->error;
             }
@@ -294,12 +327,12 @@ class User {
         if (empty($errors)) {
             return [
                 'success' => true, 
-                'message' => "Successfully updated passwords for {$updated_count} students."
+                'message' => "Successfully refreshed activation tokens and queued dispatch for {$updated_count} unactivated students."
             ];
         } else {
             return [
                 'success' => false, 
-                'message' => "Updated {$updated_count} students but encountered errors: " . implode(', ', $errors)
+                'message' => "Refreshed {$updated_count} students but encountered errors: " . implode(', ', $errors)
             ];
         }
     }
