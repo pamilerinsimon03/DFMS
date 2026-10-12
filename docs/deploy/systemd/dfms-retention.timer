@@ -1,0 +1,12 @@
+[Unit]
+Description=Daily Timer for DFMS Statutory Data Retention & Automated Purge Worker
+Documentation=https://dfms.ui.edu.ng/docs/
+
+[Timer]
+# Run daily at 02:30 AM
+OnCalendar=*-*-* 02:30:00
+Persistent=true
+RandomizedDelaySec=15m
+
+[Install]
+WantedBy=timers.target

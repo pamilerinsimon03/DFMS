@@ -1,0 +1,37 @@
+[Unit]
+Description=DFMS Asynchronous Upload Processing Queue Worker
+Documentation=https://dfms.ui.edu.ng/docs/
+After=network.target mariadb.service clamav-daemon.service
+Wants=clamav-daemon.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/dfms
+Environment=APP_ENV=production
+Environment=STORAGE_ROOT=/var/www/dfms_private/secure_uploads
+Environment=LOG_ROOT=/var/www/dfms_private/logs
+Environment=CLAMAV_SOCKET=/var/run/clamav/clamd.ctl
+
+# Long-running daemon execution with automatic failure restart
+ExecStart=/usr/bin/php /var/www/dfms/app/scripts/queue_worker.php
+
+Restart=always
+RestartSec=5s
+
+# Security Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/dfms_private/secure_uploads /var/www/dfms_private/logs
+PrivateTmp=true
+CapabilityBoundingSet=
+
+# Standard logging to journald
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=dfms-queue-worker
+
+[Install]
+WantedBy=multi-user.target

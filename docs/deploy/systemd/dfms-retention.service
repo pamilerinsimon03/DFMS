@@ -1,0 +1,26 @@
+[Unit]
+Description=DFMS Statutory Data Retention & Automated Purge Worker
+Documentation=https://dfms.ui.edu.ng/docs/
+After=network.target mariadb.service
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/dfms
+Environment=APP_ENV=production
+Environment=STORAGE_ROOT=/var/www/dfms_private/secure_uploads
+Environment=LOG_ROOT=/var/www/dfms_private/logs
+
+ExecStart=/usr/bin/php /var/www/dfms/app/scripts/enforce_retention.php
+
+# Security Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/dfms_private/secure_uploads /var/www/dfms_private/logs
+PrivateTmp=true
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=dfms-retention-worker

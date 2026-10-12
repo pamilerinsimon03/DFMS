@@ -1,0 +1,95 @@
+# Apache 2.4 Distributed Configuration (.htaccess) for DFMS Production Hardening
+# Place in web document root (or /var/www/dfms/.htaccess)
+
+# ----------------------------------------------------------------------
+# 1. Server Security Headers
+# ----------------------------------------------------------------------
+<IfModule mod_headers.c>
+    # Frame hijacking protection
+    Header always set X-Frame-Options "SAMEORIGIN"
+
+    # Strict MIME-type sniffing defense
+    Header always set X-Content-Type-Options "nosniff"
+
+    # Browser-side reflected XSS filter activation
+    Header always set X-XSS-Protection "1; mode=block"
+
+    # Referrer policy: send origin only across HTTPS boundaries
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # Restrict unneeded browser hardware capabilities
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+
+    # Strip web server fingerprinting headers
+    Header always unset Server
+    Header always unset X-Powered-By
+</IfModule>
+
+# Disable Apache ServerSignature
+ServerSignature Off
+
+# ----------------------------------------------------------------------
+# 2. Strict Access Control & Deny Rules
+# ----------------------------------------------------------------------
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Deny direct access to sensitive directories
+    RewriteRule ^(app/logs|app/config|docs|tests|scratch|\.git)(/.*)?$ - [F,NC,L]
+
+    # Deny direct HTTP requests for any legacy or staging upload paths
+    RewriteRule ^(secure_uploads|_staging)(/.*)?$ - [F,NC,L]
+
+    # Deny direct access to environment variables, logs, and database dumps
+    RewriteRule ^(\.env|.*\.log|.*\.sql|.*\.bak|.*\.backup|.*\.neon|.*\.xml)$ - [F,NC,L]
+</IfModule>
+
+# Block sensitive extensions via FilesMatch
+<FilesMatch "(^\.env|\.(env|log|sql|bak|backup|json|neon|xml|yml|yaml))$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# ----------------------------------------------------------------------
+# 3. Disable Script Execution in Document Storage Directories
+# ----------------------------------------------------------------------
+<FilesMatch "\.(php|phtml|php[0-9]|phar|pl|py|jsp|asp|sh|cgi)$">
+    <If "%{REQUEST_URI} =~ m#^/(secure_uploads|_staging)/#">
+        <IfModule mod_authz_core.c>
+            Require all denied
+        </IfModule>
+        <IfModule !mod_authz_core.c>
+            Order allow,deny
+            Deny from all
+        </IfModule>
+    </If>
+</FilesMatch>
+
+# ----------------------------------------------------------------------
+# 4. Directory Browsing & Execution Options
+# ----------------------------------------------------------------------
+Options -Indexes -ExecCGI +FollowSymLinks
+
+# ----------------------------------------------------------------------
+# 5. Front Controller Routing
+# ----------------------------------------------------------------------
+<IfModule mod_dir.c>
+    DirectoryIndex index.php public/index.php
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Prevent direct access to hidden files (.git, .env)
+    RewriteRule (^\.|/\.) - [F]
+
+    # Forward non-file non-directory requests to Front Controller
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
+</IfModule>
