@@ -1,7 +1,7 @@
 <div class="add-student-container">
     <div class="page-header">
         <h1>Add Students</h1>
-        <p>Add students individually or import multiple students using a CSV file. Each student will get a password generated from their surname.</p>
+        <p>Add students individually or import multiple students using a CSV file. Each newly added student will be sent an account activation link via email to set their password.</p>
     </div>
 
     <?php if (!empty($message)): ?>
@@ -195,17 +195,16 @@
             </div>
 
             <div class="info-card">
-                <h3>Password Generation</h3>
-                <p>Each student will automatically get a password in the format: <strong>surname12345</strong></p>
-                <p><strong>Example:</strong> "John Doe" → password: "doe12345"</p>
+                <h3>Account Activation</h3>
+                <p>Upon registration, an activation link will be automatically generated and sent to the student's email address.</p>
+                <p>Students click the link to activate their account and choose a secure password.</p>
             </div>
         </div>
-    </div>
 
     <div class="info-box">
-        <h3>Password Generation</h3>
-        <p>The system will automatically generate a password for each student using the format: <strong>surname12345</strong></p>
-        <p><strong>Example:</strong> For a student named "John Doe", the password will be "doe12345"</p>
+        <h3>Account Activation</h3>
+        <p>The system automatically sends an account activation link to the student's registered email address.</p>
+        <p>Students click the activation link to set their own password and access the DFMS portal.</p>
     </div>
 </div>
 
@@ -231,12 +230,126 @@
         });
     }
 
-    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    function initCsvUploader() {
+        const fileInput = document.getElementById('csv_file');
+        const fileLabel = document.querySelector('.file-label');
+        const uploadForm = document.querySelector('.upload-form');
+
+        if (!fileInput || !fileLabel) return;
+
+        const fileIcon = fileLabel.querySelector('.file-icon');
+        const fileText = fileLabel.querySelector('.file-text');
+
+        const defaultIconHTML = fileIcon ? fileIcon.innerHTML : '📊';
+        const defaultText = 'Choose CSV file or drag and drop';
+
+        function updateFileDisplay(file) {
+            if (!file) {
+                if (fileIcon) fileIcon.innerHTML = defaultIconHTML;
+                if (fileText) fileText.innerHTML = defaultText;
+                fileLabel.classList.remove('has-file');
+                return;
+            }
+
+            const sizeFormatted = file.size > 1024 * 1024 
+                ? (file.size / (1024 * 1024)).toFixed(2) + ' MB' 
+                : (file.size / 1024).toFixed(1) + ' KB';
+
+            if (fileIcon) {
+                fileIcon.innerHTML = '<span style="font-size: 2.2rem; color: #10b981;">📄</span>';
+            }
+            if (fileText) {
+                fileText.innerHTML = `
+                    <div style="text-align: center;">
+                        <strong style="color: #4f46e5; font-size: 1.05rem; display: block; margin-bottom: 4px;">${escapeHtml(file.name)}</strong>
+                        <span style="color: #6b7280; font-size: 0.85rem; background: #e0e7ff; padding: 2px 10px; border-radius: 12px; display: inline-block;">${sizeFormatted}</span>
+                        <span style="color: #059669; font-size: 0.85rem; display: block; margin-top: 6px; font-weight: 500;">✓ Ready to import</span>
+                    </div>
+                `;
+            }
+            fileLabel.classList.add('has-file');
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files.length > 0) {
+                updateFileDisplay(this.files[0]);
+            } else {
+                updateFileDisplay(null);
+            }
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            fileLabel.addEventListener(eventName, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                fileLabel.classList.add('drag-over');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            fileLabel.addEventListener(eventName, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                fileLabel.classList.remove('drag-over');
+            }, false);
+        });
+
+        fileLabel.addEventListener('drop', function(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+
+            if (files && files.length > 0) {
+                const file = files[0];
+                if (!file.name.toLowerCase().endsWith('.csv')) {
+                    alert('Please upload a valid .csv file.');
+                    return;
+                }
+                
+                try {
+                    const container = new DataTransfer();
+                    container.items.add(file);
+                    fileInput.files = container.files;
+                } catch (err) {
+                    console.error('DataTransfer assignment error:', err);
+                }
+
+                updateFileDisplay(file);
+            }
+        }, false);
+
+        if (uploadForm) {
+            uploadForm.addEventListener('submit', function(e) {
+                if (!fileInput.files || fileInput.files.length === 0) {
+                    e.preventDefault();
+                    alert('Please select or drag a CSV file before importing.');
+                    return;
+                }
+
+                const submitBtn = uploadForm.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner" style="display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:8px;vertical-align:middle;"></span> Importing Students...';
+                }
+            });
+        }
+    }
+
+    function initAll() {
         initAddStudentTabs();
+        initCsvUploader();
+    }
+
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        initAll();
     } else {
-        document.addEventListener('DOMContentLoaded', initAddStudentTabs);
+        document.addEventListener('DOMContentLoaded', initAll);
     }
     
     window.initAddStudentTabs = initAddStudentTabs;
+    window.initCsvUploader = initCsvUploader;
 })();
 </script>

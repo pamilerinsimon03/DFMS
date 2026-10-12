@@ -39,6 +39,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
+    // Check student account activation status
+    if ($user && ((isset($user['is_activated']) && (int)$user['is_activated'] === 0) || $user['password'] === '*ACTIVATION_REQUIRED*')) {
+        SecurityUtils::logSecurityEvent('unactivated_login_attempt', ['user_id' => $user['id'], 'matric' => $matric_number]);
+        $_SESSION['error'] = "Your account requires activation. Please check your email for the activation link or contact student support.";
+        header("Location: /public/index.php");
+        exit();
+    }
+
     if ($user && password_verify($password, $user['password'])) {
         // Log successful login and reset failed login attempts
         SecurityUtils::logSecurityEvent('successful_login', ['user_id' => $user['id'], 'matric' => $matric_number]);

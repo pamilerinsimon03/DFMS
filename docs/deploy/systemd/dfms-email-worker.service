@@ -1,0 +1,32 @@
+[Unit]
+Description=DFMS Asynchronous Activation Email Queue Worker
+Documentation=https://dfms.ui.edu.ng/docs/
+After=network.target mariadb.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/dfms
+Environment=APP_ENV=production
+Environment=LOG_ROOT=/var/www/dfms_private/logs
+
+# Execute queue processor periodically or as continuous polling daemon
+ExecStart=/usr/bin/php /var/www/dfms/app/scripts/process_email_queue.php
+
+Restart=always
+RestartSec=10s
+
+# Security Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/dfms_private/logs
+PrivateTmp=true
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=dfms-email-worker
+
+[Install]
+WantedBy=multi-user.target

@@ -2,9 +2,18 @@
 
 class AcademicCalendarService {
     public static function getCurrentSession() {
+        if (isset($_SESSION['academic_session']) && !empty($_SESSION['academic_session'])) {
+            return $_SESSION['academic_session'];
+        }
+        if (isset($_SESSION['current_academic_session']) && !empty($_SESSION['current_academic_session'])) {
+            return $_SESSION['current_academic_session'];
+        }
         $settings_file = __DIR__ . '/../config/settings.json';
         if (file_exists($settings_file)) {
             $settings = json_decode(file_get_contents($settings_file), true);
+            if (!empty($settings['current_session'])) {
+                return $settings['current_session'];
+            }
             if (!empty($settings['session_year'])) {
                 return $settings['session_year'];
             }

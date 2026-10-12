@@ -25,4 +25,10 @@ secure_uploads/
 # OS files
 .DS_Store
 Thumbs.db
-tests/
+
+# Tools
+tools/
+*.phar
+scratch/
+.phpunit.result.cache
+docs/DFMS Final Year Project.txt

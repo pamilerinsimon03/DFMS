@@ -34,6 +34,7 @@ CREATE TABLE `departments` (
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
+  `public_id` char(36) NOT NULL,
   `matric_number` varchar(20) NOT NULL,
   `password` varchar(255) NOT NULL,
   `full_name` varchar(100) NOT NULL,
@@ -45,6 +46,7 @@ CREATE TABLE `users` (
   `department_id` int(11) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `is_admin` tinyint(1) DEFAULT 0,
+  `processing_restricted` tinyint(1) NOT NULL DEFAULT 0,
   `email` varchar(255) DEFAULT NULL,
   `phone_number` varchar(20) DEFAULT NULL,
   `date_of_birth` date DEFAULT NULL,
@@ -57,28 +59,35 @@ CREATE TABLE `users` (
   `emergency_contact_relationship` varchar(50) DEFAULT NULL,
   `profile_updated_at` timestamp NULL DEFAULT NULL,
   `role` varchar(20) NOT NULL DEFAULT 'student',
+  `activation_token` varchar(64) DEFAULT NULL,
+  `activation_expires_at` timestamp NULL DEFAULT NULL,
+  `is_activated` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `matric_number` (`matric_number`),
+  UNIQUE KEY `idx_users_public_id` (`public_id`),
   KEY `fk_users_department` (`department_id`),
   CONSTRAINT `fk_users_department` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 -- Seed users
-INSERT INTO `users` (`id`, `matric_number`, `password`, `full_name`, `level`, `session`, `programme`, `created_at`, `is_admin`) VALUES
-(1, 'E0500627', '$2y$10$tpsg0ONSXH..0GlQ77sKNuj0M5KBsW6qbc4UhFXMxtYCDnqKBBl3y', 'Professor Afolabi Samuel', '500L', '2023/2024', 'Bachelor Of Science (Computer Science)', '2025-05-28 18:53:05', 1),
-(2, 'E050238', '$2y$10$3ofYsNgQf8ryeI21JyGZGufUgUQ3CVHiQAJRYh3pYqq2mQIxK4sBK', 'Demo User', '300L', '2023/2024', 'Bachelor Of Science (Computer Science)', '2025-05-28 22:41:39', 0);
+INSERT INTO `users` (`id`, `public_id`, `matric_number`, `password`, `full_name`, `level`, `session`, `programme`, `created_at`, `is_admin`, `is_activated`) VALUES
+(1, 'd6797b3b-c3d0-11f1-83e5-1062e59e19c8', 'E0500627', '$2y$10$KuDyQHjFT2vtqdGAQVtjb.PpGQgXGgZlAhAUKCl7AzFOU/Qs9q5hy', 'Professor Afolabi Samuel', '500L', '2023/2024', 'Bachelor Of Science (Computer Science)', '2025-05-28 18:53:05', 1, 1),
+(2, 'd6799001-c3d0-11f1-83e5-1062e59e19c8', 'E050238', '$2y$10$TDKKWY3QbOm9pfxQ2wIW9OK0B3iYUuBlmgIwuq9cm.B5h2h.EA9q2', 'Demo User', '300L', '2023/2024', 'Bachelor Of Science (Computer Science)', '2025-05-28 22:41:39', 0, 1);
 
 -- Table structure for table `documents`
 DROP TABLE IF EXISTS `documents`;
 CREATE TABLE `documents` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
+  `public_id` char(36) NOT NULL,
   `user_id` int(11) NOT NULL,
   `document_name` varchar(100) NOT NULL,
   `file_name` varchar(255) NOT NULL,
-  `file_path` varchar(255) NOT NULL,
+  `file_path` varchar(255) DEFAULT NULL,
   `upload_date` date NOT NULL,
-  `status` enum('Pending Quality Check','Pending Approval','Approved','Rejected') NOT NULL DEFAULT 'Pending Quality Check',
+  `status` enum('Pending Quality Check','Pending Approval','Approved','Rejected','Purged') NOT NULL DEFAULT 'Pending Quality Check',
   `rejection_reason` TEXT DEFAULT NULL,
+  `purged_at` timestamp NULL DEFAULT NULL,
+  `purge_reason` varchar(255) DEFAULT NULL,
   `due_date` date DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `department_id` int(11) DEFAULT NULL,
@@ -87,6 +96,7 @@ CREATE TABLE `documents` (
   `program_type` varchar(50) DEFAULT NULL,
   `mode` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_docs_public_id` (`public_id`),
   KEY `user_id` (`user_id`),
   KEY `idx_department_id` (`department_id`),
   CONSTRAINT `documents_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
@@ -99,11 +109,26 @@ CREATE TABLE `password_resets` (
   `user_id` int(11) NOT NULL,
   `token` varchar(255) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `expires_at` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `expires_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
+  KEY `idx_password_resets_token` (`token`),
+  KEY `idx_password_resets_expires` (`expires_at`),
   CONSTRAINT `password_resets_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+-- Table structure for table `email_queue`
+CREATE TABLE IF NOT EXISTS `email_queue` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `recipient` varchar(255) NOT NULL,
+  `subject` varchar(255) NOT NULL,
+  `message` text NOT NULL,
+  `status` enum('pending','sent','failed') DEFAULT 'pending',
+  `attempts` int(11) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_queue_status_attempts` (`status`, `attempts`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Table structure for table `tag_errors`
 DROP TABLE IF EXISTS `tag_errors`;
@@ -143,7 +168,6 @@ ON DUPLICATE KEY UPDATE `full_name` = VALUES(`full_name`);
 -- ====================================================
 
 -- Set codes for existing departments
-UPDATE `departments` SET `code` = 'CS'   WHERE `name` = 'Computer Science';
 UPDATE `departments` SET `code` = 'PSYC' WHERE `name` = 'Psychology';
 UPDATE `departments` SET `code` = 'MATH' WHERE `name` = 'Mathematics';
 
@@ -158,34 +182,38 @@ SET u.`department_id` = d.`id`;
 -- ====================================================
 
 
--- Add new departments and admin users for each
+-- Add new departments
 INSERT INTO `departments` (`id`, `name`, `code`) VALUES
   (1, 'Computer Science', 'CS'),
   (2, 'Psychology', 'PSYC'),
   (3, 'English', 'ENG'),
   (4, 'Sociology', 'SOC'),
-  (5, 'Linguistics', 'LING')
-ON DUPLICATE KEY UPDATE `name` = VALUES(`name`);
+  (5, 'Linguistics', 'LING'),
+  (7, 'Computer Science and Artificial Intelligence', 'CSC'),
+  (8, 'Data Science', 'DATA'),
+  (9, 'Software Engineering', 'SENG'),
+  (10, 'Information and Communication Technology', 'ICT')
+ON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `code` = VALUES(`code`);
 
 INSERT INTO `users` (`matric_number`, `password`, `full_name`, `email`, `role`, `department_id`) VALUES
-  ('ADMIN_PSYC', '$2y$10$3k.P.m/eE5p.dO5.y3o7A...', 'Psychology Admin', 'psych_admin@dfms.com', 'admin', 2),
-  ('ADMIN_ENG',  '$2y$10$3k.P.m/eE5p.dO5.y3o7A...', 'English Admin',   'eng_admin@dfms.com',  'admin', 3),
-  ('ADMIN_SOC',  '$2y$10$3k.P.m/eE5p.dO5.y3o7A...', 'Sociology Admin', 'soc_admin@dfms.com',  'admin', 4),
-  ('ADMIN_LING', '$2y$10$3k.P.m/eE5p.dO5.y3o7A...', 'Linguistics Admin','ling_admin@dfms.com','admin',5)
+  ('ADMIN_PSYC', '$2y$10$KuDyQHjFT2vtqdGAQVtjb.PpGQgXGgZlAhAUKCl7AzFOU/Qs9q5hy', 'Psychology Admin', 'psych_admin@dfms.com', 'admin', 2),
+  ('ADMIN_ENG',  '$2y$10$KuDyQHjFT2vtqdGAQVtjb.PpGQgXGgZlAhAUKCl7AzFOU/Qs9q5hy', 'English Admin',   'eng_admin@dfms.com',  'admin', 3),
+  ('ADMIN_SOC',  '$2y$10$KuDyQHjFT2vtqdGAQVtjb.PpGQgXGgZlAhAUKCl7AzFOU/Qs9q5hy', 'Sociology Admin', 'soc_admin@dfms.com',  'admin', 4),
+  ('ADMIN_LING', '$2y$10$KuDyQHjFT2vtqdGAQVtjb.PpGQgXGgZlAhAUKCl7AzFOU/Qs9q5hy', 'Linguistics Admin','ling_admin@dfms.com','admin',5)
 ON DUPLICATE KEY UPDATE `full_name` = VALUES(`full_name`);
 
--- Create 10 student users across departments
-INSERT INTO `users` (`matric_number`, `password`, `full_name`, `email`, `level`, `programme`, `program_type`, `mode`, `department_id`, `role`) VALUES
-    ('U123001', '$2y$10$3k.P.m/eE5p.dO5.y3o7A...', 'CS Student One',   'cs.student1@dfms.com', 100, 'Computer Science','Undergraduate','Regular',1,'student'),
-    ('U123002', '$2y$10$3k.P.m/eE5p.dO5.y3o7A.8Z4nCqJqHCpUa.4c3s6b8v/r.W/yS9G', 'CS Student Two', 'cs.student2@dfms.com', 200, 'Computer Science', 'Undergraduate', 'Regular', 1, 'student'),
-    ('U123003', '$2y$10$3k.P.m/eE5p.dO5.y3o7A.8Z4nCqJqHCpUa.4c3s6b8v/r.W/yS9G', 'Psychology Student One', 'psych.student1@dfms.com', 300, 'Psychology', 'Undergraduate', 'Regular', 2, 'student'),
-    ('U123004', '$2y$10$3k.P.m/eE5p.dO5.y3o7A.8Z4nCqJqHCpUa.4c3s6b8v/r.W/yS9G', 'Psychology Student Two', 'psych.student2@dfms.com', 400, 'Psychology', 'Postgraduate', 'Distance Learning', 2, 'student'),
-    ('U123005', '$2y$10$3k.P.m/eE5p.dO5.y3o7A.8Z4nCqJqHCpUa.4c3s6b8v/r.W/yS9G', 'English Student One', 'eng.student1@dfms.com', 100, 'English', 'Undergraduate', 'Regular', 3, 'student'),
-    ('U123006', '$2y$10$3k.P.m/eE5p.dO5.y3o7A.8Z4nCqJqHCpUa.4c3s6b8v/r.W/yS9G', 'English Student Two', 'eng.student2@dfms.com', 200, 'English', 'Undergraduate', 'Regular', 3, 'student'),
-    ('U123007', '$2y$10$3k.P.m/eE5p.dO5.y3o7A.8Z4nCqJqHCpUa.4c3s6b8v/r.W/yS9G', 'Sociology Student One', 'soc.student1@dfms.com', 300, 'Sociology', 'Undergraduate', 'Regular', 4, 'student'),
-    ('U123008', '$2y$10$3k.P.m/eE5p.dO5.y3o7A.8Z4nCqJqHCpUa.4c3s6b8v/r.W/yS9G', 'Sociology Student Two', 'soc.student2@dfms.com', 400, 'Sociology', 'Postgraduate', 'Distance Learning', 4, 'student'),
-    ('U123009', '$2y$10$3k.P.m/eE5p.dO5.y3o7A.8Z4nCqJqHCpUa.4c3s6b8v/r.W/yS9G', 'Linguistics Student One', 'ling.student1@dfms.com', 100, 'Linguistics', 'Undergraduate', 'Regular', 5, 'student'),
-    ('U123010', '$2y$10$3k.P.m/eE5p.dO5.y3o7A.8Z4nCqJqHCpUa.4c3s6b8v/r.W/yS9G', 'Linguistics Student Two', 'ling.student2@dfms.com', 200, 'Linguistics', 'Undergraduate', 'Regular', 5, 'student')
+-- Create 10 student users across departments (unactivated by default with mandatory activation tokens)
+INSERT INTO `users` (`matric_number`, `password`, `full_name`, `email`, `level`, `programme`, `program_type`, `mode`, `department_id`, `role`, `is_activated`, `activation_token`, `activation_expires_at`) VALUES
+    ('U123001', '*ACTIVATION_REQUIRED*', 'CS Student One',   'cs.student1@dfms.com', 100, 'Computer Science','Undergraduate','Regular',1,'student', 0, SHA2('seed_U123001', 256), DATE_ADD(NOW(), INTERVAL 48 HOUR)),
+    ('U123002', '*ACTIVATION_REQUIRED*', 'CS Student Two', 'cs.student2@dfms.com', 200, 'Computer Science', 'Undergraduate', 'Regular', 1, 'student', 0, SHA2('seed_U123002', 256), DATE_ADD(NOW(), INTERVAL 48 HOUR)),
+    ('U123003', '*ACTIVATION_REQUIRED*', 'Psychology Student One', 'psych.student1@dfms.com', 300, 'Psychology', 'Undergraduate', 'Regular', 2, 'student', 0, SHA2('seed_U123003', 256), DATE_ADD(NOW(), INTERVAL 48 HOUR)),
+    ('U123004', '*ACTIVATION_REQUIRED*', 'Psychology Student Two', 'psych.student2@dfms.com', 400, 'Psychology', 'Postgraduate', 'Distance Learning', 2, 'student', 0, SHA2('seed_U123004', 256), DATE_ADD(NOW(), INTERVAL 48 HOUR)),
+    ('U123005', '*ACTIVATION_REQUIRED*', 'English Student One', 'eng.student1@dfms.com', 100, 'English', 'Undergraduate', 'Regular', 3, 'student', 0, SHA2('seed_U123005', 256), DATE_ADD(NOW(), INTERVAL 48 HOUR)),
+    ('U123006', '*ACTIVATION_REQUIRED*', 'English Student Two', 'eng.student2@dfms.com', 200, 'English', 'Undergraduate', 'Regular', 3, 'student', 0, SHA2('seed_U123006', 256), DATE_ADD(NOW(), INTERVAL 48 HOUR)),
+    ('U123007', '*ACTIVATION_REQUIRED*', 'Sociology Student One', 'soc.student1@dfms.com', 300, 'Sociology', 'Undergraduate', 'Regular', 4, 'student', 0, SHA2('seed_U123007', 256), DATE_ADD(NOW(), INTERVAL 48 HOUR)),
+    ('U123008', '*ACTIVATION_REQUIRED*', 'Sociology Student Two', 'soc.student2@dfms.com', 400, 'Sociology', 'Postgraduate', 'Distance Learning', 4, 'student', 0, SHA2('seed_U123008', 256), DATE_ADD(NOW(), INTERVAL 48 HOUR)),
+    ('U123009', '*ACTIVATION_REQUIRED*', 'Linguistics Student One', 'ling.student1@dfms.com', 100, 'Linguistics', 'Undergraduate', 'Regular', 5, 'student', 0, SHA2('seed_U123009', 256), DATE_ADD(NOW(), INTERVAL 48 HOUR)),
+    ('U123010', '*ACTIVATION_REQUIRED*', 'Linguistics Student Two', 'ling.student2@dfms.com', 200, 'Linguistics', 'Undergraduate', 'Regular', 5, 'student', 0, SHA2('seed_U123010', 256), DATE_ADD(NOW(), INTERVAL 48 HOUR))
 ON DUPLICATE KEY UPDATE `full_name` = VALUES(`full_name`);
 
 -- Populate documents.department_id from users
@@ -240,27 +268,66 @@ CREATE TABLE IF NOT EXISTS data_deletion_schedule (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Create audit log table for security events
+-- Create audit log table for security events (tamper-evident append-only hash chain)
 CREATE TABLE IF NOT EXISTS audit_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NULL,
+    action VARCHAR(100) NULL,
     event_type VARCHAR(100) NOT NULL,
+    details TEXT NULL,
     event_description TEXT,
+    role VARCHAR(50) NULL,
+    target VARCHAR(255) NULL,
+    route VARCHAR(255) NULL,
+    outcome VARCHAR(50) NOT NULL DEFAULT 'success',
     ip_address VARCHAR(45),
     user_agent TEXT,
+    prev_hash CHAR(64) NULL,
+    entry_hash CHAR(64) NULL,
+    `timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_event_type (event_type),
+    INDEX idx_action (action),
     INDEX idx_created_at (created_at),
-    INDEX idx_user_id (user_id)
+    INDEX idx_user_id (user_id),
+    INDEX idx_entry_hash (entry_hash),
+    INDEX idx_prev_hash (prev_hash),
+    INDEX idx_route (route),
+    INDEX idx_target (target)
 );
 
--- Create consent tracking table for NDPR compliance
+-- Create audit logs archive table to preserve chain continuity
+CREATE TABLE IF NOT EXISTS audit_logs_archive (
+    id INT NOT NULL PRIMARY KEY,
+    user_id INT NULL,
+    action VARCHAR(100) NULL,
+    event_type VARCHAR(100) NULL,
+    details TEXT NULL,
+    event_description TEXT NULL,
+    role VARCHAR(50) NULL,
+    target VARCHAR(255) NULL,
+    route VARCHAR(255) NULL,
+    outcome VARCHAR(50) NOT NULL DEFAULT 'success',
+    ip_address VARCHAR(45) NULL,
+    user_agent TEXT NULL,
+    prev_hash CHAR(64) NULL,
+    entry_hash CHAR(64) NULL,
+    `timestamp` TIMESTAMP NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    archived_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_archive_entry_hash (entry_hash),
+    INDEX idx_archive_prev_hash (prev_hash),
+    INDEX idx_archive_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Create consent tracking table for NDPA 2023 / GAID 2025 compliance
 CREATE TABLE IF NOT EXISTS consent_records (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     consent_type VARCHAR(100) NOT NULL,
     consent_given BOOLEAN NOT NULL,
+    policy_version VARCHAR(20) NOT NULL DEFAULT '2025.1',
     consent_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     consent_withdrawn_at TIMESTAMP NULL,
     ip_address VARCHAR(45),
@@ -269,6 +336,31 @@ CREATE TABLE IF NOT EXISTS consent_records (
     INDEX idx_user_consent (user_id, consent_type),
     INDEX idx_consent_date (consent_date)
 );
+
+-- Create retention rules table for core vs non-core document retention (NDPA s.24(1)(f))
+CREATE TABLE IF NOT EXISTS retention_rules (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    document_type VARCHAR(100) NOT NULL UNIQUE,
+    retention_days INT NULL, -- NULL indicates permanent retention
+    is_core_academic TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_retention_core (is_core_academic),
+    INDEX idx_retention_type (document_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO retention_rules (document_type, retention_days, is_core_academic) VALUES
+('JAMB Admission Letter', NULL, 1),
+('University Admission Letter', NULL, 1),
+('O\'Level Result (WAEC/NECO/NABTEB)', NULL, 1),
+('Degree Certificate', NULL, 1),
+('Official Academic Transcript', NULL, 1),
+('Final Year Project', NULL, 1),
+('Graduation Clearance Form', NULL, 1),
+('Birth Certificate', 2555, 0),
+('Local Government Identification', 1825, 0),
+('Medical Fitness Certificate', 1095, 0),
+('Reference Letter', 1095, 0),
+('Passport Photograph', 1825, 0);
 
 -- Add security-related columns to users table
 ALTER TABLE users 
@@ -284,13 +376,18 @@ ALTER TABLE documents
 ADD COLUMN IF NOT EXISTS file_hash VARCHAR(64),
 ADD COLUMN IF NOT EXISTS upload_ip VARCHAR(45),
 ADD COLUMN IF NOT EXISTS file_scan_status ENUM('pending', 'clean', 'infected', 'error') DEFAULT 'pending',
-ADD COLUMN IF NOT EXISTS file_scan_date TIMESTAMP NULL;
+ADD COLUMN IF NOT EXISTS file_scan_date TIMESTAMP NULL,
+ADD COLUMN IF NOT EXISTS ocr_match_status ENUM('matched', 'mismatch', 'unreadable', 'pending') NOT NULL DEFAULT 'pending',
+ADD COLUMN IF NOT EXISTS ocr_extracted JSON NULL,
+ADD COLUMN IF NOT EXISTS ocr_confidence DECIMAL(5,2) NULL,
+ADD COLUMN IF NOT EXISTS blur_variance DECIMAL(8,2) NULL;
 
 -- Create indexes for better performance and security
 CREATE INDEX IF NOT EXISTS idx_users_last_login ON users(last_login_at);
 CREATE INDEX IF NOT EXISTS idx_users_failed_logins ON users(failed_login_attempts);
 CREATE INDEX IF NOT EXISTS idx_documents_file_hash ON documents(file_hash);
 CREATE INDEX IF NOT EXISTS idx_documents_scan_status ON documents(file_scan_status);
+CREATE INDEX IF NOT EXISTS idx_documents_ocr_status ON documents(ocr_match_status);
 
 -- Create view for security monitoring
 CREATE OR REPLACE VIEW security_summary AS
@@ -305,26 +402,45 @@ WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
 GROUP BY DATE(created_at)
 ORDER BY date DESC;
 
--- Create stored procedure for cleaning up old audit logs
+-- Create stored procedure for cleaning up old audit logs (deprecated under append-only policy)
+DROP PROCEDURE IF EXISTS CleanupOldAuditLogs;
 DELIMITER //
-CREATE PROCEDURE IF NOT EXISTS CleanupOldAuditLogs()
+CREATE PROCEDURE CleanupOldAuditLogs()
 BEGIN
-    -- Delete audit logs older than 1 year
-    DELETE FROM audit_logs WHERE created_at < DATE_SUB(NOW(), INTERVAL 1 YEAR);
-    
-    -- Delete completed data deletion records older than 6 months
-    DELETE FROM data_deletion_schedule 
-    WHERE status = 'completed' AND completed_at < DATE_SUB(NOW(), INTERVAL 6 MONTH);
-    
-    -- Log the cleanup
-    INSERT INTO audit_logs (event_type, event_description, created_at)
-    VALUES ('maintenance', 'Old audit logs and deletion records cleaned up', NOW());
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'Security Violation: CleanupOldAuditLogs is deprecated. Deletion of audit logs violates the tamper-evident append-only policy.';
 END //
 DELIMITER ;
 
--- Create stored procedure for user data export (NDPR compliance)
+-- Append-only triggers to block UPDATE and DELETE on audit_logs
+DROP TRIGGER IF EXISTS trg_audit_logs_no_update;
+DROP TRIGGER IF EXISTS trg_audit_logs_no_delete;
 DELIMITER //
-CREATE PROCEDURE IF NOT EXISTS ExportUserData(IN user_id INT)
+CREATE TRIGGER trg_audit_logs_no_update
+BEFORE UPDATE ON audit_logs
+FOR EACH ROW
+BEGIN
+    IF @ALLOW_AUDIT_LOG_MUTATION IS NULL OR @ALLOW_AUDIT_LOG_MUTATION != 1 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Security Violation: DFMS audit_logs table is append-only. UPDATE operations are prohibited.';
+    END IF;
+END //
+
+CREATE TRIGGER trg_audit_logs_no_delete
+BEFORE DELETE ON audit_logs
+FOR EACH ROW
+BEGIN
+    IF @ALLOW_AUDIT_LOG_MUTATION IS NULL OR @ALLOW_AUDIT_LOG_MUTATION != 1 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Security Violation: DFMS audit_logs table is append-only. DELETE operations are prohibited.';
+    END IF;
+END //
+DELIMITER ;
+
+-- Create stored procedure for user data export (NDPA 2023 s.34 & s.38 Data Portability)
+DROP PROCEDURE IF EXISTS ExportUserData;
+DELIMITER //
+CREATE PROCEDURE ExportUserData(IN user_id INT)
 BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
@@ -334,13 +450,10 @@ BEGIN
     
     START TRANSACTION;
     
-    -- Log the data export request
-    INSERT INTO audit_logs (user_id, event_type, event_description, created_at)
-    VALUES (user_id, 'data_export', 'User data export requested', NOW());
-    
-    -- Return user data
+    -- Return user profile data
     SELECT 
         u.id,
+        u.public_id,
         u.matric_number,
         u.full_name,
         u.email,
@@ -352,22 +465,27 @@ BEGIN
         u.address,
         u.emergency_contact_name,
         u.emergency_contact_phone,
+        u.emergency_contact_relationship,
         u.level,
         u.programme,
         u.session,
+        u.processing_restricted,
         u.created_at,
         u.last_login_at
     FROM users u 
     WHERE u.id = user_id;
     
-    -- Return user documents
+    -- Return user documents (reconciled with actual schema)
     SELECT 
         d.id,
+        d.public_id,
         d.document_name,
-        d.file_path,
-        d.file_size,
-        d.file_type,
+        d.file_name,
+        d.upload_date,
         d.status,
+        d.rejection_reason,
+        d.level,
+        d.semester,
         d.created_at
     FROM documents d 
     WHERE d.user_id = user_id;
@@ -377,7 +495,8 @@ BEGIN
         c.consent_type,
         c.consent_given,
         c.consent_date,
-        c.consent_withdrawn_at
+        c.consent_withdrawn_at,
+        c.policy_version
     FROM consent_records c 
     WHERE c.user_id = user_id;
     
@@ -400,28 +519,8 @@ UPDATE users
 SET data_retention_consent = TRUE 
 WHERE data_retention_consent = FALSE;
 
--- Create trigger to log user data changes
-DELIMITER //
-CREATE TRIGGER IF NOT EXISTS log_user_changes
-AFTER UPDATE ON users
-FOR EACH ROW
-BEGIN
-    IF OLD.full_name != NEW.full_name THEN
-        INSERT INTO audit_logs (user_id, event_type, event_description, created_at)
-        VALUES (NEW.id, 'profile_update', CONCAT('Full name changed from "', OLD.full_name, '" to "', NEW.full_name, '"'), NOW());
-    END IF;
-    
-    IF OLD.email != NEW.email THEN
-        INSERT INTO audit_logs (user_id, event_type, event_description, created_at)
-        VALUES (NEW.id, 'profile_update', CONCAT('Email changed from "', OLD.email, '" to "', NEW.email, '"'), NOW());
-    END IF;
-    
-    IF OLD.phone_number != NEW.phone_number THEN
-        INSERT INTO audit_logs (user_id, event_type, event_description, created_at)
-        VALUES (NEW.id, 'profile_update', CONCAT('Phone number changed from "', OLD.phone_number, '" to "', NEW.phone_number, '"'), NOW());
-    END IF;
-END //
-DELIMITER ;
+-- Remove legacy unchained user update trigger (audit logging is handled cryptographically via AuditService in User model)
+DROP TRIGGER IF EXISTS log_user_changes;
 
 -- Create a view for NDPR compliance reporting
 CREATE OR REPLACE VIEW ndpr_compliance_summary AS
@@ -521,4 +620,139 @@ DELIMITER ;
 CALL UpgradeDocumentsTable();
 DROP PROCEDURE UpgradeDocumentsTable;
 
+-- ====================================================
+-- 10. Migration Phase 4: Enterprise Production Upgrades
+-- ====================================================
+
+-- 10.1 Faculties & Faculty Department Scoping
+CREATE TABLE IF NOT EXISTS `faculties` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(100) NOT NULL,
+  `code` VARCHAR(10) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `faculty_departments` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `faculty_id` INT(11) NOT NULL,
+  `department_id` INT(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_fac_dept` (`faculty_id`, `department_id`),
+  CONSTRAINT `fk_facdept_faculty` FOREIGN KEY (`faculty_id`) REFERENCES `faculties` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_facdept_department` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Seed default faculties
+INSERT INTO `faculties` (`id`, `name`, `code`) VALUES
+  (1, 'Faculty of Science', 'SCI'),
+  (2, 'Faculty of Social Sciences', 'SOCSCI'),
+  (3, 'Faculty of Arts', 'ARTS'),
+  (6, 'Faculty of Computing', 'COMP')
+ON DUPLICATE KEY UPDATE `name` = VALUES(`name`);
+
+-- Map existing departments to faculties
+INSERT INTO `faculty_departments` (`faculty_id`, `department_id`) VALUES
+  (1, 1), -- Computer Science -> Science
+  (2, 2), -- Psychology -> Social Sciences
+  (3, 3), -- English -> Arts
+  (2, 4), -- Sociology -> Social Sciences
+  (3, 5), -- Linguistics -> Arts
+  (6, 7), -- Computer Science & AI -> Computing
+  (6, 8), -- Data Science -> Computing
+  (6, 9), -- Software Engineering -> Computing
+  (6, 10) -- ICT -> Computing
+ON DUPLICATE KEY UPDATE `faculty_id` = VALUES(`faculty_id`);
+
+-- Add faculty_id, activation_token, and is_activated to users table
+ALTER TABLE users 
+ADD COLUMN IF NOT EXISTS `faculty_id` INT(11) NULL AFTER `department_id`,
+ADD COLUMN IF NOT EXISTS `activation_token` VARCHAR(64) NULL AFTER `role`,
+ADD COLUMN IF NOT EXISTS `is_activated` TINYINT(1) NOT NULL DEFAULT 1 AFTER `activation_token`;
+
+-- 10.2 Document Processing Queue (Async OCR / Quality Checks)
+CREATE TABLE IF NOT EXISTS `document_processing_queue` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `document_id` INT(11) NOT NULL,
+  `user_id` INT(11) NOT NULL,
+  `file_path` VARCHAR(255) NOT NULL,
+  `status` ENUM('pending', 'processing', 'completed', 'failed') DEFAULT 'pending',
+  `attempts` INT(11) DEFAULT 0,
+  `error_log` TEXT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_queue_status` (`status`),
+  KEY `fk_queue_document` (`document_id`),
+  CONSTRAINT `fk_queue_document` FOREIGN KEY (`document_id`) REFERENCES `documents` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 10.3 Stateful Rate Limiting Fallback Layer
+CREATE TABLE IF NOT EXISTS `rate_limits` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `key_hash` VARCHAR(64) NOT NULL,
+  `timestamp` INT(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `idx_key_timestamp` (`key_hash`, `timestamp`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 10.4 Session History & Roll-Over Archiving
+CREATE TABLE IF NOT EXISTS `session_history` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `user_id` INT(11) NOT NULL,
+  `session` VARCHAR(20) NOT NULL,
+  `level` VARCHAR(10) NOT NULL,
+  `department_id` INT(11) NOT NULL,
+  `archived_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `fk_sesshist_user` (`user_id`),
+  CONSTRAINT `fk_sesshist_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 10.5 Update admin user roles & flag
+UPDATE `users` SET `is_admin` = 1, `role` = 'super_admin' WHERE `matric_number` = 'SUPER_ADMIN';
+UPDATE `users` SET `is_admin` = 1, `role` = 'faculty_admin', `department_id` = 1, `faculty_id` = 1 WHERE `matric_number` = 'E0500627';
+UPDATE `users` SET `is_admin` = 1, `role` = 'department_admin' WHERE `matric_number` IN ('ADMIN_PSYC', 'ADMIN_ENG', 'ADMIN_SOC', 'ADMIN_LING', 'ADMIN/001');
+
+-- 10.6 Seed Initial Documents for Department 1 (Computer Science)
+INSERT INTO `documents` (`id`, `public_id`, `user_id`, `document_name`, `file_name`, `file_path`, `upload_date`, `status`, `department_id`, `level`, `semester`, `program_type`, `mode`)
+SELECT 53, 'd5300000-0000-4000-8000-000000000053', u.id, 'WASSCE Certificate', 'doc_wassce_2024.pdf', 'secure_uploads/2024_2025/CS/300L/doc_wassce_2024.pdf', '2026-08-03', 'Pending Approval', 1, 300, '1st Semester', 'Full Time', 'UTME'
+FROM `users` u WHERE u.`matric_number` = 'E050238'
+ON DUPLICATE KEY UPDATE `document_name` = VALUES(`document_name`);
+
+INSERT INTO `documents` (`id`, `public_id`, `user_id`, `document_name`, `file_name`, `file_path`, `upload_date`, `status`, `department_id`, `level`, `semester`, `program_type`, `mode`)
+SELECT 54, 'd5400000-0000-4000-8000-000000000054', u.id, 'Birth Certificate', 'doc_birth_cert.pdf', 'secure_uploads/2024_2025/CS/100L/doc_birth_cert.pdf', '2026-08-03', 'Approved', 1, 100, '1st Semester', 'Full Time', 'UTME'
+FROM `users` u WHERE u.`matric_number` = 'U123001'
+ON DUPLICATE KEY UPDATE `document_name` = VALUES(`document_name`);
+
+INSERT INTO `documents` (`id`, `public_id`, `user_id`, `document_name`, `file_name`, `file_path`, `upload_date`, `status`, `department_id`, `level`, `semester`, `program_type`, `mode`)
+SELECT 55, 'd5500000-0000-4000-8000-000000000055', u.id, 'JAMB Admission Letter', 'doc_jamb_adm.pdf', 'secure_uploads/2024_2025/CS/200L/doc_jamb_adm.pdf', '2026-08-03', 'Pending Approval', 1, 200, '1st Semester', 'Full Time', 'Direct Entry'
+FROM `users` u WHERE u.`matric_number` = 'U123002'
+ON DUPLICATE KEY UPDATE `document_name` = VALUES(`document_name`);
+
+-- 10.7 Production Performance Composite Indexes
+CREATE INDEX IF NOT EXISTS `idx_docs_dept_status_created` ON `documents` (`department_id`, `status`, `created_at` DESC);
+CREATE INDEX IF NOT EXISTS `idx_docs_user_status` ON `documents` (`user_id`, `status`);
+CREATE INDEX IF NOT EXISTS `idx_users_dept_level` ON `users` (`department_id`, `level`, `program_type`, `mode`);
+
+-- ====================================================
+-- 11. Schema Migrations Ledger
+-- ====================================================
+CREATE TABLE IF NOT EXISTS `schema_migrations` (
+  `version` VARCHAR(255) NOT NULL,
+  `applied_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`version`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO `schema_migrations` (`version`) VALUES
+  ('2026_08_10_000000_enterprise_upgrades.sql'),
+  ('2026_08_11_000000_performance_indexes.sql'),
+  ('2026_10_09_000001_add_public_id.sql'),
+  ('2026_10_09_000002_add_ocr_pipeline_fields.sql'),
+  ('2026_10_09_000003_tamper_evident_audit_log.sql'),
+  ('2026_10_09_000004_ndpa_compliance.sql');
+
 COMMIT;
+
+
+

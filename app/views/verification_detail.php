@@ -12,12 +12,14 @@
             <div class="user-info">
                 <div class="user-name"><?php echo htmlspecialchars($user['full_name']); ?></div>
                 <div class="user-id">
-                    <?php if ($user['is_admin'] == 1): ?>
-                        <?php if ($user['matric_number'] === 'SUPER_ADMIN'): ?>
-                            Role: Super Admin
-                        <?php else: ?>
-                            Role: <?php echo htmlspecialchars($user['department_name'] ?? 'Psychology'); ?> Admin
-                        <?php endif; ?>
+                    <?php 
+                    $headerRole = AccessScope::resolveRole($user);
+                    if ($headerRole === 'super_admin'): ?>
+                        Role: Super Admin
+                    <?php elseif ($headerRole === 'faculty_admin'): ?>
+                        Role: <?php echo htmlspecialchars($user['faculty_name'] ?? 'Faculty'); ?> Admin
+                    <?php elseif ($headerRole === 'department_admin'): ?>
+                        Role: <?php echo htmlspecialchars($user['department_name'] ?? 'Department'); ?> Admin
                     <?php else: ?>
                         Matric No: <?php echo htmlspecialchars($user['matric_number']); ?>
                     <?php endif; ?>
@@ -53,7 +55,7 @@
         <div class="doc-preview-container">
             <div class="doc-preview">
                 <iframe class="doc-embed"
-                    src="/app/controllers/secure_file_viewer.php?id=<?php echo htmlspecialchars($doc['id']); ?>"></iframe>
+                    src="/app/controllers/secure_file_viewer.php?id=<?php echo htmlspecialchars($doc['public_id'] ?? $doc['id']); ?>"></iframe>
                 <div class="zoom-icon"><img src="/app/src/assets/images/Zoom - In.svg" alt="Zoom"></div>
             </div>
         </div>
@@ -106,16 +108,18 @@
     </div>
     <?php if ($doc['status'] === 'Pending Approval'): ?>
     <div class="action-row">
-        <form action="/app/controllers/verification_detail.php?doc_id=<?php echo $doc_id; ?>" method="POST"
+        <form action="/app/controllers/verification_detail.php?doc_id=<?php echo htmlspecialchars($doc_id); ?>" method="POST"
             style="display: inline;">
             <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+            <input type="hidden" name="doc_id" value="<?php echo htmlspecialchars($doc_id); ?>">
             <input type="hidden" name="action" value="approve">
             <button type="submit" class="approve-btn"><img src="/app/src/assets/images/Check.svg" class="btn-icon"
                     alt="">Approve</button>
         </form>
-        <form id="reject-form" action="/app/controllers/verification_detail.php?doc_id=<?php echo $doc_id; ?>" method="POST"
+        <form id="reject-form" action="/app/controllers/verification_detail.php?doc_id=<?php echo htmlspecialchars($doc_id); ?>" method="POST"
             style="display: inline;">
             <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+            <input type="hidden" name="doc_id" value="<?php echo htmlspecialchars($doc_id); ?>">
             <input type="hidden" name="action" value="reject">
             <input type="hidden" name="rejection_reason" id="hidden-rejection-reason">
             <button type="button" id="reject-trigger-btn" class="reject-btn"><img src="/app/src/assets/images/Close.svg" class="btn-icon"

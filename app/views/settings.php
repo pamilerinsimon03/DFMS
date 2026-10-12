@@ -14,12 +14,14 @@
             <div class="user-info">
                 <div class="user-name"><?php echo htmlspecialchars($user['full_name']); ?></div>
                 <div class="user-id">
-                    <?php if ($user['is_admin'] == 1): ?>
-                        <?php if ($user['matric_number'] === 'SUPER_ADMIN'): ?>
-                            Role: Super Admin
-                        <?php else: ?>
-                            Role: <?php echo htmlspecialchars($user['department_name'] ?? 'Psychology'); ?> Admin
-                        <?php endif; ?>
+                    <?php 
+                    $headerRole = AccessScope::resolveRole($user);
+                    if ($headerRole === 'super_admin'): ?>
+                        Role: Super Admin
+                    <?php elseif ($headerRole === 'faculty_admin'): ?>
+                        Role: <?php echo htmlspecialchars($user['faculty_name'] ?? 'Faculty'); ?> Admin
+                    <?php elseif ($headerRole === 'department_admin'): ?>
+                        Role: <?php echo htmlspecialchars($user['department_name'] ?? 'Department'); ?> Admin
                     <?php else: ?>
                         Matric No: <?php echo htmlspecialchars($user['matric_number']); ?>
                     <?php endif; ?>
@@ -99,13 +101,13 @@
                     </form>
                 <?php else: ?>
                     <div class="info-box">
-                        <p><strong>Student Password Update</strong></p>
-                        <p>Update all existing student passwords to the new format: <strong>surname12345</strong></p>
-                        <form method="POST" onsubmit="return confirm('Are you sure you want to update all student passwords? This action cannot be undone.');">
+                        <p><strong>Pending Student Account Activation</strong></p>
+                        <p>Resend activation links via email to all students whose accounts are pending activation.</p>
+                        <form method="POST" onsubmit="return confirm('Resend activation emails to all unactivated student accounts?');">
                             <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                             <button type="submit" name="action" value="update_passwords" class="btn btn-warning">
-                                <span class="btn-icon"><i data-lucide="refresh-cw"></i></span>
-                                Update All Student Passwords
+                                <span class="btn-icon"><i data-lucide="mail"></i></span>
+                                Resend Activation Links
                             </button>
                         </form>
                     </div>

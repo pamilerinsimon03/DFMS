@@ -23,12 +23,14 @@
             <div class="user-info">
                 <div class="user-name"><?php echo htmlspecialchars($user['full_name']); ?></div>
                 <div class="user-id">
-                    <?php if ($user['is_admin'] == 1): ?>
-                        <?php if ($user['matric_number'] === 'SUPER_ADMIN'): ?>
-                            Role: Super Admin
-                        <?php else: ?>
-                            Role: <?php echo htmlspecialchars($user['department_name'] ?? 'Psychology'); ?> Admin
-                        <?php endif; ?>
+                    <?php 
+                    $headerRole = AccessScope::resolveRole($user);
+                    if ($headerRole === 'super_admin'): ?>
+                        Role: Super Admin
+                    <?php elseif ($headerRole === 'faculty_admin'): ?>
+                        Role: <?php echo htmlspecialchars($user['faculty_name'] ?? 'Faculty'); ?> Admin
+                    <?php elseif ($headerRole === 'department_admin'): ?>
+                        Role: <?php echo htmlspecialchars($user['department_name'] ?? 'Department'); ?> Admin
                     <?php else: ?>
                         Matric No: <?php echo htmlspecialchars($user['matric_number']); ?>
                     <?php endif; ?>
@@ -90,14 +92,14 @@
                 <div class="no-files">No files uploaded yet.</div>
                 <?php else: ?>
                 <?php foreach ($documents as $doc): ?>
-                <div class="file-card" data-id="<?php echo $doc['id']; ?>">
+                <div class="file-card" data-id="<?php echo htmlspecialchars($doc['public_id'] ?? $doc['id']); ?>">
                     <div class="file-image">
                         <?php 
                         $fileExt = strtolower(pathinfo($doc['file_path'], PATHINFO_EXTENSION));
                         $isImage = in_array($fileExt, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
                         if ($isImage): 
                         ?>
-                        <img src="/app/controllers/secure_file_viewer.php?id=<?php echo $doc['id']; ?>" 
+                        <img src="/app/controllers/secure_file_viewer.php?id=<?php echo htmlspecialchars($doc['public_id'] ?? $doc['id']); ?>" 
                              alt="<?php echo htmlspecialchars($doc['document_name']); ?>"
                              style="object-fit: cover; width: 100%; height: 100%; border-radius: 4px;">
                         <?php else: ?>

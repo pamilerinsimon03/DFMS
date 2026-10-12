@@ -14,12 +14,14 @@
             <div class="user-info">
                 <div class="user-name"><?php echo htmlspecialchars($user['full_name']); ?></div>
                 <div class="user-id">
-                    <?php if ($user['is_admin'] == 1): ?>
-                        <?php if ($user['matric_number'] === 'SUPER_ADMIN'): ?>
-                            Role: Super Admin
-                        <?php else: ?>
-                            Role: <?php echo htmlspecialchars($user['department_name'] ?? 'Psychology'); ?> Admin
-                        <?php endif; ?>
+                    <?php 
+                    $headerRole = AccessScope::resolveRole($user);
+                    if ($headerRole === 'super_admin'): ?>
+                        Role: Super Admin
+                    <?php elseif ($headerRole === 'faculty_admin'): ?>
+                        Role: <?php echo htmlspecialchars($user['faculty_name'] ?? 'Faculty'); ?> Admin
+                    <?php elseif ($headerRole === 'department_admin'): ?>
+                        Role: <?php echo htmlspecialchars($user['department_name'] ?? 'Department'); ?> Admin
                     <?php else: ?>
                         Matric No: <?php echo htmlspecialchars($user['matric_number']); ?>
                     <?php endif; ?>
@@ -217,6 +219,36 @@
                             <p>Always log out when you're finished using the system</p>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <img src="/app/src/assets/images/Document Purple.svg" alt="Data Protection Icon">
+                </div>
+                <div class="card-title">
+                    <h3>Data Protection & Privacy Rights</h3>
+                    <p>Manage your rights under NDPA / NDPR 2019</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="tips-list" style="margin-bottom: 20px;">
+                    <div class="tip-item">
+                        <div class="tip-icon">
+                            <img src="/app/src/assets/images/Check.svg" alt="Check Icon">
+                        </div>
+                        <div class="tip-content">
+                            <h4>Self-Service Data Rights</h4>
+                            <p>Request data access exports, rectify personal details, or request data deletion under institutional retention policies.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <a href="/app/controllers/data_subject_rights.php" class="btn btn-primary" style="display: inline-flex; align-items: center; text-decoration: none;">
+                        Manage Privacy & Data Rights
+                    </a>
                 </div>
             </div>
         </div>

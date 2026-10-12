@@ -1,0 +1,71 @@
+name: CI Test & Evaluation Suite
+
+on:
+  push:
+    branches: [ main, develop, thesis-security-design ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  phpunit:
+    name: PHPUnit Tests & Quality Gates
+    runs-on: ubuntu-latest
+
+    services:
+      mariadb:
+        image: mariadb:10.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: dfms_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP 8.2
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, mysqli, gd, imagick, fileinfo
+        tools: phpunit, phpstan, psalm
+
+    - name: Run PHPStan Analysis
+      run: phpstan analyse -c phpstan.neon --memory-limit=1G --no-progress
+
+    - name: Run Psalm Analysis
+      run: psalm --show-info=false
+
+    - name: Initialize Test Database & Run Migrations
+      env:
+        DB_HOST: 127.0.0.1
+        DB_NAME: dfms_test
+        DB_USER: root
+        DB_PASS: root
+      run: |
+        mysql -h 127.0.0.1 -u root -proot dfms_test < dfms_database.sql
+        php app/scripts/run_migrations.php
+
+    - name: Execute PHPUnit Suite
+      env:
+        DB_HOST: 127.0.0.1
+        DB_NAME: dfms_test
+        DB_USER: root
+        DB_PASS: root
+        APP_ENV: testing
+      run: phpunit --testdox
+
+    - name: Run Evaluation Harnesses
+      env:
+        DB_HOST: 127.0.0.1
+        DB_NAME: dfms_test
+        DB_USER: root
+        DB_PASS: root
+        APP_ENV: testing
+      run: |
+        php docs/evaluation/blur_calibration.php
+        php docs/evaluation/clamav_latency.php
+        php docs/evaluation/ocr_accuracy.php
+        php docs/evaluation/auth_benchmark.php

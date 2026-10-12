@@ -8,26 +8,22 @@ require_once __DIR__ . '/../models/Notification.php';
 $user = User::getById($_SESSION['user_id']);
 $notifications = Notification::getForUser($_SESSION['user_id'], 15);
 $unread_count = Notification::countUnread($_SESSION['user_id']);
-$department_id = $user['department_id'] ?? null;
+$requested_dept = isset($_GET['department']) ? (int)$_GET['department'] : null;
 
 $start_date = $_GET['start_date'] ?? date('Y-m-d', strtotime('-6 months'));
 $end_date = $_GET['end_date'] ?? date('Y-m-d');
 
-$total_docs = Document::countAllDocuments(null, $start_date, $end_date, null, $department_id, null, null, null);
-$approved_docs = Document::countAllDocuments('Approved', $start_date, $end_date, null, $department_id, null, null, null);
-$pending_docs = Document::countAllDocuments('Pending Approval', $start_date, $end_date, null, $department_id, null, null, null);
-$rejected_docs = Document::countAllDocuments('Rejected', $start_date, $end_date, null, $department_id, null, null, null);
+$total_docs = Document::countAllDocuments(null, $start_date, $end_date, null, $requested_dept, null, null, null, $user);
+$approved_docs = Document::countAllDocuments('Approved', $start_date, $end_date, null, $requested_dept, null, null, null, $user);
+$pending_docs = Document::countAllDocuments('Pending Approval', $start_date, $end_date, null, $requested_dept, null, null, null, $user);
+$rejected_docs = Document::countAllDocuments('Rejected', $start_date, $end_date, null, $requested_dept, null, null, null, $user);
 
 if ($total_docs == 0) {
-    $all_docs_sql = "SELECT COUNT(d.id) as total FROM documents d JOIN users u ON d.user_id = u.id";
-    $params = [];
-    $types = '';
-    
-    if ($department_id) {
-        $all_docs_sql .= " WHERE u.department_id = ?";
-        $params[] = $department_id;
-        $types = 'i';
-    }
+    require_once __DIR__ . '/../utils/AccessScope.php';
+    $scope = AccessScope::buildDocumentScopeFilter($user, $requested_dept, 'u.');
+    $all_docs_sql = "SELECT COUNT(d.id) as total FROM documents d JOIN users u ON d.user_id = u.id WHERE " . $scope['sql'];
+    $params = $scope['params'];
+    $types = $scope['types'];
     
     global $conn;
     $stmt = $conn->prepare($all_docs_sql);
@@ -38,14 +34,10 @@ if ($total_docs == 0) {
     $all_docs_count = $stmt->get_result()->fetch_assoc()['total'];
     
     if ($all_docs_count > 0) {
-        $date_range_sql = "SELECT MIN(d.created_at) as earliest, MAX(d.created_at) as latest FROM documents d JOIN users u ON d.user_id = u.id";
-        if ($department_id) {
-            $date_range_sql .= " WHERE u.department_id = ?";
-        }
-        
+        $date_range_sql = "SELECT MIN(d.created_at) as earliest, MAX(d.created_at) as latest FROM documents d JOIN users u ON d.user_id = u.id WHERE " . $scope['sql'];
         $stmt = $conn->prepare($date_range_sql);
-        if ($department_id) {
-            $stmt->bind_param("i", $department_id);
+        if ($types) {
+            $stmt->bind_param($types, ...$params);
         }
         $stmt->execute();
         $date_range = $stmt->get_result()->fetch_assoc();
@@ -53,15 +45,15 @@ if ($total_docs == 0) {
         $start_date = date('Y-m-d', strtotime($date_range['earliest']));
         $end_date = date('Y-m-d', strtotime($date_range['latest']));
         
-        $total_docs = Document::countAllDocuments(null, $start_date, $end_date, null, $department_id, null, null, null);
-        $approved_docs = Document::countAllDocuments('Approved', $start_date, $end_date, null, $department_id, null, null, null);
-        $pending_docs = Document::countAllDocuments('Pending Approval', $start_date, $end_date, null, $department_id, null, null, null);
-        $rejected_docs = Document::countAllDocuments('Rejected', $start_date, $end_date, null, $department_id, null, null, null);
+        $total_docs = Document::countAllDocuments(null, $start_date, $end_date, null, $requested_dept, null, null, null, $user);
+        $approved_docs = Document::countAllDocuments('Approved', $start_date, $end_date, null, $requested_dept, null, null, null, $user);
+        $pending_docs = Document::countAllDocuments('Pending Approval', $start_date, $end_date, null, $requested_dept, null, null, null, $user);
+        $rejected_docs = Document::countAllDocuments('Rejected', $start_date, $end_date, null, $requested_dept, null, null, null, $user);
     }
 }
 
-$uploads_by_month = Document::getUploadsByMonth($start_date, $end_date, $department_id);
-$verification_breakdown = Document::getVerificationBreakdown($start_date, $end_date, $department_id);
+$uploads_by_month = Document::getUploadsByMonth($start_date, $end_date, $requested_dept, $user);
+$verification_breakdown = Document::getVerificationBreakdown($start_date, $end_date, $requested_dept, $user);
 
 $months = array_keys($uploads_by_month);
 $upload_counts = array_values($uploads_by_month);
@@ -69,7 +61,7 @@ $upload_counts = array_values($uploads_by_month);
 $breakdown_labels = array_keys($verification_breakdown);
 $breakdown_counts = array_values($verification_breakdown);
 
-$recent_pending = Document::getPendingDocuments($start_date, $end_date, 5, $department_id);
+$recent_pending = Document::getPendingDocuments($start_date, $end_date, 5, $requested_dept, $user);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_POST['doc_id'])) {
     requireCSRFToken();
@@ -86,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
         'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown'
     ]);
     
-    Document::updateStatus($doc_id, $action);
+    Document::updateStatus($doc_id, $action, $_POST['rejection_reason'] ?? null, $user);
     header("Location: " . $_SERVER['REQUEST_URI']);
     exit();
 }

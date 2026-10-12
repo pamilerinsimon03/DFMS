@@ -74,10 +74,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $result = User::createStudent($student_data);
                         
                         if ($result['success']) {
+                            $actUrl = $result['activation_url'] ?? '';
+                            $msgText = 'Student created successfully. ';
+                            if ($actUrl) {
+                                $msgText .= 'Activation link: ' . $actUrl;
+                            } elseif (isset($result['password'])) {
+                                $msgText .= 'Password: ' . $result['password'];
+                            } else {
+                                $msgText .= 'Activation link dispatched to student email.';
+                            }
                             $import_results[] = [
                                 'row' => $row_number,
                                 'status' => 'success',
-                                'message' => 'Student created successfully. Password: ' . $result['password']
+                                'message' => $msgText
                             ];
                             $success_count++;
                         } else {

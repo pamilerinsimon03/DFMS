@@ -30,6 +30,38 @@ class MailService
         return $config;
     }
 
+    public static function queue($to, $subject, $message)
+    {
+        global $conn;
+        if (is_array($to)) {
+            $to = implode(',', $to);
+        }
+
+        if ($conn) {
+            try {
+                @$conn->query("CREATE TABLE IF NOT EXISTS email_queue (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    recipient VARCHAR(255) NOT NULL,
+                    subject VARCHAR(255) NOT NULL,
+                    message TEXT NOT NULL,
+                    status ENUM('pending', 'sent', 'failed') DEFAULT 'pending',
+                    attempts INT DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+                $stmt = $conn->prepare("INSERT INTO email_queue (recipient, subject, message) VALUES (?, ?, ?)");
+                if ($stmt) {
+                    $stmt->bind_param("sss", $to, $subject, $message);
+                    return $stmt->execute();
+                }
+            } catch (Throwable $e) {
+                // Fallback to direct send if DB queue insertion fails
+            }
+        }
+
+        return self::send($to, $subject, $message);
+    }
+
     public static function send($to, $subject, $message)
     {
         if (is_array($to)) {
@@ -74,9 +106,17 @@ class MailService
             }
         }
 
-        // Bypass mailing on local environment / CLI mode if unconfigured
-        if (php_sapi_name() === 'cli' || (isset($_SERVER['SERVER_NAME']) && $_SERVER['SERVER_NAME'] === 'localhost')) {
-            SecurityUtils::logSecurityEvent('mail_simulated_local', ['to' => $to, 'subject' => $subject]);
+        // Bypass mailing on local environment / CLI mode ONLY if SMTP username is unconfigured
+        if (empty($config['username']) && (php_sapi_name() === 'cli' || (isset($_SERVER['SERVER_NAME']) && in_array($_SERVER['SERVER_NAME'], ['localhost', '127.0.0.1', '::1'], true)))) {
+            preg_match('#https?://[^\s<"\']+#i', $message, $urlMatch);
+            $extractedUrl = $urlMatch[0] ?? null;
+
+            SecurityUtils::logSecurityEvent('mail_simulated_local', [
+                'to' => $to,
+                'subject' => $subject,
+                'activation_url' => $extractedUrl,
+                'body_text' => strip_tags($message)
+            ]);
             return true;
         }
 

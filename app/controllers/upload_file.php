@@ -19,8 +19,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user_id = $_SESSION['user_id'];
     $file = $_FILES['file'] ?? null;
     
-    function sendUploadResponse($success, $message, $userId = null, $data = []) {
-        $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
+    function sendUploadResponse($success, $message, $userId = null, $data = [], $httpCode = 200) {
+        http_response_code($httpCode);
+        $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') || (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json'));
 
         if ($isAjax) {
             header('Content-Type: application/json');
@@ -39,16 +40,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!$document_name) {
-        sendUploadResponse(false, 'Invalid document name.', $user_id);
+        sendUploadResponse(false, 'Invalid document name.', $user_id, [], 422);
     }
 
     if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
-        sendUploadResponse(false, 'Please select a valid file to upload.', $user_id);
+        sendUploadResponse(false, 'Please select a valid file to upload.', $user_id, [], 422);
     }
 
     $user = User::getById($user_id);
     if (!$user) {
-        sendUploadResponse(false, "Upload failed: User data not found.", $user_id);
+        sendUploadResponse(false, "Upload failed: User data not found.", $user_id, [], 422);
     }
 
     $semester = AcademicCalendarService::getCurrentSemester();
@@ -57,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $generatedFilename = FilenameGenerator::generate($user_id, $document_name, $semester, $extension);
     
     if (!$generatedFilename) {
-        sendUploadResponse(false, "Upload failed: Could not generate filename. Ensure profile is complete.", $user_id);
+        sendUploadResponse(false, "Upload failed: Could not generate filename. Ensure profile is complete.", $user_id, [], 422);
     }
 
     $classificationData = [
@@ -80,9 +81,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'document_id' => $result['id'],
                 'document_name' => $document_name,
                 'status' => 'processing'
-            ]
+            ],
+            200
         );
     } else {
-        sendUploadResponse(false, "Upload failed: " . $result['message'], $user_id);
+        $httpCode = $result['http_code'] ?? 422;
+        sendUploadResponse(false, "Upload failed: " . $result['message'], $user_id, [], $httpCode);
     }
 }

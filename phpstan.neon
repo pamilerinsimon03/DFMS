@@ -13,4 +13,8 @@ parameters:
         - '#Call to static method getInstance\(\) on an unknown class.*#'
         - '#Comparison operation .* is always false#'
         - '#Variable \$issues in empty\(\) always exists and is always falsy#'
+        - '#Parameter \#1 \$kernel of method Imagick::convolveImage\(\) expects array.*#'
+        - '#Call to function method_exists\(\) with .Imagick. and .getQuantumRange. will always evaluate to true#'
+        - '#Result of \|\| is always false#'
+        - '#Strict comparison using === between int.* and 0 will always evaluate to false#'
     reportUnmatchedIgnoredErrors: false

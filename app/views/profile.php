@@ -14,12 +14,14 @@
             <div class="user-info">
                 <div class="user-name"><?php echo htmlspecialchars($user['full_name']); ?></div>
                 <div class="user-id">
-                    <?php if ($user['is_admin'] == 1): ?>
-                        <?php if ($user['matric_number'] === 'SUPER_ADMIN'): ?>
-                            Role: Super Admin
-                        <?php else: ?>
-                            Role: <?php echo htmlspecialchars($user['department_name'] ?? 'Psychology'); ?> Admin
-                        <?php endif; ?>
+                    <?php 
+                    $headerRole = AccessScope::resolveRole($user);
+                    if ($headerRole === 'super_admin'): ?>
+                        Role: Super Admin
+                    <?php elseif ($headerRole === 'faculty_admin'): ?>
+                        Role: <?php echo htmlspecialchars($user['faculty_name'] ?? 'Faculty'); ?> Admin
+                    <?php elseif ($headerRole === 'department_admin'): ?>
+                        Role: <?php echo htmlspecialchars($user['department_name'] ?? 'Department'); ?> Admin
                     <?php else: ?>
                         Matric No: <?php echo htmlspecialchars($user['matric_number']); ?>
                     <?php endif; ?>

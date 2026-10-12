@@ -12,12 +12,14 @@
             <div class="user-info">
                 <div class="user-name"><?php echo htmlspecialchars($user['full_name']); ?></div>
                 <div class="user-id">
-                    <?php if ($user['is_admin'] == 1): ?>
-                        <?php if ($user['matric_number'] === 'SUPER_ADMIN'): ?>
-                            Role: Super Admin
-                        <?php else: ?>
-                            Role: <?php echo htmlspecialchars($user['department_name'] ?? 'Psychology'); ?> Admin
-                        <?php endif; ?>
+                    <?php 
+                    $headerRole = AccessScope::resolveRole($user);
+                    if ($headerRole === 'super_admin'): ?>
+                        Role: Super Admin
+                    <?php elseif ($headerRole === 'faculty_admin'): ?>
+                        Role: <?php echo htmlspecialchars($user['faculty_name'] ?? 'Faculty'); ?> Admin
+                    <?php elseif ($headerRole === 'department_admin'): ?>
+                        Role: <?php echo htmlspecialchars($user['department_name'] ?? 'Department'); ?> Admin
                     <?php else: ?>
                         Matric No: <?php echo htmlspecialchars($user['matric_number']); ?>
                     <?php endif; ?>
@@ -109,7 +111,7 @@
                     <td><?php echo htmlspecialchars($doc['document_name']); ?></td>
                     <td><?php echo date('M d, Y', strtotime($doc['upload_date'] ?? 'now')); ?></td>
                     <td class="td-action">
-                        <a href="/app/controllers/verification_detail.php?doc_id=<?php echo $doc['id']; ?>"
+                        <a href="/app/controllers/verification_detail.php?doc_id=<?php echo htmlspecialchars($doc['public_id'] ?? $doc['id']); ?>"
                             class="action-item">
                             <img src="/app/src/assets/images/Bold Eye.svg" alt="View"> View
                         </a>

@@ -1,193 +1,276 @@
 # University of Ibadan Digital File Management System (DFMS)
 
-A secure web portal for students, administrators, and lecturers to manage academic documents with comprehensive security features and NDPR compliance.
+[![Build Status](https://img.shields.io/github/actions/workflow/status/pamilerinsimon03/DFMS/security-scan.yml?branch=main)](https://github.com/pamilerinsimon03/DFMS/actions)
+[![NDPA 2023 Compliance](https://img.shields.io/badge/Compliance-NDPA%202023%20%2F%20GAID%202025-green.svg)](docs/GAP_REPORT.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-## Tech Stack
-
-* **Backend:** PHP
-* **Frontend:** HTML5, CSS3, Vanilla JavaScript (ES6+)
-* **Database:** MySQL
-
-## Server Requirements
-
-For the application to run correctly, the server must meet the following requirements:
-
-* PHP 8.0 or higher
-* MySQL 5.7 or higher
-* GD extension (bundled with PHP) for blur detection
-* A web server such as Apache or Nginx
-
-## Image Quality & OCR Validation
-
-These features automate rejection of blurry or unreadable uploads. Install and configure the following:
-
-### Linux (Debian/Ubuntu 20.04/22.04+)
-
-Run the following commands to install the required dependencies (Tesseract OCR, ImageMagick, and PHP extension):
-
-```bash
-# 1. Update package list
-sudo apt-get update
-
-# 2. Install Tesseract OCR and its language pack
-sudo apt-get install tesseract-ocr tesseract-ocr-eng -y
-
-# 3. Install ImageMagick and PHP Extension
-# (Replace php8.1 with your installed version if different)
-sudo apt-get install imagemagick php-imagick -y
-
-# 4. Restart Web Server to load new PHP extension
-sudo systemctl restart apache2
-# OR if using Nginx+FPM:
-# sudo systemctl restart php8.1-fpm
-```
-
-### Windows (XAMPP/WAMP)
-
-1.  **Check PHP Version**: Create an `info.php` file (`<?php phpinfo(); ?>`) to see your PHP version (e.g., 8.2), Architecture (x64), and Thread Safety (TS).
-2.  **Install ImageMagick**:
-    *   Download from [ImageMagick Windows Downloads](https://imagemagick.org/script/download.php#windows) (select DLL version, e.g., `ImageMagick-7.1.x-Q16-HDRI-x64-dll.exe`).
-    *   **Important**: Check **"Add to System Path"** during installation.
-3.  **Install PHP Extension**:
-    *   Download from [PECL Imagick](https://pecl.php.net/package/imagick). Choose the DLL matching your PHP version/TS.
-    *   Extract `php_imagick.dll` to `C:\xampp\php\ext\`.
-    *   Extract `CORE_RL_*.dll` and `IM_MOD_RL_*.dll` files to `C:\xampp\apache\bin\`.
-4.  **Install Tesseract OCR**:
-    *   Download installer from [UB Mannheim Tesseract Wiki](https://github.com/UB-Mannheim/tesseract/wiki).
-    *   **Important**: Check **"Add to Path"** during installation so the system can find `tesseract.exe`.
-5.  **Configure PHP**:
-    *   Edit `php.ini` and add `extension=imagick`.
-6.  **Restart Apache**: Restart the server from the XAMPP Control Panel.
+A high-security, web-based digital file archiving and verification portal designed for the University of Ibadan to manage, verify, and archive academic documents with automated quality checks, antivirus scanning, role-based access control, cryptographic audit logging, and statutory Nigerian Data Protection Act (NDPA 2023) compliance.
 
 ---
 
-## Getting Started
+## 📐 System Architecture
 
-1. **Clone the repository:**
+DFMS is engineered on a custom **Model-View-Controller (MVC)** architecture with `mysqli` parameterized prepared statements, a responsive single-page application (SPA) front-controller, a dedicated **Security Middleware & Scope Pipeline**, and an **Isolated Content-Addressed Storage Engine**.
 
-   ```bash
-   git clone <repository_url>
-   cd DFMS
-   ```
-2. **Database Setup:**
+```
+                           +------------------------+
+                           |     Client Browser     |
+                           +-----------+------------+
+                                       |
+                                       v
+                           +------------------------+
+                           |    public/index.php    |
+                           |   (Front Controller)   |
+                           +-----------+------------+
+                                       |
+                   +-------------------+-------------------+
+                   |                                       |
+                   v                                       v
+       +-----------------------+               +-----------------------+
+       | AccessControl         |               | SecurityUtils & CSRF  |
+       | Middleware (RBAC)     |               | (Token / Rate Limiter)|
+       +-----------+-----------+               +-----------+-----------+
+                   |                                       |
+                   +-------------------+-------------------+
+                                       |
+                                       v
+                           +------------------------+
+                           |   app/controllers/     |
+                           +-----------+------------+
+                                       |
+          +----------------------------+----------------------------+
+          |                            |                            |
+          v                            v                            v
++-------------------+        +-------------------+        +-------------------+
+|    app/models/    |        |   app/services/   |        |    app/views/     |
+| User / Document   |        | FileDelivery / QC |        |  SPA Responsive   |
+| (UUID Translation)|        | (Sendfile / Clam) |        |    UI Templates   |
++---------+---------+        +---------+---------+        +-------------------+
+          |                            |
+          v                            v
++-------------------+        +-------------------+
+|  MariaDB Database |        | Isolated Storage  |
+| (Hash Chain /     |        | (0750 / 0640      |
+| Append Triggers)  |        | Outside Webroot)  |
++-------------------+        +-------------------+
+```
 
-   * Import the `dfms_database.sql` file into MySQL database.
-   * The system now uses environment variables for secure credential management.
-3. **Install Dependencies:**
+### Key Architectural Layers
 
-   * Follow the steps under **Image Quality & OCR Validation** if you need automated checks.
-4. **Web Server Configuration:**
+1. **Front Controller & Routing (`public/index.php`)**: Single entry point handling security bootstrap, boot-time storage isolation checks, synchronizer CSRF token validation, rate limiting, and SPA routing.
+2. **Two-Stage Authorization & Scoping (`app/utils/AccessScope.php`, `AccessControlMiddleware.php`)**:
+   - **Stage 1 (Route Level):** Fail-closed capability matching against centralized RBAC matrix (`super_admin` > `faculty_admin` > `department_admin` > `student`).
+   - **Stage 2 (Query & Object Level):** Parameterized SQL predicate generation (`buildDocumentScopeFilter`, `buildUserScopeFilter`) applied directly to SQL queries, blocking Insecure Direct Object References (IDOR).
+3. **Non-Sequential Identifiers (UUIDv4)**: Public-facing endpoints, URLs, and JSON payloads expose only RFC 4122 UUIDv4 identifiers (`public_id`), translating to internal auto-increment primary keys strictly at the model boundary.
+4. **Isolated Salted HMAC Storage Engine (`app/utils/StoragePathResolver.php`)**:
+   - Default path set outside the web root (`../dfms_private/secure_uploads`).
+   - Content-addressed file naming via HMAC: `hash_hmac('sha256', content, STORAGE_SALT)`.
+   - Sharding structure: `{session}/{department}/{level}/{first_two_hex_chars}/{hmac_hash}.{magic_ext}`.
+   - Enforces directory mode `0750` and file mode `0640` with strict `realpath()` traversal blocking.
+5. **Kernel-Accelerated Authenticated Delivery (`app/services/FileDeliveryService.php`)**:
+   - Multi-mode streaming supporting Apache `mod_xsendfile` (`X-Sendfile`), Nginx accelerated redirect (`X-Accel-Redirect`), and PHP development fallback.
+   - Emits zero file bytes from PHP in accelerated modes.
+   - Enforces strict Content-Security-Policy (`default-src 'none'; sandbox; frame-ancestors 'self'`) and `X-Content-Type-Options: nosniff`.
+6. **Asynchronous Upload Pipeline (`app/scripts/queue_worker.php`)**:
+   - Staging in private directory `_staging/` (mode `0700`).
+   - Stage 1: `ClamAVScannerService` chunked socket streaming via `nINSTREAM` (4-byte length framing, fail-closed in production).
+   - Stage 2: Discrete Laplacian variance blur evaluation ($\sigma_{Lap}^2 \ge 100$).
+   - Stage 3: Tesseract OCR regex field extraction (`matric_number`, `candidate_name`, `session`, `ref_number`) with student record cross-checks.
+   - Permanent storage promotion upon passing all quality checks.
+7. **Tamper-Evident Append-Only Audit Ledger (`app/services/AuditService.php`)**:
+   - Merkle-style cryptographic chaining: $H_i = \text{SHA-256}(H_{i-1} \parallel \text{canonical JSON})$ with $H_0 = 64\text{ zeros}$.
+   - Database triggers intercept and abort `UPDATE` and `DELETE` operations on `audit_logs`.
+   - CLI verification tool: `php app/scripts/verify_audit_chain.php`.
+8. **NDPA 2023 & GAID 2025 Statutory Compliance (`app/controllers/data_subject_rights.php`)**:
+   - Consent capture and withdrawal with lawful basis refusal under s.25(1)(b) for core academic processing.
+   - Machine-readable JSON export (s.34/s.38) and audited rectification diff logging (s.36).
+   - Processing restriction flag and middleware gatekeeper (`processing_restricted` under s.37).
+   - Automated retention enforcement worker (`enforce_retention.php`) unlinking non-core expired records while permanently preserving core academic degrees.
 
-   * Point your web server’s document root to the `/public` directory.
+---
 
-## Project Structure
+## 🛠️ Tech Stack & Dependencies
+
+* **Backend Runtime:** PHP 8.2+ (ZTS / NTS, `mysqli`, `fileinfo`, `gd`, `imagick`, `mbstring`, `openssl`, `sodium`)
+* **Database Engine:** MySQL 5.7+ / MariaDB 10.4+ (`mysqlnd`, strict mode, append-only triggers)
+* **Frontend:** Vanilla JavaScript (ES6+), CSS3, SPA routing, Synchronizer CSRF tokens
+* **Document Processing & Malware Defense:** Tesseract OCR (v5.x), ImageMagick (v7.x), ClamAV Antivirus Daemon
+* **Static Analysis:** PHPStan (Level 5, 0 errors), Psalm (0 errors)
+* **Test Suite:** PHPUnit 9.6 (85 automated tests, 540 assertions)
+* **Continuous Integration:** GitHub Actions (`.github/workflows/security-scan.yml`, `ci.yml`)
+
+---
+
+## 📁 Repository Structure
 
 ```
 DFMS/
+├── .github/
+│   └── workflows/              # GitHub Actions CI & Security Scanning workflows
 ├── app/
-│   ├── config/      # Database and app configuration
-│   ├── controllers/ # Handles user requests and business logic
-│   ├── models/      # Database interaction and data models
-│   ├── views/       # PHP templates for the UI
-│   ├── src/         # CSS, JS, and image assets
-│   ├── utils/       # Security utilities and helper functions
-│   └── logs/        # Security and audit logs
-├── docs/            # Documentation (see docs/README.md)
-├── secure_uploads/  # Secure file storage (outside webroot)
-├── public/
-│   └── index.php    # Front controller
-├── dfms_database.sql # Complete database schema with security updates
-├── .htaccess        # Security headers and access controls
-├── env.example      # Environment variables template
-└── README.md        # This file
+│   ├── config/                 # Centralized permissions, document patterns, system config
+│   │   ├── config.php          # Security bootstrap & storage boundary validation
+│   │   ├── permissions.php     # Centralized RBAC matrix and route capabilities
+│   │   ├── document_patterns.php # OCR regex extraction pattern registry
+│   │   └── settings.json       # System runtime settings & rate limiter thresholds
+│   ├── controllers/            # Request handlers (Uploads, Auth, Admin, File Delivery)
+│   ├── models/                 # Data access layer (User, Document, PasswordReset)
+│   ├── scripts/                # Background workers & CLI utilities
+│   │   ├── queue_worker.php    # Asynchronous upload pipeline worker
+│   │   ├── process_email_queue.php # Asynchronous activation email dispatcher
+│   │   ├── enforce_retention.php # Statutory retention automated purge worker
+│   │   ├── verify_audit_chain.php # Audit ledger hash chain cryptographic verifier
+│   │   ├── run_migrations.php  # Schema migration runner with schema_migrations tracking
+│   │   ├── seed_demo.php       # Dynamic cryptographic credential seeding
+│   │   └── migrate_storage.php # Storage reorganization & salted HMAC hashing utility
+│   ├── services/               # Core services (FileDelivery, QualityCheck, ClamAV, Audit, RateLimiter)
+│   ├── src/                    # CSS stylesheets, client-side SPA routing (`spa.js`)
+│   ├── utils/                  # AccessScope, AccessControlMiddleware, CSRFProtection
+│   └── views/                  # View templates, partials, and modals
+├── docs/
+│   ├── GAP_REPORT.md           # Formal thesis security design compliance matrix (All 20 Met)
+│   ├── DOC_CHANGES.md          # Thesis documentation corrections and errata
+│   ├── evaluation/             # Automated empirical evaluation harnesses & evidence
+│   │   ├── blur_calibration.php # Discrete Laplacian variance benchmark
+│   │   ├── clamav_latency.php   # nINSTREAM chunked streaming throughput benchmark
+│   │   ├── ocr_accuracy.php     # Character Error Rate (CER) and entity extraction harness
+│   │   ├── auth_benchmark.php   # Two-stage authorization overhead benchmark (1,000 runs)
+│   │   └── RESULTS.md           # Empirical benchmark measurement output and analysis
+│   └── deploy/                 # Production deployment & hardening guides
+│       ├── apache.sample.conf  # Production Apache VirtualHost configuration
+│       ├── nginx.sample.conf   # Production Nginx server block with X-Accel-Redirect
+│       ├── htaccess.sample     # Production .htaccess hardening sample
+│       ├── cron.sample         # Production cron job definitions
+│       ├── STORAGE_SECURITY.md # Filesystem mount options, ClamAV socket, and DB PoLP
+│       └── systemd/            # Systemd service units (queue worker, email worker, retention)
+├── migrations/                 # Idempotent incremental SQL migrations
+├── public/                     # Web server DocumentRoot
+│   └── index.php               # Front controller
+├── tests/                      # Comprehensive PHPUnit test suite (Unit & Integration)
+├── dfms_database.sql           # Canonical database schema and baseline data
+├── phpstan.neon                # PHPStan static analysis configuration
+├── psalm.xml                   # Psalm static analysis configuration
+└── README.md                   # System Architecture and Operational Runbook (This document)
 ```
 
-## Login Credentials
+---
 
-### Admin Users
-- **Main Admin**: Matric `E0500627`, Password `test101`
-- **Psychology Admin**: Matric `ADMIN_PSYC`, Password `admin12345`
-- **English Admin**: Matric `ADMIN_ENG`, Password `admin12345`
-- **Sociology Admin**: Matric `ADMIN_SOC`, Password `admin12345`
-- **Linguistics Admin**: Matric `ADMIN_LING`, Password `admin12345`
-- **Super Admin**: Matric `SUPER_ADMIN`, Password `admin12345`
+## ⚡ Getting Started & Quick Setup
 
-### Student Users
-Default Password format: `surname12345` (e.g., for "John Doe" → `doe12345`)
+### 1. Environment Setup
 
-**Note:** The system now supports automatic password generation based on student surnames. New students will have passwords in the format: `surname12345` (e.g., "John Doe" → password: "doe12345").
+```bash
+git clone https://github.com/pamilerinsimon03/DFMS.git
+cd DFMS
 
-## Admin Features
+# Copy environment template
+cp env.example .env
+```
 
-### Student Management
-- **Add Individual Students**: Navigate to "Add Student" in the admin panel to add students one by one
-- **Bulk Import Students**: Use "Bulk Import" to upload a CSV file with multiple students
-- **Update Passwords**: Use "Update Passwords" to change all existing student passwords to the new format
+Configure `.env` with your local database credentials:
+```ini
+DB_HOST=127.0.0.1
+DB_NAME=dfms_local
+DB_USER=root
+DB_PASS=your_password
+APP_ENV=development
+STORAGE_ROOT=../dfms_private/secure_uploads
+LOG_ROOT=../dfms_private/logs
+STORAGE_SALT=your_random_64_char_hex_salt
+SENDFILE_MODE=php
+```
 
-### CSV Import Format
-The bulk import feature accepts CSV files with the following columns:
-- `matric_number` (required)
-- `full_name` (required) 
-- `level` (required)
-- `session` (required)
-- `programme` (required)
-- `department_id` (required)
-- `program_type` (optional, default: Undergraduate)
-- `mode` (optional, default: Regular)
-- `email` (optional)
+### 2. Database Initialization & Migration
 
-Download the CSV template from the bulk import page for the correct format.
+Initialize the canonical schema and run all incremental migrations:
+```bash
+# 1. Load canonical base schema
+mysql -u root -p dfms_local < dfms_database.sql
 
-### Quick Login Reference
+# 2. Run incremental migrations via the migration runner
+php app/scripts/run_migrations.php
+```
 
-**Admin Users:**
-- Main Admin: `E0500627` / `test101`
-- Psychology Admin: `ADMIN_PSYC` / `admin12345`
-- English Admin: `ADMIN_ENG` / `admin12345`
-- Sociology Admin: `ADMIN_SOC` / `admin12345`
-- Linguistics Admin: `ADMIN_LING` / `admin12345`
-- Super Admin: `SUPER_ADMIN` / `admin12345`
+### 3. Dynamic Demonstration Credential Seeding
 
-**Student Users:**
-- Computer Science: `U123001`, `U123002` (password: `surname12345`)
-- Psychology: `U123003`, `U123004` (password: `surname12345`)
-- English: `U123005`, `U123006` (password: `surname12345`)
-- Sociology: `U123007`, `U123008` (password: `surname12345`)
-Linguistics: U123009, U123010
+To ensure zero hardcoded default credentials, generate cryptographically random credentials ($\ge 16$ chars) for administrative roles and single-use activation URLs for students:
+```bash
+php app/scripts/seed_demo.php
+```
 
-## 📚 Documentation
+Sample output:
+```text
+========================================================================
+DFMS Demonstration & Administrative Credential Provisioning
+========================================================================
+Role               | Username   | Password (Generated)        | Scope
+------------------------------------------------------------------------
+Super Admin        | SUPER_ADMIN| k9#P$vX2!mR8*zL4            | Global System Access
+Faculty Admin      | E0500627   | j7@Q#wT9!bN3*yK5            | Faculty of Science
+Department Admin   | ADMIN_CSC  | w4$K!vM8*xP2#zR9            | Computer Science
+```
 
-All documentation is available in the [`docs/`](docs/) directory:
+---
 
-- **[System Documentation](docs/DOCUMENTATION.md)** - Complete setup and usage guide
-- **[Test Cases](docs/Security_Test_Cases.md)** - Security testing procedures
+## 🧪 Testing, Quality Gates & Benchmarks
 
-## 🚀 Quick Security Setup
+### 1. Static Analysis
+Verify static type safety and zero error status across all source files:
+```bash
+# PHPStan static analysis (Level 5)
+php C:\tools\phpstan.phar analyse --memory-limit 1G --no-progress
 
-1. **Environment Setup:**
+# Psalm static analysis
+php C:\tools\psalm.phar --show-info=false
+```
+
+### 2. Automated Test Suite (PHPUnit)
+Execute the comprehensive test suite covering RBAC scoping, isolated storage, file delivery headers, upload queues, ClamAV socket streaming, Laplacian variance filtering, audit hash chaining, rate limiting, and NDPA compliance:
+```bash
+php C:\tools\phpunit.phar
+```
+*Result: 85 tests, 540 assertions, 0 errors, 0 failures.*
+
+### 3. Empirical Evaluation Harnesses
+Execute the benchmarking harnesses required by Section 8 of the thesis security design:
+```bash
+# 1. Blur Calibration Benchmark (Laplacian Variance)
+php docs/evaluation/blur_calibration.php
+
+# 2. ClamAV Streaming Latency & Throughput Benchmark
+php docs/evaluation/clamav_latency.php
+
+# 3. OCR Character Error Rate & Regex Extraction Benchmark
+php docs/evaluation/ocr_accuracy.php
+
+# 4. Two-Stage Authorization & Scoping Latency Benchmark
+php docs/evaluation/auth_benchmark.php
+```
+
+For complete empirical measurement tables and statistical analysis, refer to **[`docs/evaluation/RESULTS.md`](docs/evaluation/RESULTS.md)**.
+
+---
+
+## 🚀 Production Deployment & Hardening Runbook
+
+For production deployment on Linux (Ubuntu 22.04 / Debian 12), follow the detailed guides in [`docs/deploy/`](docs/deploy/):
+
+1. **Storage Isolation & Filesystem Hardening:** Follow [`docs/deploy/STORAGE_SECURITY.md`](docs/deploy/STORAGE_SECURITY.md) to configure `/etc/fstab` mount options (`nosuid,nodev,noexec`), POSIX permission modes (`0750` dirs, `0640` files), and ClamAV UNIX domain sockets.
+2. **Database Principle of Least Privilege:** Create segregated database users for runtime DML vs migration DDL.
+3. **Web Server Acceleration & Deny Rules:**
+   - **Nginx:** Use [`docs/deploy/nginx.sample.conf`](docs/deploy/nginx.sample.conf) with internal `X-Accel-Redirect` blocks.
+   - **Apache:** Use [`docs/deploy/apache.sample.conf`](docs/deploy/apache.sample.conf) and [`docs/deploy/htaccess.sample`](docs/deploy/htaccess.sample) with `mod_xsendfile`.
+4. **Systemd Daemon Workers:** Install service units from [`docs/deploy/systemd/`](docs/deploy/systemd/):
    ```bash
-   cp env.example .env
-   # Edit .env with your database credentials
+   sudo cp docs/deploy/systemd/*.service /etc/systemd/system/
+   sudo cp docs/deploy/systemd/*.timer /etc/systemd/system/
+   sudo systemctl daemon-reload
+   sudo systemctl enable --now dfms-queue-worker.service dfms-email-worker.service dfms-retention.timer
    ```
+5. **Scheduled Maintenance:** Install crontab entries from [`docs/deploy/cron.sample`](docs/deploy/cron.sample).
 
-2. **Database Setup:**
-   ```bash
-   mysql -u your_user -p your_database < dfms_database.sql
-   ```
+---
 
-3. **Security Validation:**
-   ```bash
-   # Run the deployment script (optional - fixes already applied)
-   ./deploy_security_fixes.sh
-   ```
+## 📄 License & Intellectual Property
 
-## 🔐 Security Features
-
-- **CSRF Protection** - All forms protected against cross-site request forgery
-- **Input Validation** - Comprehensive validation and sanitization
-- **Rate Limiting** - Protection against brute force attacks
-- **Secure File Uploads** - Files stored outside webroot with validation
-- **Audit Logging** - Complete security event tracking
-- **NDPR Compliance** - Full data protection regulation compliance
-- **Session Security** - Secure session management with proper flags
-
+This software is developed for the University of Ibadan as an academic digital file management and document verification system. Released under the [MIT License](LICENSE).

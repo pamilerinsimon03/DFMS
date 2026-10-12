@@ -24,12 +24,14 @@
             <div class="user-info">
                 <div class="user-name"><?php echo htmlspecialchars($user['full_name']); ?></div>
                 <div class="user-id">
-                    <?php if ($user['is_admin'] == 1): ?>
-                        <?php if ($user['matric_number'] === 'SUPER_ADMIN'): ?>
-                            Role: Super Admin
-                        <?php else: ?>
-                            Role: <?php echo htmlspecialchars($user['department_name'] ?? 'Psychology'); ?> Admin
-                        <?php endif; ?>
+                    <?php 
+                    $headerRole = AccessScope::resolveRole($user);
+                    if ($headerRole === 'super_admin'): ?>
+                        Role: Super Admin
+                    <?php elseif ($headerRole === 'faculty_admin'): ?>
+                        Role: <?php echo htmlspecialchars($user['faculty_name'] ?? 'Faculty'); ?> Admin
+                    <?php elseif ($headerRole === 'department_admin'): ?>
+                        Role: <?php echo htmlspecialchars($user['department_name'] ?? 'Department'); ?> Admin
                     <?php else: ?>
                         Matric No: <?php echo htmlspecialchars($user['matric_number']); ?>
                     <?php endif; ?>
@@ -90,14 +92,12 @@
                 </div>
             </div>
 
-            <?php if (!$user['department_id']): ?>
+            <?php if (!empty($available_departments)): ?>
             <select name="department">
                 <option value="">All Departments</option>
-                <?php 
-                $departments = [['id' => 1, 'name' => 'Computer Science'], ['id' => 2, 'name' => 'Psychology'], ['id' => 3, 'name' => 'English'], ['id' => 4, 'name' => 'Sociology'], ['id' => 5, 'name' => 'Linguistics']];
-                foreach ($departments as $dept): ?>
+                <?php foreach ($available_departments as $dept): ?>
                 <option value="<?php echo $dept['id']; ?>"
-                    <?php echo ($department_id == $dept['id']) ? 'selected' : ''; ?>>
+                    <?php echo (isset($department_id) && (int)$department_id === (int)$dept['id']) ? 'selected' : ''; ?>>
                     <?php echo htmlspecialchars($dept['name']); ?>
                 </option>
                 <?php endforeach; ?>
@@ -176,7 +176,7 @@
                         <td><?php echo htmlspecialchars($doc['full_name']); ?></td>
                         <td><?php echo htmlspecialchars($doc['department']); ?></td>
                         <td><?php echo htmlspecialchars($doc['level']); ?></td>
-                        <td><a href="/app/controllers/verification_detail.php?doc_id=<?php echo $doc['id']; ?>"
+                        <td><a href="/app/controllers/verification_detail.php?doc_id=<?php echo htmlspecialchars($doc['public_id'] ?? $doc['id']); ?>"
                                 class="doc-link"><?php echo htmlspecialchars($doc['document_name']); ?></a></td>
                         <td><?php echo date('M d, Y', strtotime($doc['upload_date'] ?? 'now')); ?></td>
                         <td class="td-status <?php echo $status_slug; ?>">
@@ -189,7 +189,7 @@
                             <div class="action-menu">
                                 <img src="/app/src/assets/images/more.svg" alt="More" class="action-btn">
                                 <div class="action-menu-content">
-                                    <a href="/app/controllers/verification_detail.php?doc_id=<?php echo $doc['id']; ?>"
+                                    <a href="/app/controllers/verification_detail.php?doc_id=<?php echo htmlspecialchars($doc['public_id'] ?? $doc['id']); ?>"
                                         class="action-item"><img src="/app/src/assets/images/Bold Eye.svg" alt="View">
                                         View</a>
                                 </div>

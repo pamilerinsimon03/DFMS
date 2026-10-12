@@ -21,6 +21,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <meta name="csrf-token" content="<?php echo generateCSRFToken(); ?>">
+    <script>window.DFMS_CSRF_TOKEN = "<?php echo generateCSRFToken(); ?>";</script>
 </head>
 
 <body>

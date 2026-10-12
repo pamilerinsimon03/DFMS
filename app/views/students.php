@@ -16,12 +16,14 @@
             <div class="user-info">
                 <div class="user-name"><?php echo htmlspecialchars($user['full_name']); ?></div>
                 <div class="user-id">
-                    <?php if ($user['is_admin'] == 1): ?>
-                        <?php if ($user['matric_number'] === 'SUPER_ADMIN'): ?>
-                            Role: Super Admin
-                        <?php else: ?>
-                            Role: <?php echo htmlspecialchars($user['department_name'] ?? 'Psychology'); ?> Admin
-                        <?php endif; ?>
+                    <?php 
+                    $headerRole = AccessScope::resolveRole($user);
+                    if ($headerRole === 'super_admin'): ?>
+                        Role: Super Admin
+                    <?php elseif ($headerRole === 'faculty_admin'): ?>
+                        Role: <?php echo htmlspecialchars($user['faculty_name'] ?? 'Faculty'); ?> Admin
+                    <?php elseif ($headerRole === 'department_admin'): ?>
+                        Role: <?php echo htmlspecialchars($user['department_name'] ?? 'Department'); ?> Admin
                     <?php else: ?>
                         Matric No: <?php echo htmlspecialchars($user['matric_number']); ?>
                     <?php endif; ?>
@@ -56,15 +58,23 @@
         </a>
     </div>
     
-    <?php if ($user['matric_number'] === 'SUPER_ADMIN' && $filter_department_id === null): ?>
+    <?php 
+    $userRole = AccessScope::resolveRole($user);
+    if ($userRole === 'super_admin' && empty($filter_department_id)): ?>
         <div class="filter-indicator">
-            <span class="filter-badge">Showing all students from all departments</span>
-            <a href="?<?php echo http_build_query(array_merge($_GET, ['show_all' => '0'])); ?>" class="view-all-link">View My Department Only</a>
+            <span class="filter-badge">Showing all students across all departments</span>
         </div>
-    <?php elseif ($user['matric_number'] === 'SUPER_ADMIN' && $filter_department_id !== null): ?>
+    <?php elseif ($userRole === 'super_admin' && !empty($filter_department_id)): ?>
         <div class="filter-indicator">
-            <span class="filter-badge">Showing students from your department only</span>
-            <a href="?<?php echo http_build_query(array_merge($_GET, ['show_all' => '1'])); ?>" class="view-all-link">View All Students</a>
+            <span class="filter-badge">Showing students from selected department</span>
+            <a href="?<?php echo http_build_query(array_merge($_GET, ['department' => ''])); ?>" class="view-all-link">View All Students</a>
+        </div>
+    <?php elseif ($userRole === 'faculty_admin'): ?>
+        <div class="filter-indicator">
+            <span class="filter-badge"><?php echo !empty($filter_department_id) ? 'Showing students from selected department' : 'Showing students from your faculty (' . htmlspecialchars($user['faculty_name'] ?? 'Faculty of Science') . ')'; ?></span>
+            <?php if (!empty($filter_department_id)): ?>
+                <a href="?<?php echo http_build_query(array_merge($_GET, ['department' => ''])); ?>" class="view-all-link">View All Faculty Students</a>
+            <?php endif; ?>
         </div>
     <?php elseif ($user['department_id']): ?>
         <div class="filter-indicator">
@@ -89,6 +99,18 @@
                     <img src="/app/src/assets/images/calendar.svg" alt="Calendar">
                 </div>
             </div>
+
+            <?php if (!empty($available_departments)): ?>
+            <select name="department">
+                <option value="">All Departments</option>
+                <?php foreach ($available_departments as $dept): ?>
+                <option value="<?php echo $dept['id']; ?>"
+                    <?php echo (isset($filter_department_id) && (int)$filter_department_id === (int)$dept['id']) ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($dept['name']); ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+            <?php endif; ?>
 
             <select name="level">
                 <option value="">All Levels</option>
@@ -121,18 +143,24 @@
     <?php if (empty($students)): ?>
         <div class="no-students">
             <p>No students found matching your criteria.</p>
-            <?php if ($user['department_id'] && $user['matric_number'] !== 'SUPER_ADMIN'): ?>
-                <p>You are currently viewing students from your department only.</p>
-            <?php elseif ($user['matric_number'] === 'SUPER_ADMIN' && $filter_department_id !== null): ?>
-                <p>You are currently viewing students from your department only. 
-                   <a href="?<?php echo http_build_query(array_merge($_GET, ['show_all' => '1'])); ?>">View all students</a>
+            <?php if ($userRole === 'super_admin' && !empty($filter_department_id)): ?>
+                <p>Filtered by department. 
+                   <a href="?<?php echo http_build_query(array_merge($_GET, ['department' => ''])); ?>">View all students</a>
                 </p>
+            <?php elseif ($userRole === 'faculty_admin'): ?>
+                <p>Showing students from your faculty (<?php echo htmlspecialchars($user['faculty_name'] ?? 'Faculty of Science'); ?>).
+                <?php if (!empty($filter_department_id)): ?>
+                   <a href="?<?php echo http_build_query(array_merge($_GET, ['department' => ''])); ?>">View all faculty students</a>
+                <?php endif; ?>
+                </p>
+            <?php elseif ($user['department_id']): ?>
+                <p>You are currently viewing students from your department only.</p>
             <?php endif; ?>
         </div>
     <?php else: ?>
         <div class="students-grid">
             <?php foreach ($students as $student): ?>
-            <a href="/app/controllers/student_profile.php?id=<?php echo $student['id']; ?>" class="student-card">
+            <a href="/app/controllers/student_profile.php?id=<?php echo htmlspecialchars($student['public_id'] ?? $student['id']); ?>" class="student-card">
                 <img src="/app/src/assets/images/admin-avatar.png" alt="Student Avatar">
                 <h3><?php echo htmlspecialchars($student['full_name']); ?></h3>
                 <p>Matric No: <?php echo htmlspecialchars($student['matric_number']); ?></p>

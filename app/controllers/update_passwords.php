@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
-$page_title = 'Update Student Passwords';
+$page_title = 'Resend Activation Emails';
 $active_page = 'update_passwords';
 $css_files = ['admin.css', 'update_passwords.css'];
 $js_files = ['admin.js'];

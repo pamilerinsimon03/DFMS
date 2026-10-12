@@ -1,0 +1,34 @@
+# DFMS Production Crontab Configuration Sample
+# Install via: sudo crontab -u www-data -e
+# Path: /etc/cron.d/dfms
+
+# Set environment variables for cron executions
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+APP_ENV=production
+STORAGE_ROOT=/var/www/dfms_private/secure_uploads
+LOG_ROOT=/var/www/dfms_private/logs
+
+# ----------------------------------------------------------------------
+# 1. Asynchronous Upload Pipeline Worker Watchdog / Execution
+# Run every minute if systemd worker is not used, or as watchdog
+# ----------------------------------------------------------------------
+* * * * * php /var/www/dfms/app/scripts/queue_worker.php --single-run >> /var/www/dfms_private/logs/queue_worker_cron.log 2>&1
+
+# ----------------------------------------------------------------------
+# 2. Asynchronous Activation Email Queue Processing
+# Dispatches activation tokens and security notifications every minute
+# ----------------------------------------------------------------------
+* * * * * php /var/www/dfms/app/scripts/process_email_queue.php >> /var/www/dfms_private/logs/email_worker_cron.log 2>&1
+
+# ----------------------------------------------------------------------
+# 3. Statutory Retention Enforcement & Automated Purge (NDPA 2023 s.24)
+# Executes daily at 02:30 AM to unlink non-core expired records
+# ----------------------------------------------------------------------
+30 2 * * * php /var/www/dfms/app/scripts/enforce_retention.php >> /var/www/dfms_private/logs/retention_cron.log 2>&1
+
+# ----------------------------------------------------------------------
+# 4. Tamper-Evident Audit Hash Chain Integrity Verification
+# Validates complete SHA-256 Merkle-style hash chain daily at 04:00 AM
+# ----------------------------------------------------------------------
+0 4 * * * php /var/www/dfms/app/scripts/verify_audit_chain.php >> /var/www/dfms_private/logs/audit_verify_cron.log 2>&1

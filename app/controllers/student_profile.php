@@ -10,15 +10,19 @@ if (!isset($_GET['id'])) {
     exit();
 }
 
-$student_id = $_GET['id'];
-$student = User::getById($student_id);
-
+$rawStudentId = $_GET['id'];
 $user = User::getById($_SESSION['user_id']);
+$student = User::getByIdScoped($rawStudentId, $user);
+
+if (!$student) {
+    header("Location: /app/controllers/students.php");
+    exit();
+}
+
 $notifications = Notification::getForUser($_SESSION['user_id'], 15);
 $unread_count = Notification::countUnread($_SESSION['user_id']);
 
-
-$documents = Document::getDocumentsByUserId($student_id);
+$documents = Document::getDocumentsByUserId((int)$student['id']);
 
 $active_page = 'students';
 $css_files = ['admin.css', 'student_profile.css'];
