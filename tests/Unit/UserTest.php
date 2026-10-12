@@ -17,19 +17,18 @@ class UserTest extends TestCase {
         }
     }
 
-    // Test pure logic
+    // Test pure logic: cryptographically strong random password generation
     public function testGeneratePassword() {
         $fullName = "John Doe";
         $password = User::generatePassword($fullName);
-        $this->assertEquals("doe12345", $password);
+        $this->assertGreaterThanOrEqual(16, strlen($password));
+        $this->assertNotEquals("doe12345", $password);
+        $this->assertMatchesRegularExpression('/[A-Z]/', $password);
+        $this->assertMatchesRegularExpression('/[0-9]/', $password);
 
-        $fullName = "Jane";
-        $password = User::generatePassword($fullName);
-        $this->assertEquals("jane12345", $password);
-
-        $fullName = "A B C D";
-        $password = User::generatePassword($fullName);
-        $this->assertEquals("d12345", $password);
+        $fullName2 = "Jane";
+        $password2 = User::generatePassword($fullName2);
+        $this->assertNotEquals($password, $password2, "Subsequent passwords must be unique random values");
     }
     
     // Test database interaction with Mock

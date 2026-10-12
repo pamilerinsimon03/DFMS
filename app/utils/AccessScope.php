@@ -222,7 +222,7 @@ class AccessScope
             return (int)($doc['user_id'] ?? 0) === (int)($user['id'] ?? -1);
         }
 
-        $docDeptId = isset($doc['department_id']) && $doc['department_id'] !== null
+        $docDeptId = !empty($doc['department_id'])
             ? (int)$doc['department_id']
             : null;
 

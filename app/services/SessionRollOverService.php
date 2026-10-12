@@ -28,7 +28,11 @@ class SessionRollOverService
 
             foreach ($students as $s) {
                 // Record session snapshot in session_history
-                $histStmt->bind_param("issi", $s['id'], $s['session'], $s['level'], $s['department_id']);
+                $deptId = ($s['department_id'] !== null && $s['department_id'] !== '') ? (int)$s['department_id'] : 1;
+                $currentSession = !empty($s['session']) ? $s['session'] : '2023/2024';
+                $currentLevel = !empty($s['level']) ? $s['level'] : '100L';
+
+                $histStmt->bind_param("issi", $s['id'], $currentSession, $currentLevel, $deptId);
                 $histStmt->execute();
                 $archivedCount++;
 
@@ -52,7 +56,14 @@ class SessionRollOverService
             if (file_exists($settingsFile)) {
                 $settings = json_decode(file_get_contents($settingsFile), true) ?: [];
                 $settings['current_session'] = $newSession;
+                $settings['session_year'] = $newSession;
                 file_put_contents($settingsFile, json_encode($settings, JSON_PRETTY_PRINT));
+            }
+
+            // Synchronize active session if available
+            if (session_status() === PHP_SESSION_ACTIVE || isset($_SESSION)) {
+                $_SESSION['academic_session'] = $newSession;
+                $_SESSION['current_academic_session'] = $newSession;
             }
 
             $conn->commit();

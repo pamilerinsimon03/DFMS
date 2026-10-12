@@ -16,12 +16,12 @@ if (User::isAdmin($user_id)) {
     $start_date = $_GET['start_date'] ?? date('Y-m-d', strtotime('-30 days'));
     $end_date = $_GET['end_date'] ?? date('Y-m-d');
 
-    $total_docs = Document::countAllDocuments('all', $start_date, $end_date, null, $department_id, null, null, null) ?? 0;
-    $pending_docs = Document::countAllDocuments('pending', $start_date, $end_date, null, $department_id, null, null, null) ?? 0;
-    $approved_docs = Document::countAllDocuments('approved', $start_date, $end_date, null, $department_id, null, null, null) ?? 0;
-    $rejected_docs = Document::countAllDocuments('rejected', $start_date, $end_date, null, $department_id, null, null, null) ?? 0;
+    $total_docs = Document::countAllDocuments('all', $start_date, $end_date, null, $department_id, null, null, null, $user) ?? 0;
+    $pending_docs = Document::countAllDocuments('pending', $start_date, $end_date, null, $department_id, null, null, null, $user) ?? 0;
+    $approved_docs = Document::countAllDocuments('approved', $start_date, $end_date, null, $department_id, null, null, null, $user) ?? 0;
+    $rejected_docs = Document::countAllDocuments('rejected', $start_date, $end_date, null, $department_id, null, null, null, $user) ?? 0;
     
-    $recent_pending = Document::getPendingDocuments($start_date, $end_date, 5, $department_id) ?? [];
+    $recent_pending = Document::getPendingDocuments($start_date, $end_date, 5, $department_id, $user) ?? [];
     
     $page_title = 'Admin Dashboard';
     $active_page = 'dashboard';

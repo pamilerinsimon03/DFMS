@@ -66,7 +66,7 @@ class RateLimiter
                 $cutoff = $now - $window;
 
                 $redis->multi();
-                $redis->zRemRangeByScore($redisKey, 0, (string)$cutoff);
+                $redis->zRemRangeByScore($redisKey, '-inf', (string)$cutoff);
                 $redis->zCard($redisKey);
                 $redis->zAdd($redisKey, $now, (string)$now . ':' . bin2hex(random_bytes(4)));
                 $redis->expire($redisKey, $window + 10);

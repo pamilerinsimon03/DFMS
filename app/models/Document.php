@@ -599,10 +599,23 @@ class Document
             $types .= 'i';
         }
 
-        if ($status_filter) {
-            $sql .= " AND d.status = ?";
-            $params[] = $status_filter;
-            $types .= 's';
+        if (!empty($status_filter) && strtolower((string)$status_filter) !== 'all') {
+            $normStatus = strtolower(trim((string)$status_filter));
+            if ($normStatus === 'pending') {
+                $sql .= " AND d.status IN ('Pending Quality Check', 'Pending Approval')";
+            } elseif ($normStatus === 'approved') {
+                $sql .= " AND d.status = 'Approved'";
+            } elseif ($normStatus === 'rejected') {
+                $sql .= " AND d.status = 'Rejected'";
+            } elseif ($normStatus === 'pending quality check') {
+                $sql .= " AND d.status = 'Pending Quality Check'";
+            } elseif ($normStatus === 'pending approval') {
+                $sql .= " AND d.status = 'Pending Approval'";
+            } else {
+                $sql .= " AND d.status = ?";
+                $params[] = $status_filter;
+                $types .= 's';
+            }
         }
 
         if ($search) {
@@ -706,10 +719,23 @@ class Document
             $types .= 'i';
         }
 
-        if ($status_filter) {
-            $sql .= " AND d.status = ?";
-            $params[] = $status_filter;
-            $types .= 's';
+        if (!empty($status_filter) && strtolower((string)$status_filter) !== 'all') {
+            $normStatus = strtolower(trim((string)$status_filter));
+            if ($normStatus === 'pending') {
+                $sql .= " AND d.status IN ('Pending Quality Check', 'Pending Approval')";
+            } elseif ($normStatus === 'approved') {
+                $sql .= " AND d.status = 'Approved'";
+            } elseif ($normStatus === 'rejected') {
+                $sql .= " AND d.status = 'Rejected'";
+            } elseif ($normStatus === 'pending quality check') {
+                $sql .= " AND d.status = 'Pending Quality Check'";
+            } elseif ($normStatus === 'pending approval') {
+                $sql .= " AND d.status = 'Pending Approval'";
+            } else {
+                $sql .= " AND d.status = ?";
+                $params[] = $status_filter;
+                $types .= 's';
+            }
         }
 
         if ($search) {
@@ -971,6 +997,22 @@ class Document
         $ext = StoragePathResolver::determineExtension($tmpPath);
         if (!$ext || !in_array($ext, ['pdf', 'jpg', 'jpeg', 'png'], true)) {
             return ['success' => false, 'http_code' => 422, 'message' => 'Invalid file format: Only PDF, JPEG, and PNG files are accepted.'];
+        }
+
+        // Unlink old physical file outside web root before staging replacement to avoid orphaned files
+        if (!empty($doc['file_path'])) {
+            try {
+                $oldPhysicalPath = StoragePathResolver::resolvePhysicalPath($doc['file_path']);
+                if (!empty($oldPhysicalPath) && file_exists($oldPhysicalPath) && is_file($oldPhysicalPath)) {
+                    $realOld = realpath($oldPhysicalPath);
+                    $storageRoot = realpath(StoragePathResolver::getStorageRoot());
+                    if ($realOld && $storageRoot && str_starts_with(str_replace('\\', '/', $realOld), str_replace('\\', '/', $storageRoot))) {
+                        @unlink($realOld);
+                    }
+                }
+            } catch (Throwable $e) {
+                // If old path resolution fails or file was already purged, proceed safely
+            }
         }
 
         // Stage file in STORAGE_ROOT/_staging

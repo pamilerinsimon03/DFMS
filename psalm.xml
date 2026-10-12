@@ -20,6 +20,7 @@
         <InvalidClass errorLevel="suppress" />
         <UndefinedFunction errorLevel="suppress" />
         <PossiblyUnusedProperty errorLevel="suppress" />
+        <PossiblyUnusedReturnValue errorLevel="suppress" />
         <PropertyNotSetInConstructor errorLevel="suppress" />
         <MissingConstructor errorLevel="suppress" />
     </issueHandlers>

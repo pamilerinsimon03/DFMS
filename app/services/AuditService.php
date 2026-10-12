@@ -52,11 +52,11 @@ class AuditService
             'details'    => $detailsStr,
             'ip_address' => (string)($data['ip_address'] ?? ''),
             'outcome'    => (string)($data['outcome'] ?? 'success'),
-            'role'       => isset($data['role']) && $data['role'] !== null && $data['role'] !== '' ? (string)$data['role'] : null,
-            'route'      => isset($data['route']) && $data['route'] !== null && $data['route'] !== '' ? (string)$data['route'] : null,
-            'target'     => isset($data['target']) && $data['target'] !== null && $data['target'] !== '' ? (string)$data['target'] : null,
+            'role'       => isset($data['role']) && $data['role'] !== '' ? (string)$data['role'] : null,
+            'route'      => isset($data['route']) && $data['route'] !== '' ? (string)$data['route'] : null,
+            'target'     => isset($data['target']) && $data['target'] !== '' ? (string)$data['target'] : null,
             'timestamp'  => (string)($data['timestamp'] ?? $data['created_at'] ?? ''),
-            'user_id'    => isset($data['user_id']) && $data['user_id'] !== null && $data['user_id'] !== '' ? (int)$data['user_id'] : null,
+            'user_id'    => isset($data['user_id']) && $data['user_id'] !== '' ? (int)$data['user_id'] : null,
         ];
 
         ksort($payload);
@@ -290,11 +290,11 @@ class AuditService
                 'details'    => (string)($row['details'] ?? $row['event_description'] ?? ''),
                 'ip_address' => (string)($row['ip_address'] ?? ''),
                 'outcome'    => (string)($row['outcome'] ?? 'success'),
-                'role'       => isset($row['role']) && $row['role'] !== null && $row['role'] !== '' ? (string)$row['role'] : null,
-                'route'      => isset($row['route']) && $row['route'] !== null && $row['route'] !== '' ? (string)$row['route'] : null,
-                'target'     => isset($row['target']) && $row['target'] !== null && $row['target'] !== '' ? (string)$row['target'] : null,
+                'role'       => isset($row['role']) && $row['role'] !== '' ? (string)$row['role'] : null,
+                'route'      => isset($row['route']) && $row['route'] !== '' ? (string)$row['route'] : null,
+                'target'     => isset($row['target']) && $row['target'] !== '' ? (string)$row['target'] : null,
                 'timestamp'  => $timestamp,
-                'user_id'    => isset($row['user_id']) && $row['user_id'] !== null && $row['user_id'] !== '' ? (int)$row['user_id'] : null,
+                'user_id'    => isset($row['user_id']) && $row['user_id'] !== '' ? (int)$row['user_id'] : null,
             ];
 
             $canonicalJson = self::buildCanonicalJson($canonicalData);
@@ -361,11 +361,11 @@ class AuditService
                 'details'    => (string)($row['details'] ?? $row['event_description'] ?? ''),
                 'ip_address' => (string)($row['ip_address'] ?? ''),
                 'outcome'    => (string)($row['outcome'] ?? 'success'),
-                'role'       => isset($row['role']) && $row['role'] !== null && $row['role'] !== '' ? (string)$row['role'] : null,
-                'route'      => isset($row['route']) && $row['route'] !== null && $row['route'] !== '' ? (string)$row['route'] : null,
-                'target'     => isset($row['target']) && $row['target'] !== null && $row['target'] !== '' ? (string)$row['target'] : null,
+                'role'       => isset($row['role']) && $row['role'] !== '' ? (string)$row['role'] : null,
+                'route'      => isset($row['route']) && $row['route'] !== '' ? (string)$row['route'] : null,
+                'target'     => isset($row['target']) && $row['target'] !== '' ? (string)$row['target'] : null,
                 'timestamp'  => $timestamp,
-                'user_id'    => isset($row['user_id']) && $row['user_id'] !== null && $row['user_id'] !== '' ? (int)$row['user_id'] : null,
+                'user_id'    => isset($row['user_id']) && $row['user_id'] !== '' ? (int)$row['user_id'] : null,
             ];
 
             $canonicalJson = self::buildCanonicalJson($canonicalData);
@@ -388,4 +388,70 @@ class AuditService
         $db->query("SET @ALLOW_AUDIT_LOG_MUTATION = NULL");
         return $backfilled;
     }
+
+    /**
+     * Get recent audit events with optional role filtering
+     * Gracefully accepts inverted arguments if caller passes role as first argument.
+     *
+     * @param int|string $limit Maximum events to retrieve (or role if inverted)
+     * @param string|int|null $role Role filter (or limit if inverted)
+     * @param mysqli|null $dbConn Database connection
+     * @return array
+     */
+    public static function getRecentEvents($limit = 10, $role = null, ?mysqli $dbConn = null): array
+    {
+        // Gracefully handle inverted arguments: (string $role, int $limit)
+        if (is_string($limit) && !is_numeric($limit)) {
+            $swappedRole = $limit;
+            $limit = is_numeric($role) ? (int)$role : 10;
+            $role = $swappedRole;
+        }
+
+        $limit = (int)$limit;
+        if ($limit <= 0) {
+            $limit = 10;
+        }
+
+        global $conn;
+        $db = $dbConn ?? $conn;
+        if (!$db) {
+            return [];
+        }
+
+        $sql = "SELECT a.*, 
+                       u.full_name, 
+                       u.matric_number,
+                       COALESCE(a.action, a.event_type) AS event_type,
+                       COALESCE(a.details, a.event_description) AS event_description,
+                       COALESCE(a.timestamp, a.created_at) AS created_at
+                FROM audit_logs a 
+                LEFT JOIN users u ON a.user_id = u.id";
+
+        $params = [];
+        $types = '';
+
+        if (!empty($role) && is_string($role)) {
+            $sql .= " WHERE a.role = ?";
+            $params[] = $role;
+            $types .= 's';
+        }
+
+        $sql .= " ORDER BY a.id DESC LIMIT ?";
+        $params[] = $limit;
+        $types .= 'i';
+
+        $stmt = $db->prepare($sql);
+        if (!$stmt) {
+            return [];
+        }
+
+        $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $events = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+        $stmt->close();
+
+        return $events;
+    }
 }
+

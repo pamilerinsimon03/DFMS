@@ -3,6 +3,7 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Document.php';
 require_once __DIR__ . '/../models/Notification.php';
+require_once __DIR__ . '/../services/AuditService.php';
 
 
 $user = User::getById($_SESSION['user_id']);
@@ -42,16 +43,7 @@ for ($i = 5; $i >= 0; $i--) {
 // 4. Fetch Audit Logs for Security Panel (Super Admin ONLY)
 $audit_logs = [];
 if ($is_super_admin) {
-    global $conn;
-    $sql = "SELECT a.*, u.full_name, u.matric_number 
-            FROM audit_logs a 
-            LEFT JOIN users u ON a.user_id = u.id 
-            ORDER BY a.created_at DESC 
-            LIMIT 10";
-    $result = $conn->query($sql);
-    if ($result) {
-        $audit_logs = $result->fetch_all(MYSQLI_ASSOC);
-    }
+    $audit_logs = AuditService::getRecentEvents(10);
 }
 
 $page_title = 'Analytics';
