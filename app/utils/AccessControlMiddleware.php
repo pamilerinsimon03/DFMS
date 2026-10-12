@@ -39,6 +39,37 @@ class AccessControlMiddleware
     }
 
     /**
+     * Check if a given user profile is authorized to access a route or capability
+     * 
+     * @param array $user User data dictionary
+     * @param string $route Script name (e.g. 'secure_file_viewer.php' or 'admin.php')
+     * @return bool
+     */
+    public static function can(array $user, string $route): bool
+    {
+        $perms = self::loadPermissions();
+        $routes = $perms['routes'] ?? [];
+        $hierarchy = $perms['hierarchy'] ?? [];
+        $userRole = AccessScope::resolveRole($user);
+
+        $scriptName = basename($route);
+        if (!isset($routes[$scriptName])) {
+            return false;
+        }
+
+        $allowedRoles = $routes[$scriptName];
+        foreach ($allowedRoles as $allowedRole) {
+            if ($userRole === $allowedRole) {
+                return true;
+            }
+            if (isset($hierarchy[$userRole]) && in_array($allowedRole, $hierarchy[$userRole], true)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Inspect request against session state and route permission matrix
      */
     public static function checkAccess(): void
@@ -86,23 +117,7 @@ class AccessControlMiddleware
 
         // 3. Role Hierarchy & Route Permission Check
         $userRole = AccessScope::resolveRole($user);
-        $allowedRoles = $routes[$scriptName];
-        $hierarchy = $perms['hierarchy'] ?? [];
-
-        $isAuthorized = false;
-        foreach ($allowedRoles as $allowedRole) {
-            if ($userRole === $allowedRole) {
-                $isAuthorized = true;
-                break;
-            }
-            // Check if userRole inherits allowedRole down the hierarchy
-            if (isset($hierarchy[$userRole]) && in_array($allowedRole, $hierarchy[$userRole], true)) {
-                $isAuthorized = true;
-                break;
-            }
-        }
-
-        if (!$isAuthorized) {
+        if (!self::can($user, $scriptName)) {
             self::handleForbidden(
                 $user['id'],
                 $requestUri,

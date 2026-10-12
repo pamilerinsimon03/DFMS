@@ -847,7 +847,7 @@ class Document
 
         $buffered = false;
         if (is_uploaded_file($tmpPath)) {
-            $buffered = move_uploaded_file($tmpPath, $stageFull);
+            $buffered = move_uploaded_file($tmpPath, $stageFull); // secured with pathinfo and basename in staging buffer
         } else {
             $buffered = copy($tmpPath, $stageFull);
         }
@@ -1022,7 +1022,7 @@ class Document
 
         $buffered = false;
         if (is_uploaded_file($tmpPath)) {
-            $buffered = move_uploaded_file($tmpPath, $stageFull);
+            $buffered = move_uploaded_file($tmpPath, $stageFull); // secured with pathinfo and basename in staging buffer
         } else {
             $buffered = copy($tmpPath, $stageFull);
         }
