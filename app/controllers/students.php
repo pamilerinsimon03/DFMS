@@ -8,7 +8,18 @@ require_once __DIR__ . '/../models/Notification.php';
 $user = User::getById($_SESSION['user_id']);
 $notifications = Notification::getForUser($_SESSION['user_id'], 15);
 $unread_count = Notification::countUnread($_SESSION['user_id']);
-$requested_dept = isset($_GET['department']) ? (int)$_GET['department'] : null;
+$requested_dept = isset($_GET['department']) && $_GET['department'] !== '' ? (int)$_GET['department'] : null;
+$filter_department_id = $requested_dept;
+
+$userRole = AccessScope::resolveRole($user);
+if ($userRole === 'super_admin') {
+    $available_departments = User::getAllDepartments();
+} elseif ($userRole === 'faculty_admin') {
+    $facultyId = AccessScope::resolveFacultyId($user);
+    $available_departments = User::getFacultyDepartments($facultyId);
+} else {
+    $available_departments = [];
+}
 
 $start_date = !empty($_GET['start_date']) ? $_GET['start_date'] : '2020-01-01';
 $end_date = !empty($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-d');
@@ -54,10 +65,12 @@ if (isset($_GET['ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolo
     
     if (empty($students)) {
         $html .= '<div class="no-students"><p>No students found matching your criteria.</p>';
-        if ($user['department_id'] && $user['matric_number'] !== 'SUPER_ADMIN') {
+        if ($userRole === 'super_admin' && $requested_dept !== null) {
+            $html .= '<p>Filtered by department. <a href="?' . http_build_query(array_merge($_GET, ['department' => ''])) . '">View all students</a></p>';
+        } elseif ($userRole === 'faculty_admin') {
+            $html .= '<p>Showing students from your faculty (' . htmlspecialchars($user['faculty_name'] ?? 'Faculty of Science') . ').</p>';
+        } elseif ($user['department_id']) {
             $html .= '<p>You are currently viewing students from your department only.</p>';
-        } elseif ($user['matric_number'] === 'SUPER_ADMIN' && $requested_dept !== null) {
-            $html .= '<p>You are currently viewing students from your department only. <a href="?' . http_build_query(array_merge($_GET, ['show_all' => '1'])) . '">View all students</a></p>';
         }
         $html .= '</div>';
     } else {

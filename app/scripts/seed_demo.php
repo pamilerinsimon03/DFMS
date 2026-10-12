@@ -97,16 +97,18 @@ foreach ($admins as $admin) {
     $publicId = User::generateUUID();
 
     $stmt = $conn->prepare("
-        INSERT INTO users (public_id, matric_number, password, full_name, email, role, is_admin, is_activated, department_id, level, session, programme)
-        VALUES (?, ?, ?, ?, ?, ?, 1, 1, ?, 'N/A', '2023/2024', 'Administration')
+        INSERT INTO users (public_id, matric_number, password, full_name, email, role, is_admin, is_activated, department_id, faculty_id, level, session, programme)
+        VALUES (?, ?, ?, ?, ?, ?, 1, 1, ?, ?, 'N/A', '2023/2024', 'Administration')
         ON DUPLICATE KEY UPDATE 
+            full_name = VALUES(full_name),
             password = VALUES(password),
             role = VALUES(role),
             is_admin = 1,
             is_activated = 1,
-            department_id = VALUES(department_id)
+            department_id = VALUES(department_id),
+            faculty_id = VALUES(faculty_id)
     ");
-    $stmt->bind_param("ssssssi", $publicId, $admin['matric_number'], $hashedPassword, $admin['full_name'], $admin['email'], $admin['role'], $admin['department_id']);
+    $stmt->bind_param("ssssssii", $publicId, $admin['matric_number'], $hashedPassword, $admin['full_name'], $admin['email'], $admin['role'], $admin['department_id'], $admin['faculty_id']);
     $stmt->execute();
     $stmt->close();
 

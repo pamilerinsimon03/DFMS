@@ -711,7 +711,7 @@ CREATE TABLE IF NOT EXISTS `session_history` (
 
 -- 10.5 Update admin user roles & flag
 UPDATE `users` SET `is_admin` = 1, `role` = 'super_admin' WHERE `matric_number` = 'SUPER_ADMIN';
-UPDATE `users` SET `is_admin` = 1, `role` = 'department_admin', `department_id` = 1 WHERE `matric_number` = 'E0500627';
+UPDATE `users` SET `is_admin` = 1, `role` = 'faculty_admin', `department_id` = 1, `faculty_id` = 1 WHERE `matric_number` = 'E0500627';
 UPDATE `users` SET `is_admin` = 1, `role` = 'department_admin' WHERE `matric_number` IN ('ADMIN_PSYC', 'ADMIN_ENG', 'ADMIN_SOC', 'ADMIN_LING', 'ADMIN/001');
 
 -- 10.6 Seed Initial Documents for Department 1 (Computer Science)

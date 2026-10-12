@@ -54,6 +54,33 @@ class AccessScope
     }
 
     /**
+     * Resolve faculty ID with fallback to faculty_departments mapping
+     */
+    public static function resolveFacultyId(array $user): int
+    {
+        if (!empty($user['faculty_id'])) {
+            return (int)$user['faculty_id'];
+        }
+        if (!empty($user['department_id'])) {
+            global $conn;
+            if ($conn) {
+                $stmt = $conn->prepare("SELECT faculty_id FROM faculty_departments WHERE department_id = ? LIMIT 1");
+                if ($stmt) {
+                    $deptId = (int)$user['department_id'];
+                    $stmt->bind_param("i", $deptId);
+                    $stmt->execute();
+                    $row = $stmt->get_result()->fetch_assoc();
+                    $stmt->close();
+                    if ($row && !empty($row['faculty_id'])) {
+                        return (int)$row['faculty_id'];
+                    }
+                }
+            }
+        }
+        return 0;
+    }
+
+    /**
      * Build parameterized SQL filter for documents table based on user role and optional requested department filter
      * 
      * @param array $user Authenticated session user
@@ -78,7 +105,7 @@ class AccessScope
         }
 
         if ($role === 'faculty_admin') {
-            $facultyId = (int)($user['faculty_id'] ?? 0);
+            $facultyId = self::resolveFacultyId($user);
             $allowedDepts = self::getFacultyDepartmentIds($facultyId);
             if (empty($allowedDepts)) {
                 return ['sql' => '1=0', 'types' => '', 'params' => []];
@@ -148,7 +175,7 @@ class AccessScope
         }
 
         if ($role === 'faculty_admin') {
-            $facultyId = (int)($user['faculty_id'] ?? 0);
+            $facultyId = self::resolveFacultyId($user);
             $allowedDepts = self::getFacultyDepartmentIds($facultyId);
             if (empty($allowedDepts)) {
                 return ['sql' => '1=0', 'types' => '', 'params' => []];
@@ -237,7 +264,7 @@ class AccessScope
         }
 
         if ($role === 'faculty_admin') {
-            $facultyId = (int)($user['faculty_id'] ?? 0);
+            $facultyId = self::resolveFacultyId($user);
             $allowedDepts = self::getFacultyDepartmentIds($facultyId);
             return in_array($docDeptId, $allowedDepts, true);
         }
@@ -267,7 +294,7 @@ class AccessScope
         }
 
         if ($role === 'faculty_admin') {
-            $facultyId = (int)($user['faculty_id'] ?? 0);
+            $facultyId = self::resolveFacultyId($user);
             $allowedDepts = self::getFacultyDepartmentIds($facultyId);
             return in_array($targetDeptId, $allowedDepts, true);
         }

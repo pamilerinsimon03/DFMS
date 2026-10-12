@@ -552,10 +552,16 @@ class Document
     public static function processPendingQueue() {
         // Background queue processing is handled by dedicated CLI worker (app/scripts/queue_worker.php)
         // Inline execution is strictly gated behind a development environment flag (SYNC_QUEUE_PROCESSING=1)
-        if (getenv('APP_ENV') === 'development' && getenv('SYNC_QUEUE_PROCESSING') === '1') {
+        $appEnv = getenv('APP_ENV') ?: ($_ENV['APP_ENV'] ?? 'development');
+        $syncQueue = getenv('SYNC_QUEUE_PROCESSING') ?: ($_ENV['SYNC_QUEUE_PROCESSING'] ?? '0');
+        if ($appEnv === 'development' && $syncQueue === '1') {
             $workerScript = __DIR__ . '/../scripts/queue_worker.php';
             if (file_exists($workerScript)) {
-                @exec("php " . escapeshellarg($workerScript) . " --once > /dev/null 2>&1 &");
+                if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+                    @pclose(@popen("start /B php " . escapeshellarg($workerScript) . " --once > NUL 2>&1", "r"));
+                } else {
+                    @exec("php " . escapeshellarg($workerScript) . " --once > /dev/null 2>&1 &");
+                }
             }
         }
         return true;
@@ -934,6 +940,7 @@ class Document
             );
 
             $conn->commit();
+            self::processPendingQueue();
 
             SecurityUtils::logSecurityEvent('file_upload_staged', [
                 'user_id'   => $user_id,
@@ -1061,6 +1068,7 @@ class Document
             );
 
             $conn->commit();
+            self::processPendingQueue();
 
             SecurityUtils::logSecurityEvent('file_reupload_staged', [
                 'user_id' => $doc['user_id'],

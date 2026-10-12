@@ -26,7 +26,18 @@ $search = $_GET['search'] ?? '';
 $page = (int)($_GET['page'] ?? 1);
 $per_page = 50;
 $level = $_GET['level'] ?? null;
-$requested_dept = isset($_GET['department']) ? (int)$_GET['department'] : null;
+$requested_dept = isset($_GET['department']) && $_GET['department'] !== '' ? (int)$_GET['department'] : null;
+$department_id = $requested_dept;
+
+$userRole = AccessScope::resolveRole($user);
+if ($userRole === 'super_admin') {
+    $available_departments = User::getAllDepartments();
+} elseif ($userRole === 'faculty_admin') {
+    $facultyId = AccessScope::resolveFacultyId($user);
+    $available_departments = User::getFacultyDepartments($facultyId);
+} else {
+    $available_departments = [];
+}
 $mode = $_GET['mode'] ?? null;
 $program_type = $_GET['program_type'] ?? null;
 $sort_by = $_GET['sort_by'] ?? 'upload_date';
